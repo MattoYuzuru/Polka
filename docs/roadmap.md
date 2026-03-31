@@ -1,8 +1,8 @@
 # Roadmap
 
 ## Текущий статус
-- Текущая ветка: `feat/reading-stats-and-profile-analytics`
-- Текущая фаза: finished-at tracking для completed books и analytics block на профиле
+- Текущая ветка: `chore/web-icon-pack`
+- Текущая фаза: branding assets для веба: favicon, device icons и логотип для README
 - Последнее обновление: 2026-03-31
 
 ## Этапы
@@ -24,14 +24,10 @@
 4. Добить e2e/component сценарии под login, CRUD и фильтрацию.
 
 ## Последняя проверка
-- `npm run test:backend`
 - `npm run build:frontend`
-- `npm run test:frontend`
-- `docker compose up -d --build postgres backend`
-- `POST /api/v1/books` со статусом `Прочитал`
-- `GET /api/v1/profiles/mattoy` до completed create
-- `GET /api/v1/profiles/mattoy` после completed create
-- `DELETE /api/v1/books/:id` для возврата исходной analytics-картины
+- Визуальная проверка favicon/device icons в `frontend/public`
+- Проверка `README.md` с баннерным логотипом
+- Проверка подключения иконок и manifest в `frontend/src/index.html`
 
 ## Принципы итераций
 - Один вертикальный срез на одну небольшую ветку.
