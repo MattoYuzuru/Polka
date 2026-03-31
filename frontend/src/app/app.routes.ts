@@ -49,6 +49,14 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'lists/:listId/edit',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/recommendation-lists/pages/list-form-page/list-form-page.component').then(
+        (module) => module.ListFormPageComponent,
+      ),
+  },
+  {
     path: 'lists/:listId',
     loadComponent: () =>
       import('./features/recommendation-lists/pages/list-details-page/list-details-page.component').then(

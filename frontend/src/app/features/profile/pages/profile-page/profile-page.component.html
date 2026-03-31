@@ -136,7 +136,7 @@
 
         <div class="lists-stack">
           @for (recommendationList of profile.recommendationLists; track recommendationList.id) {
-            <a class="list-card" [routerLink]="['/lists', recommendationList.id]">
+            <article class="list-card">
               <div class="list-card__top">
                 <h3 tuiHeader="h5">{{ recommendationList.title }}</h3>
                 <span tuiBadge>
@@ -145,7 +145,29 @@
               </div>
               <p>{{ recommendationList.description }}</p>
               <p class="list-card__meta">{{ recommendationList.booksCount }} книг(и)</p>
-            </a>
+              <div class="list-card__actions">
+                <a [routerLink]="['/lists', recommendationList.id]" tuiButton>Открыть</a>
+                @if (isOwner()) {
+                  <a [routerLink]="['/lists', recommendationList.id, 'edit']" tuiButton>Изменить</a>
+                  <button
+                    tuiButton
+                    type="button"
+                    [disabled]="processingListId() === recommendationList.id"
+                    (click)="toggleRecommendationListVisibility(recommendationList.id, recommendationList.isPublic)"
+                  >
+                    {{ recommendationList.isPublic ? 'Сделать приватным' : 'Сделать публичным' }}
+                  </button>
+                  <button
+                    tuiButton
+                    type="button"
+                    [disabled]="processingListId() === recommendationList.id"
+                    (click)="deleteRecommendationList(recommendationList.id)"
+                  >
+                    Удалить
+                  </button>
+                }
+              </div>
+            </article>
           }
         </div>
       </aside>

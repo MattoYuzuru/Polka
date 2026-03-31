@@ -1,8 +1,8 @@
 # Roadmap
 
 ## Текущий статус
-- Текущая ветка: `feat/recommendation-lists`
-- Текущая фаза: реальные recommendation lists с выбором книг из библиотеки и публичной страницей списка
+- Текущая ветка: `feat/recommendation-lists-owner-actions`
+- Текущая фаза: owner actions для recommendation lists, edit mode и управление публичностью
 - Последнее обновление: 2026-03-31
 
 ## Этапы
@@ -13,15 +13,15 @@
 | 2. Backend foundation | completed | Go API, Postgres, Docker Compose, startup migrations, seeded auth/profile persistence | `backend/`, `compose.yaml` |
 | 3. Auth и app shell | completed | JWT login/register, token storage, guards, interceptors, profile edit, owner/guest profile visibility | frontend + backend auth modules |
 | 4. Books domain | in progress | create/get/update/delete книг, edit mode, публичность, цитаты, мнения | books feature |
-| 5. Recommendation lists | in progress | create/get списков, выбор книг, публичная страница списка, owner/guest visibility | recommendation-lists feature |
+| 5. Recommendation lists | in progress | create/get/update/delete списков, edit mode, публичность, owner/guest visibility | recommendation-lists feature |
 | 6. Public profile и статистика | in progress | owner/guest режимы, фильтры, сортировка, метрики | profile feature |
 | 7. QA и delivery | pending | unit tests, component tests, CI/CD, GHCR, deploy docs, Lighthouse | `.github/`, `docs/`, `README.md` |
 
 ## Ближайшие шаги
-1. Добавить update/delete/toggle visibility для recommendation lists и owner actions на профиле.
-2. Добавить reorder/top mechanics и более богатые owner actions в библиотеке.
-3. Настроить ESLint, Stylelint, Jest, Playwright component tests и GitHub Actions.
-4. Подготовить публикацию контейнеров в GHCR и production compose для VPS.
+1. Добавить reorder/top mechanics и более богатые owner actions в библиотеке.
+2. Настроить ESLint, Stylelint, Jest, Playwright component tests и GitHub Actions.
+3. Подготовить публикацию контейнеров в GHCR и production compose для VPS.
+4. Добавить фильтры, сортировку и вычисляемую статистику чтения за период.
 
 ## Последняя проверка
 - `npm run test:backend`
@@ -29,9 +29,10 @@
 - `npm run test:frontend`
 - `docker compose up -d --build postgres backend`
 - `POST /api/v1/recommendation-lists`
-- `GET /api/v1/recommendation-lists/:id` как гость
-- `GET /api/v1/recommendation-lists/:id` как владелец
-- `GET /api/v1/profiles/mattoy` после создания списка
+- `PATCH /api/v1/recommendation-lists/:id`
+- `PATCH /api/v1/recommendation-lists/:id/visibility`
+- `DELETE /api/v1/recommendation-lists/:id`
+- `GET /api/v1/profiles/mattoy` после owner mutations
 
 ## Принципы итераций
 - Один вертикальный срез на одну небольшую ветку.

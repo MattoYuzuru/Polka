@@ -33,6 +33,15 @@
         <button tuiButton type="button" (click)="copyLink()">
           {{ copied() ? 'Ссылка скопирована' : 'Скопировать ссылку' }}
         </button>
+        @if (recommendationList.viewerCanEdit) {
+          <a [routerLink]="['/lists', recommendationList.id, 'edit']" tuiButton>Редактировать</a>
+          <button tuiButton type="button" [disabled]="isProcessing()" (click)="toggleVisibility()">
+            {{ recommendationList.isPublic ? 'Сделать приватным' : 'Сделать публичным' }}
+          </button>
+          <button tuiButton type="button" [disabled]="isProcessing()" (click)="deleteList()">
+            Удалить
+          </button>
+        }
       </div>
     </section>
 
