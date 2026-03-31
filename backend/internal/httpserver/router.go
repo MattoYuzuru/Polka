@@ -136,6 +136,37 @@ func NewRouter(
 			httputil.WriteJSON(w, http.StatusCreated, bookDetails)
 		})
 
+		router.Post("/books/import", func(w http.ResponseWriter, r *http.Request) {
+			claims, ok := requireAuth(w, r, tokenManager)
+			if !ok {
+				return
+			}
+
+			var input books.ImportBooksInput
+
+			if err := httputil.DecodeJSON(r, &input); err != nil {
+				httputil.WriteError(w, http.StatusBadRequest, "Передайте корректный JSON с массивом books.items.")
+
+				return
+			}
+
+			result, err := booksService.Import(r.Context(), claims.Subject, input)
+			if err != nil {
+				switch {
+				case errors.Is(err, books.ErrInvalidInput):
+					httputil.WriteError(w, http.StatusBadRequest, "Импортируемый JSON должен содержать хотя бы одну корректную книгу.")
+				case errors.Is(err, books.ErrUnauthorized):
+					httputil.WriteError(w, http.StatusUnauthorized, "Требуется авторизация.")
+				default:
+					httputil.WriteError(w, http.StatusInternalServerError, "Не удалось импортировать книги.")
+				}
+
+				return
+			}
+
+			httputil.WriteJSON(w, http.StatusCreated, result)
+		})
+
 		router.Post("/books/cover-upload", func(w http.ResponseWriter, r *http.Request) {
 			claims, ok := requireAuth(w, r, tokenManager)
 			if !ok {

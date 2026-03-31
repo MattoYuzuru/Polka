@@ -1,0 +1,64 @@
+<main class="book-import-page">
+  <section class="intro-card" tuiCardLarge tuiSurface>
+    <p tuiChip>Импорт</p>
+    <h1 tuiHeader="h2">Импорт книг из JSON</h1>
+    <p>
+      Эта страница принимает либо массив книг, либо объект формата
+      <code>{{ importShapeHint }}</code>
+      и импортирует записи в библиотеку владельца через backend.
+    </p>
+    <div class="intro-badges">
+      <span tuiBadge>JSON file</span>
+      <span tuiBadge>Bulk import</span>
+      <span tuiBadge>Owner only</span>
+    </div>
+  </section>
+
+  <section class="import-layout">
+    <article class="helper-card" tuiCardLarge tuiSurface>
+      <p tuiBadge>Формат</p>
+      <pre class="json-example">{{ exampleJson }}</pre>
+
+      <label class="file-input">
+        <input type="file" accept="application/json,.json" (change)="fillFromFile($event)" />
+        <span>Подставить JSON из файла</span>
+      </label>
+    </article>
+
+    <article class="form-card" tuiCardLarge tuiSurface>
+      <form class="import-form" [formGroup]="importForm" (ngSubmit)="submit()">
+        <label class="field">
+          <span>JSON payload</span>
+          <textarea
+            class="field__control field__control--textarea"
+            formControlName="rawJson"
+            [placeholder]="importPlaceholder"
+            data-testid="books-import-json"
+          ></textarea>
+        </label>
+
+        @if (errorMessage()) {
+          <p class="error-box">{{ errorMessage() }}</p>
+        }
+
+        @if (successMessage()) {
+          <p class="success-box">{{ successMessage() }}</p>
+        }
+
+        <div class="actions">
+          <button
+            tuiButton
+            type="submit"
+            [disabled]="isSubmitting()"
+            data-testid="books-import-submit"
+          >
+            {{ isSubmitting() ? 'Импортируем...' : 'Импортировать книги' }}
+          </button>
+          @if (authSessionStore.user(); as user) {
+            <a [routerLink]="['/', user.nickname]" tuiButton>К профилю</a>
+          }
+        </div>
+      </form>
+    </article>
+  </section>
+</main>

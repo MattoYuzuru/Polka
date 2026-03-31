@@ -3,7 +3,7 @@
     <section class="state-card" tuiCardLarge tuiSurface>
       <p tuiChip>Загрузка</p>
       <h1 tuiHeader="h3">Собираем библиотеку и метаданные профиля.</h1>
-      <p>Запрос уже ушёл в backend mock API.</p>
+      <p>Запрос уже ушёл в backend API.</p>
     </section>
   } @else if (errorMessage()) {
     <section class="state-card" tuiCardLarge tuiSurface>
@@ -59,6 +59,7 @@
 
           @if (isOwner()) {
             <a routerLink="/settings/profile" tuiButton>Редактировать профиль</a>
+            <a routerLink="/books/import" tuiButton>Импорт JSON</a>
             <a routerLink="/books/new" tuiButton>Добавить книгу</a>
             <a routerLink="/lists/new" tuiButton>Добавить список</a>
             <button tuiButton type="button" (click)="logout()">Выйти</button>

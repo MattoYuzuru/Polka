@@ -18,6 +18,14 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'books/import',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/books/pages/book-import-page/book-import-page.component').then(
+        (module) => module.BookImportPageComponent,
+      ),
+  },
+  {
     path: 'books/new',
     canActivate: [authGuard],
     loadComponent: () =>
