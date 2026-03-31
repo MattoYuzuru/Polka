@@ -235,6 +235,7 @@ func (repository *PostgresRepository) loadBooks(
 	const query = `
 		SELECT
 			id::text,
+			rank_position,
 			title,
 			author,
 			description,
@@ -270,6 +271,7 @@ func (repository *PostgresRepository) loadBooks(
 
 		if err := rows.Scan(
 			&book.ID,
+			&book.RankPosition,
 			&book.Title,
 			&book.Author,
 			&book.Description,

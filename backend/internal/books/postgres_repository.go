@@ -353,6 +353,75 @@ func (repository *PostgresRepository) Delete(
 	return nil
 }
 
+func (repository *PostgresRepository) Reorder(
+	ctx context.Context,
+	ownerUserID string,
+	input ReorderBooksInput,
+) error {
+	tx, err := repository.pool.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("begin reorder books transaction: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	var booksCount int
+
+	if err := tx.QueryRow(
+		ctx,
+		`SELECT COUNT(*) FROM books WHERE user_id::text = $1`,
+		ownerUserID,
+	).Scan(&booksCount); err != nil {
+		return fmt.Errorf("count owner books for reorder: %w", err)
+	}
+
+	if booksCount != len(input.BookIDs) {
+		return ErrInvalidInput
+	}
+
+	var availableBooksCount int
+
+	if err := tx.QueryRow(
+		ctx,
+		`
+			SELECT COUNT(*)
+			FROM books
+			WHERE user_id::text = $1
+			  AND id::text = ANY($2);
+		`,
+		ownerUserID,
+		input.BookIDs,
+	).Scan(&availableBooksCount); err != nil {
+		return fmt.Errorf("count provided books for reorder: %w", err)
+	}
+
+	if availableBooksCount != len(input.BookIDs) {
+		return ErrInvalidInput
+	}
+
+	for index, bookID := range input.BookIDs {
+		if _, err := tx.Exec(
+			ctx,
+			`
+				UPDATE books
+				SET rank_position = $3
+				WHERE id::text = $1
+				  AND user_id::text = $2;
+			`,
+			bookID,
+			ownerUserID,
+			index+1,
+		); err != nil {
+			return fmt.Errorf("update book rank position: %w", err)
+		}
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("commit reorder books transaction: %w", err)
+	}
+
+	return nil
+}
+
 func (repository *PostgresRepository) loadQuotes(ctx context.Context, bookID string) ([]Quote, error) {
 	rows, err := repository.pool.Query(
 		ctx,

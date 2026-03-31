@@ -24,6 +24,7 @@ type User struct {
 
 type Book struct {
 	ID             string   `json:"id"`
+	RankPosition   int      `json:"rankPosition"`
 	Title          string   `json:"title"`
 	Author         string   `json:"author"`
 	Description    string   `json:"description"`

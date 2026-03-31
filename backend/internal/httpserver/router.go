@@ -313,6 +313,38 @@ func NewRouter(
 			httputil.WriteJSON(w, http.StatusOK, bookDetails)
 		})
 
+		router.Patch("/books/order", func(w http.ResponseWriter, r *http.Request) {
+			claims, ok := requireAuth(w, r, tokenManager)
+			if !ok {
+				return
+			}
+
+			var input books.ReorderBooksInput
+
+			if err := httputil.DecodeJSON(r, &input); err != nil {
+				httputil.WriteError(w, http.StatusBadRequest, "Некорректный JSON в теле запроса.")
+
+				return
+			}
+
+			if err := booksService.Reorder(r.Context(), claims.Subject, input); err != nil {
+				switch {
+				case errors.Is(err, books.ErrInvalidInput):
+					httputil.WriteError(w, http.StatusBadRequest, "Передайте полный корректный порядок книг владельца.")
+				case errors.Is(err, books.ErrUnauthorized):
+					httputil.WriteError(w, http.StatusUnauthorized, "Требуется авторизация.")
+				default:
+					httputil.WriteError(w, http.StatusInternalServerError, "Не удалось обновить порядок книг.")
+				}
+
+				return
+			}
+
+			httputil.WriteJSON(w, http.StatusOK, map[string]string{
+				"status": "reordered",
+			})
+		})
+
 		router.Delete("/books/{bookID}", func(w http.ResponseWriter, r *http.Request) {
 			claims, ok := requireAuth(w, r, tokenManager)
 			if !ok {

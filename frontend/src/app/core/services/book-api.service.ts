@@ -6,6 +6,7 @@ import { environment } from '../../../environments/environment';
 import {
   BookDetails,
   CreateBookPayload,
+  ReorderBooksPayload,
   UpdateBookPayload,
 } from '../../shared/models/book.model';
 
@@ -41,5 +42,9 @@ export class BookApiService {
     return this.http.delete<{ status: string }>(
       `${environment.apiBaseUrl}/books/${encodeURIComponent(bookId)}`,
     );
+  }
+
+  reorderBooks(payload: ReorderBooksPayload): Observable<{ status: string }> {
+    return this.http.patch<{ status: string }>(`${environment.apiBaseUrl}/books/order`, payload);
   }
 }
