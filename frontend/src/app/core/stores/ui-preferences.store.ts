@@ -32,9 +32,7 @@ export const UiPreferencesStore = signalStore(
     gradientStops: FALLBACK_GRADIENT,
   }),
   withComputed(({ gradientStops }) => ({
-    profileGradientCss: computed(
-      () => `linear-gradient(135deg, ${gradientStops().join(', ')})`,
-    ),
+    profileGradientCss: computed(() => `linear-gradient(135deg, ${gradientStops().join(', ')})`),
   })),
   withMethods((store) => ({
     bootstrap(): void {
@@ -45,10 +43,7 @@ export const UiPreferencesStore = signalStore(
     syncProfileGradient(gradientStops: string[]): void {
       const normalizedStops = gradientStops.length ? gradientStops : FALLBACK_GRADIENT;
 
-      globalThis.sessionStorage?.setItem(
-        SESSION_GRADIENT_KEY,
-        JSON.stringify(normalizedStops),
-      );
+      globalThis.sessionStorage?.setItem(SESSION_GRADIENT_KEY, JSON.stringify(normalizedStops));
 
       patchState(store, {
         gradientStops: normalizedStops,

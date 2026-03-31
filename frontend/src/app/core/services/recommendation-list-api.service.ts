@@ -1,12 +1,12 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { type Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import {
-  CreateRecommendationListPayload,
-  RecommendationListDetails,
-  UpdateRecommendationListPayload,
+  type CreateRecommendationListPayload,
+  type RecommendationListDetails,
+  type UpdateRecommendationListPayload,
 } from '../../shared/models/recommendation-list.model';
 
 @Injectable({ providedIn: 'root' })

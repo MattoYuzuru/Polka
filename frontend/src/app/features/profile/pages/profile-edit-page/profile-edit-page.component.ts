@@ -57,9 +57,7 @@ export class ProfileEditPageComponent {
           this.isLoading.set(false);
         }),
         catchError((error: { error?: { message?: string } }) => {
-          this.errorMessage.set(
-            error.error?.message ?? 'Не удалось загрузить данные профиля.',
-          );
+          this.errorMessage.set(error.error?.message ?? 'Не удалось загрузить данные профиля.');
           this.isLoading.set(false);
 
           return EMPTY;

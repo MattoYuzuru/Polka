@@ -11,7 +11,7 @@ import { TuiCardLarge, TuiHeader } from '@taiga-ui/layout';
 import { BookApiService } from '../../../../core/services/book-api.service';
 import { AuthSessionStore } from '../../../../core/stores/auth-session.store';
 import { BOOK_STATUS_OPTIONS } from '../../../../shared/data/book-form.constants';
-import { BookDetails, BookFormValue } from '../../../../shared/models/book.model';
+import { type BookDetails, type BookFormValue } from '../../../../shared/models/book.model';
 
 const BOOK_DRAFT_KEY = 'polka.books.create-draft';
 
@@ -94,9 +94,10 @@ export class BookFormPageComponent {
     this.draftMessage.set(null);
     this.isSubmitting.set(true);
 
-    const request$ = this.isEditMode() && this.editingBookId
-      ? this.bookApiService.updateBook(this.editingBookId, this.bookForm.getRawValue())
-      : this.bookApiService.createBook(this.bookForm.getRawValue());
+    const request$ =
+      this.isEditMode() && this.editingBookId
+        ? this.bookApiService.updateBook(this.editingBookId, this.bookForm.getRawValue())
+        : this.bookApiService.createBook(this.bookForm.getRawValue());
 
     request$
       .pipe(
@@ -118,9 +119,7 @@ export class BookFormPageComponent {
         error: (error: { error?: { message?: string } }) => {
           this.errorMessage.set(
             error.error?.message ??
-              (this.isEditMode()
-                ? 'Не удалось обновить книгу.'
-                : 'Не удалось создать книгу.'),
+              (this.isEditMode() ? 'Не удалось обновить книгу.' : 'Не удалось создать книгу.'),
           );
         },
       });

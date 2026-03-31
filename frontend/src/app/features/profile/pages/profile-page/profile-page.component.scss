@@ -33,8 +33,7 @@
   display: grid;
   gap: 1.5rem;
   padding: clamp(1.5rem, 4vw, 2.5rem);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.86) 0%, rgba(255, 255, 255, 0.92) 100%);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.86) 0%, rgba(255, 255, 255, 0.92) 100%);
 }
 
 .profile-identity {

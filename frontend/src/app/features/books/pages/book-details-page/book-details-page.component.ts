@@ -16,11 +16,20 @@ import { TuiBadge, TuiChip } from '@taiga-ui/kit';
 import { TuiCardLarge, TuiHeader } from '@taiga-ui/layout';
 
 import { BookApiService } from '../../../../core/services/book-api.service';
-import { BookDetails } from '../../../../shared/models/book.model';
+import { type BookDetails } from '../../../../shared/models/book.model';
 
 @Component({
   selector: 'app-book-details-page',
-  imports: [DatePipe, RouterLink, TuiButton, TuiBadge, TuiCardLarge, TuiChip, TuiHeader, TuiSurface],
+  imports: [
+    DatePipe,
+    RouterLink,
+    TuiButton,
+    TuiBadge,
+    TuiCardLarge,
+    TuiChip,
+    TuiHeader,
+    TuiSurface,
+  ],
   templateUrl: './book-details-page.component.html',
   styleUrl: './book-details-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -1,5 +1,5 @@
-import { BookCard } from './book.model';
-import { RecommendationListCard } from './recommendation-list.model';
+import { type BookCard } from './book.model';
+import { type RecommendationListCard } from './recommendation-list.model';
 
 export interface ProfileStats {
   memberSinceLabel: string;

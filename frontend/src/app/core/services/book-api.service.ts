@@ -1,13 +1,13 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { type Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import {
-  BookDetails,
-  CreateBookPayload,
-  ReorderBooksPayload,
-  UpdateBookPayload,
+  type BookDetails,
+  type CreateBookPayload,
+  type ReorderBooksPayload,
+  type UpdateBookPayload,
 } from '../../shared/models/book.model';
 
 @Injectable({ providedIn: 'root' })

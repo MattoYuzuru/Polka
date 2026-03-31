@@ -1,8 +1,8 @@
 # Roadmap
 
 ## Текущий статус
-- Текущая ветка: `chore/web-icon-pack`
-- Текущая фаза: branding assets для веба: favicon, device icons и логотип для README
+- Текущая ветка: `chore/lint-and-format-tooling`
+- Текущая фаза: ESLint, Stylelint и Prettier tooling для frontend и root scripts
 - Последнее обновление: 2026-03-31
 
 ## Этапы
@@ -15,19 +15,21 @@
 | 4. Books domain | in progress | create/get/update/delete книг, edit mode, публичность, цитаты, мнения, reorder/top order | books feature |
 | 5. Recommendation lists | in progress | create/get/update/delete списков, edit mode, публичность, owner/guest visibility | recommendation-lists feature |
 | 6. Public profile и статистика | in progress | owner/guest режимы, фильтры, сортировка, метрики, reading analytics | profile feature |
-| 7. QA и delivery | pending | unit tests, component tests, CI/CD, GHCR, deploy docs, Lighthouse | `.github/`, `docs/`, `README.md` |
+| 7. QA и delivery | in progress | lint/format tooling, unit tests, component tests, CI/CD, GHCR, deploy docs, Lighthouse | `.github/`, `docs/`, `README.md` |
 
 ## Ближайшие шаги
-1. Настроить ESLint, Stylelint, Jest, Playwright component tests и GitHub Actions.
-2. Подготовить публикацию контейнеров в GHCR и production compose для VPS.
-3. Добавить Lighthouse-замеры, production polish и README с deploy flow.
-4. Добить e2e/component сценарии под login, CRUD и фильтрацию.
+1. Перевести unit tests на Jest и собрать 10-15 покрывающих сценариев.
+2. Добавить Playwright component/e2e сценарии под login, CRUD и фильтрацию.
+3. Подготовить GitHub Actions: lint, test, build и публикация образов в GHCR.
+4. Добавить production compose, deploy flow на VPS и Lighthouse-замеры.
 
 ## Последняя проверка
+- `npm run lint:frontend`
+- `npm run lint:styles`
+- `npm run format:check`
 - `npm run build:frontend`
-- Визуальная проверка favicon/device icons в `frontend/public`
-- Проверка `README.md` с баннерным логотипом
-- Проверка подключения иконок и manifest в `frontend/src/index.html`
+- `npm run test:frontend`
+- `npm run test:backend`
 
 ## Принципы итераций
 - Один вертикальный срез на одну небольшую ветку.

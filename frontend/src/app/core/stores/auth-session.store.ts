@@ -1,7 +1,7 @@
 import { computed } from '@angular/core';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 
-import { AuthSession, UserIdentity } from '../../shared/models/auth.model';
+import { type AuthSession, type UserIdentity } from '../../shared/models/auth.model';
 
 const TOKEN_STORAGE_KEY = 'polka.auth.token';
 const USER_STORAGE_KEY = 'polka.auth.user';

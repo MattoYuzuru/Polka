@@ -15,7 +15,7 @@ import { TuiBadge, TuiChip } from '@taiga-ui/kit';
 import { TuiCardLarge, TuiHeader } from '@taiga-ui/layout';
 
 import { RecommendationListApiService } from '../../../../core/services/recommendation-list-api.service';
-import { RecommendationListDetails } from '../../../../shared/models/recommendation-list.model';
+import { type RecommendationListDetails } from '../../../../shared/models/recommendation-list.model';
 
 @Component({
   selector: 'app-list-details-page',
