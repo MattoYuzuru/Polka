@@ -13,8 +13,8 @@
         Поля подтягиваются из backend. Здесь же можно сменить публичность, текст мнения и
         сохранённую цитату.
       } @else {
-        Черновик по-прежнему остаётся в `localStorage`, но основное действие уже уходит в
-        backend и сразу влияет на профиль пользователя.
+        Черновик по-прежнему остаётся в `localStorage`, но основное действие уже уходит в backend и
+        сразу влияет на профиль пользователя.
       }
     </p>
   </section>
@@ -26,115 +26,138 @@
     </section>
   } @else {
     <section class="form-layout">
-    <article class="cover-dropzone" tuiCardLarge tuiSurface>
-      <p tuiBadge>Обложка</p>
-      <div class="cover-dropzone__placeholder">
-        {{ isEditMode() ? 'Загрузка обложки появится следующим срезом' : 'Upload появится в следующем срезе' }}
-      </div>
-      <p class="muted">
-        На этом этапе книга уже создаётся как реальная сущность, но загрузка медиа ещё не
-        подключена.
-      </p>
-      @if (!isEditMode()) {
-        <button tuiButton type="button" (click)="saveDraftLocally()">Сохранить черновик</button>
-      }
-    </article>
-
-    <article class="form-card" tuiCardLarge tuiSurface>
-      <form class="book-form" [formGroup]="bookForm" (ngSubmit)="submit()">
-        <label class="field">
-          <span>Название</span>
-          <input class="field__control" formControlName="title" type="text" />
-        </label>
-
-        <label class="field">
-          <span>Автор</span>
-          <input class="field__control" formControlName="author" type="text" />
-        </label>
-
-        <div class="field-grid">
-          <label class="field">
-            <span>Жанр</span>
-            <input class="field__control" formControlName="genre" type="text" />
-          </label>
-
-          <label class="field">
-            <span>Год</span>
-            <input class="field__control" formControlName="year" type="number" />
-          </label>
+      <article class="cover-dropzone" tuiCardLarge tuiSurface>
+        <p tuiBadge>Обложка</p>
+        <div class="cover-dropzone__placeholder">
+          {{
+            isEditMode()
+              ? 'Загрузка обложки появится следующим срезом'
+              : 'Upload появится в следующем срезе'
+          }}
         </div>
-
-        <div class="field-grid">
-          <label class="field">
-            <span>Издательство</span>
-            <input class="field__control" formControlName="publisher" type="text" />
-          </label>
-
-          <label class="field">
-            <span>Возрастное ограничение</span>
-            <input class="field__control" formControlName="ageRating" type="text" />
-          </label>
-        </div>
-
-        <div class="field-grid">
-          <label class="field">
-            <span>Статус</span>
-            <select class="field__control" formControlName="status">
-              @for (status of statusOptions; track status) {
-                <option [value]="status">{{ status }}</option>
-              }
-            </select>
-          </label>
-
-          <label class="field">
-            <span>Оценка</span>
-            <input class="field__control" formControlName="rating" type="number" min="0" max="10" />
-          </label>
-        </div>
-
-        <label class="checkbox-field">
-          <input formControlName="isPublic" type="checkbox" />
-          <span>Показывать книгу в публичной библиотеке</span>
-        </label>
-
-        <label class="field">
-          <span>Описание</span>
-          <textarea class="field__control field__control--textarea" formControlName="description"></textarea>
-        </label>
-
-        <label class="field">
-          <span>Мнение</span>
-          <textarea class="field__control field__control--textarea" formControlName="opinion"></textarea>
-        </label>
-
-        <label class="field">
-          <span>Цитата</span>
-          <textarea class="field__control field__control--textarea" formControlName="quote"></textarea>
-        </label>
-
-        @if (draftMessage()) {
-          <p class="muted">{{ draftMessage() }}</p>
+        <p class="muted">
+          На этом этапе книга уже создаётся как реальная сущность, но загрузка медиа ещё не
+          подключена.
+        </p>
+        @if (!isEditMode()) {
+          <button tuiButton type="button" (click)="saveDraftLocally()">Сохранить черновик</button>
         }
+      </article>
 
-        @if (errorMessage()) {
-          <p class="error-box">{{ errorMessage() }}</p>
-        }
+      <article class="form-card" tuiCardLarge tuiSurface>
+        <form class="book-form" [formGroup]="bookForm" (ngSubmit)="submit()">
+          <label class="field">
+            <span>Название</span>
+            <input class="field__control" formControlName="title" type="text" />
+          </label>
 
-        <div class="actions">
-          <button tuiButton type="submit" [disabled]="isSubmitting()">
-            {{
-              isSubmitting()
-                ? (isEditMode() ? 'Сохраняем...' : 'Создаём...')
-                : (isEditMode() ? 'Сохранить изменения' : 'Добавить книгу')
-            }}
-          </button>
-          <button tuiButton type="button" (click)="resetDraft()">Очистить</button>
-          @if (authSessionStore.user(); as user) {
-            <a [routerLink]="['/', user.nickname]" tuiButton>К профилю</a>
+          <label class="field">
+            <span>Автор</span>
+            <input class="field__control" formControlName="author" type="text" />
+          </label>
+
+          <div class="field-grid">
+            <label class="field">
+              <span>Жанр</span>
+              <input class="field__control" formControlName="genre" type="text" />
+            </label>
+
+            <label class="field">
+              <span>Год</span>
+              <input class="field__control" formControlName="year" type="number" />
+            </label>
+          </div>
+
+          <div class="field-grid">
+            <label class="field">
+              <span>Издательство</span>
+              <input class="field__control" formControlName="publisher" type="text" />
+            </label>
+
+            <label class="field">
+              <span>Возрастное ограничение</span>
+              <input class="field__control" formControlName="ageRating" type="text" />
+            </label>
+          </div>
+
+          <div class="field-grid">
+            <label class="field">
+              <span>Статус</span>
+              <select class="field__control" formControlName="status">
+                @for (status of statusOptions; track status) {
+                  <option [value]="status">{{ status }}</option>
+                }
+              </select>
+            </label>
+
+            <label class="field">
+              <span>Оценка</span>
+              <input
+                class="field__control"
+                formControlName="rating"
+                type="number"
+                min="0"
+                max="10"
+              />
+            </label>
+          </div>
+
+          <label class="checkbox-field">
+            <input formControlName="isPublic" type="checkbox" />
+            <span>Показывать книгу в публичной библиотеке</span>
+          </label>
+
+          <label class="field">
+            <span>Описание</span>
+            <textarea
+              class="field__control field__control--textarea"
+              formControlName="description"
+            ></textarea>
+          </label>
+
+          <label class="field">
+            <span>Мнение</span>
+            <textarea
+              class="field__control field__control--textarea"
+              formControlName="opinion"
+            ></textarea>
+          </label>
+
+          <label class="field">
+            <span>Цитата</span>
+            <textarea
+              class="field__control field__control--textarea"
+              formControlName="quote"
+            ></textarea>
+          </label>
+
+          @if (draftMessage()) {
+            <p class="muted">{{ draftMessage() }}</p>
           }
-        </div>
-      </form>
-    </article>
+
+          @if (errorMessage()) {
+            <p class="error-box">{{ errorMessage() }}</p>
+          }
+
+          <div class="actions">
+            <button tuiButton type="submit" [disabled]="isSubmitting()">
+              {{
+                isSubmitting()
+                  ? isEditMode()
+                    ? 'Сохраняем...'
+                    : 'Создаём...'
+                  : isEditMode()
+                    ? 'Сохранить изменения'
+                    : 'Добавить книгу'
+              }}
+            </button>
+            <button tuiButton type="button" (click)="resetDraft()">Очистить</button>
+            @if (authSessionStore.user(); as user) {
+              <a [routerLink]="['/', user.nickname]" tuiButton>К профилю</a>
+            }
+          </div>
+        </form>
+      </article>
     </section>
   }
 </main>

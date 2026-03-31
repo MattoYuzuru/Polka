@@ -64,7 +64,11 @@
             <a class="book-card" [routerLink]="['/books', book.id]" tuiSurface>
               <div
                 class="book-cover"
-                [style.background-image]="'linear-gradient(145deg, ' + (book.coverPalette.length ? book.coverPalette.join(', ') : '#101010, #404040') + ')'"
+                [style.background-image]="
+                  'linear-gradient(145deg, ' +
+                  (book.coverPalette.length ? book.coverPalette.join(', ') : '#101010, #404040') +
+                  ')'
+                "
               >
                 <span class="book-rank">{{ index + 1 }}</span>
                 <span class="book-initial">{{ book.title.slice(0, 1).toUpperCase() }}</span>

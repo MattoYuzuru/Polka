@@ -2,7 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
-  OnInit,
+  type OnInit,
   computed,
   inject,
   signal,
@@ -20,8 +20,12 @@ import { ProfileApiService } from '../../../../core/services/profile-api.service
 import { RecommendationListApiService } from '../../../../core/services/recommendation-list-api.service';
 import { AuthSessionStore } from '../../../../core/stores/auth-session.store';
 import { UiPreferencesStore } from '../../../../core/stores/ui-preferences.store';
-import { BOOK_STATUSES, BookCard, BookStatus } from '../../../../shared/models/book.model';
-import { PublicProfile } from '../../../../shared/models/profile.model';
+import {
+  BOOK_STATUSES,
+  type BookCard,
+  type BookStatus,
+} from '../../../../shared/models/book.model';
+import { type PublicProfile } from '../../../../shared/models/profile.model';
 
 type BookSortOption = 'top' | 'rating' | 'year' | 'title';
 type ReorderDirection = 'top' | 'up' | 'down';
@@ -98,7 +102,8 @@ export class ProfilePageComponent implements OnInit {
     switch (this.selectedSort()) {
       case 'rating':
         return sortedBooks.sort(
-          (left, right) => (right.rating ?? -1) - (left.rating ?? -1) || left.rankPosition - right.rankPosition,
+          (left, right) =>
+            (right.rating ?? -1) - (left.rating ?? -1) || left.rankPosition - right.rankPosition,
         );
       case 'year':
         return sortedBooks.sort(

@@ -15,7 +15,11 @@
     <section class="book-hero" tuiCardLarge tuiSurface>
       <div
         class="book-hero__cover"
-        [style.background-image]="'linear-gradient(145deg, ' + (book.coverPalette.length ? book.coverPalette.join(', ') : '#101010, #404040') + ')'"
+        [style.background-image]="
+          'linear-gradient(145deg, ' +
+          (book.coverPalette.length ? book.coverPalette.join(', ') : '#101010, #404040') +
+          ')'
+        "
       >
         <span>{{ book.title.slice(0, 1).toUpperCase() }}</span>
       </div>
@@ -41,7 +45,12 @@
           <a [routerLink]="backLink()" tuiButton>Назад к библиотеке</a>
           @if (book.viewerCanEdit) {
             <a [routerLink]="['/books', book.id, 'edit']" tuiButton>Редактировать</a>
-            <button tuiButton type="button" [disabled]="isProcessing()" (click)="toggleVisibility()">
+            <button
+              tuiButton
+              type="button"
+              [disabled]="isProcessing()"
+              (click)="toggleVisibility()"
+            >
               {{ book.isPublic ? 'Сделать приватной' : 'Сделать публичной' }}
             </button>
             <button tuiButton type="button" [disabled]="isProcessing()" (click)="deleteBook()">
@@ -62,7 +71,9 @@
             @for (opinion of book.opinions; track opinion.id) {
               <article class="entry-card">
                 <p>{{ opinion.content }}</p>
-                <p class="entry-date">{{ opinion.createdAt | date: 'longDate' : undefined : 'ru-RU' }}</p>
+                <p class="entry-date">
+                  {{ opinion.createdAt | date: 'longDate' : undefined : 'ru-RU' }}
+                </p>
               </article>
             }
           </div>
@@ -80,7 +91,9 @@
             @for (quote of book.quotes; track quote.id) {
               <blockquote class="entry-card entry-card--quote">
                 <p>{{ quote.content }}</p>
-                <footer class="entry-date">{{ quote.createdAt | date: 'longDate' : undefined : 'ru-RU' }}</footer>
+                <footer class="entry-date">
+                  {{ quote.createdAt | date: 'longDate' : undefined : 'ru-RU' }}
+                </footer>
               </blockquote>
             }
           </div>

@@ -3,8 +3,8 @@
     <p tuiChip>Настройки профиля</p>
     <h1 tuiHeader="h2">Редактирование публичной страницы</h1>
     <p>
-      Изменения сразу влияют на адрес страницы, заголовок профиля и описание, которое
-      видят посетители.
+      Изменения сразу влияют на адрес страницы, заголовок профиля и описание, которое видят
+      посетители.
     </p>
 
     @if (isLoading()) {
@@ -23,7 +23,10 @@
 
         <label class="field">
           <span>Теглайн</span>
-          <textarea class="field__control field__control--textarea" formControlName="tagline"></textarea>
+          <textarea
+            class="field__control field__control--textarea"
+            formControlName="tagline"
+          ></textarea>
         </label>
 
         @if (errorMessage()) {

@@ -17,11 +17,7 @@ body {
   background:
     radial-gradient(circle at top left, rgba(255, 255, 255, 0.8), transparent 38%),
     linear-gradient(180deg, var(--polka-paper), var(--polka-paper-shadow));
-  font-family:
-    'Avenir Next',
-    'Segoe UI',
-    'Helvetica Neue',
-    sans-serif;
+  font-family: 'Avenir Next', 'Segoe UI', 'Helvetica Neue', sans-serif;
   line-height: 1.5;
 }
 
@@ -32,11 +28,7 @@ h4,
 h5,
 h6 {
   margin: 0;
-  font-family:
-    'Iowan Old Style',
-    'Palatino Linotype',
-    'Book Antiqua',
-    serif;
+  font-family: 'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', serif;
   font-weight: 700;
 }
 

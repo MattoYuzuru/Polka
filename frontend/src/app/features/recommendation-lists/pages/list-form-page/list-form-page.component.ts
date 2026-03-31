@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -10,10 +17,10 @@ import { TuiCardLarge, TuiHeader } from '@taiga-ui/layout';
 import { ProfileApiService } from '../../../../core/services/profile-api.service';
 import { RecommendationListApiService } from '../../../../core/services/recommendation-list-api.service';
 import { AuthSessionStore } from '../../../../core/stores/auth-session.store';
-import { BookCard } from '../../../../shared/models/book.model';
+import { type BookCard } from '../../../../shared/models/book.model';
 import {
-  RecommendationListDetails,
-  RecommendationListFormValue,
+  type RecommendationListDetails,
+  type RecommendationListFormValue,
 } from '../../../../shared/models/recommendation-list.model';
 
 const LIST_DRAFT_KEY = 'polka.lists.create-draft';
@@ -114,9 +121,13 @@ export class ListFormPageComponent {
     this.draftMessage.set(null);
     this.isSubmitting.set(true);
 
-    const request$ = this.isEditMode() && this.editingListId
-      ? this.recommendationListApiService.updateList(this.editingListId, this.listForm.getRawValue())
-      : this.recommendationListApiService.createList(this.listForm.getRawValue());
+    const request$ =
+      this.isEditMode() && this.editingListId
+        ? this.recommendationListApiService.updateList(
+            this.editingListId,
+            this.listForm.getRawValue(),
+          )
+        : this.recommendationListApiService.createList(this.listForm.getRawValue());
 
     request$
       .pipe(
@@ -179,9 +190,7 @@ export class ListFormPageComponent {
 
     this.profileApiService
       .getPublicProfile(nickname)
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-      )
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (profile) => {
           this.books.set(profile.books);
