@@ -6,12 +6,19 @@ import (
 )
 
 type Config struct {
-	AppEnv         string
-	Port           string
-	DatabaseURL    string
-	JWTSecret      string
-	AutoMigrate    bool
-	AllowedOrigins []string
+	AppEnv                  string
+	Port                    string
+	DatabaseURL             string
+	JWTSecret               string
+	AutoMigrate             bool
+	AllowedOrigins          []string
+	StorageEndpoint         string
+	StorageRegion           string
+	StorageBucket           string
+	StorageAccessKeyID      string
+	StorageSecretAccessKey  string
+	StorageUsePathStyle     bool
+	StorageAutoCreateBucket bool
 }
 
 func Load() Config {
@@ -27,6 +34,13 @@ func Load() Config {
 				"http://localhost:4200,http://127.0.0.1:4200,https://polka.keykomi.com",
 			),
 		),
+		StorageEndpoint:         envOrDefault("STORAGE_ENDPOINT", ""),
+		StorageRegion:           envOrDefault("STORAGE_REGION", "us-east-1"),
+		StorageBucket:           envOrDefault("STORAGE_BUCKET", "polka-covers"),
+		StorageAccessKeyID:      envOrDefault("STORAGE_ACCESS_KEY_ID", ""),
+		StorageSecretAccessKey:  envOrDefault("STORAGE_SECRET_ACCESS_KEY", ""),
+		StorageUsePathStyle:     envBoolOrDefault("STORAGE_USE_PATH_STYLE", true),
+		StorageAutoCreateBucket: envBoolOrDefault("STORAGE_AUTO_CREATE_BUCKET", true),
 	}
 }
 

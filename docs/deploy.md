@@ -18,6 +18,7 @@
 Workflow публикует теги:
 - `sha-<short-sha>` для каждого push
 - `branch-<branch-name>` для push в ветки
+- `edge` для default branch
 - `main` для default branch
 
 ## Первый deploy на VPS
@@ -31,7 +32,7 @@ cd /opt/polka
 git fetch --all --prune
 git checkout main
 git pull --ff-only
-POLKA_IMAGE_TAG=main ./scripts/deploy/polka-bootstrap-k8s.sh
+POLKA_IMAGE_TAG=edge ./scripts/deploy/polka-bootstrap-k8s.sh
 ```
 
 Если нужно задеплоить конкретный branch build до merge в `main`:
@@ -46,7 +47,7 @@ cd /opt/polka
 git fetch --all --prune
 git checkout main
 git pull --ff-only
-POLKA_IMAGE_TAG=main ./scripts/deploy/polka-bootstrap-k8s.sh
+POLKA_IMAGE_TAG=edge ./scripts/deploy/polka-bootstrap-k8s.sh
 ```
 
 Скрипт:
@@ -54,7 +55,10 @@ POLKA_IMAGE_TAG=main ./scripts/deploy/polka-bootstrap-k8s.sh
 - создаёт только namespace `polka` и secret `polka-secrets`, если их ещё нет;
 - применяет манифесты Polka;
 - обновляет образы frontend/backend;
-- ждёт rollout `postgres`, `backend`, `frontend`.
+- поднимает `postgres`, `minio`, `backend`, `frontend`;
+- ждёт rollout `postgres`, `minio`, `backend`, `frontend`.
+
+Сейчас деплой на VPS не происходит автоматически после merge. После того как GitHub Actions закончит `publish`, нужно зайти по SSH и выполнить rollout-команду вручную.
 
 ## Что проверять после rollout
 ```bash

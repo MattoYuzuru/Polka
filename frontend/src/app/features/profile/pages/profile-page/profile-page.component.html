@@ -214,15 +214,23 @@
               <div
                 class="book-cover"
                 [style.background-image]="
-                  'linear-gradient(145deg, ' +
-                  (book.coverPalette.length ? book.coverPalette.join(', ') : '#101010, #404040') +
-                  ')'
+                  !book.coverUrl
+                    ? 'linear-gradient(145deg, ' +
+                      (book.coverPalette.length
+                        ? book.coverPalette.join(', ')
+                        : '#101010, #404040') +
+                      ')'
+                    : null
                 "
               >
                 <span class="book-rank">{{ book.rankPosition }}</span>
-                <span class="book-initials">
-                  {{ book.title.slice(0, 1).toUpperCase() }}
-                </span>
+                @if (book.coverUrl) {
+                  <img [src]="book.coverUrl" [alt]="'Обложка книги ' + book.title" />
+                } @else {
+                  <span class="book-initials">
+                    {{ book.title.slice(0, 1).toUpperCase() }}
+                  </span>
+                }
               </div>
 
               <div class="book-card__body">
@@ -241,10 +249,22 @@
 
                 <p class="book-opinion">{{ book.opinionPreview }}</p>
 
-                <a [routerLink]="['/books', book.id]" tuiButton>Мнение и цитаты</a>
+                <a
+                  [routerLink]="['/books', book.id]"
+                  tuiButton
+                  [attr.data-testid]="'book-open-' + book.id"
+                >
+                  Мнение и цитаты
+                </a>
                 @if (isOwner()) {
                   <div class="book-owner-actions">
-                    <a [routerLink]="['/books', book.id, 'edit']" tuiButton>Изменить</a>
+                    <a
+                      [routerLink]="['/books', book.id, 'edit']"
+                      tuiButton
+                      [attr.data-testid]="'book-edit-' + book.id"
+                    >
+                      Изменить
+                    </a>
                     <button
                       tuiButton
                       type="button"
@@ -257,6 +277,7 @@
                       tuiButton
                       type="button"
                       [disabled]="processingBookId() === book.id"
+                      [attr.data-testid]="'book-delete-' + book.id"
                       (click)="deleteBook(book.id)"
                     >
                       Удалить

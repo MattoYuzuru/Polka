@@ -25,6 +25,7 @@ const books: BookCard[] = [
     rating: 10,
     opinionPreview: 'Тест',
     coverPalette: ['#111111', '#222222'],
+    coverUrl: null,
   },
   {
     id: 'book-2',
@@ -41,6 +42,7 @@ const books: BookCard[] = [
     rating: 9,
     opinionPreview: 'Тест',
     coverPalette: ['#333333', '#444444'],
+    coverUrl: null,
   },
   {
     id: 'book-3',
@@ -57,6 +59,7 @@ const books: BookCard[] = [
     rating: null,
     opinionPreview: 'Тест',
     coverPalette: ['#555555', '#666666'],
+    coverUrl: null,
   },
 ];
 

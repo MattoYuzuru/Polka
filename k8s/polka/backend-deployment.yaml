@@ -54,8 +54,34 @@ spec:
                 secretKeyRef:
                   name: polka-secrets
                   key: jwt-secret
+            - name: STORAGE_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: polka-secrets
+                  key: storage-access-key-id
+            - name: STORAGE_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: polka-secrets
+                  key: storage-secret-access-key
+            - name: STORAGE_BUCKET
+              valueFrom:
+                secretKeyRef:
+                  name: polka-secrets
+                  key: storage-bucket
+            - name: STORAGE_REGION
+              valueFrom:
+                secretKeyRef:
+                  name: polka-secrets
+                  key: storage-region
             - name: DATABASE_URL
               value: postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@postgres:5432/$(POSTGRES_DB)?sslmode=disable
+            - name: STORAGE_ENDPOINT
+              value: http://minio:9000
+            - name: STORAGE_USE_PATH_STYLE
+              value: "true"
+            - name: STORAGE_AUTO_CREATE_BUCKET
+              value: "true"
           readinessProbe:
             httpGet:
               path: /api/v1/health
@@ -68,6 +94,12 @@ spec:
               port: http
             initialDelaySeconds: 15
             periodSeconds: 20
+          startupProbe:
+            httpGet:
+              path: /api/v1/health
+              port: http
+            failureThreshold: 24
+            periodSeconds: 5
           resources:
             requests:
               cpu: 100m

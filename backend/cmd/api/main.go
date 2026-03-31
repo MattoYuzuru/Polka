@@ -16,6 +16,7 @@ import (
 	"github.com/MattoYuzuru/Polka/backend/internal/config"
 	"github.com/MattoYuzuru/Polka/backend/internal/database"
 	"github.com/MattoYuzuru/Polka/backend/internal/httpserver"
+	"github.com/MattoYuzuru/Polka/backend/internal/media"
 	"github.com/MattoYuzuru/Polka/backend/internal/profile"
 	"github.com/MattoYuzuru/Polka/backend/internal/recommendationlists"
 )
@@ -37,13 +38,24 @@ func main() {
 		}
 	}
 
+	storage, err := media.New(cfg)
+	if err != nil {
+		log.Fatalf("init storage: %v", err)
+	}
+
+	if storage != nil && cfg.StorageAutoCreateBucket {
+		if err := storage.EnsureBucket(ctx); err != nil {
+			log.Fatalf("ensure storage bucket: %v", err)
+		}
+	}
+
 	tokenManager := auth.NewTokenManager(cfg.JWTSecret, 24*time.Hour)
 	authRepository := auth.NewPostgresRepository(pool)
 	booksRepository := books.NewPostgresRepository(pool)
 	profileRepository := profile.NewPostgresRepository(pool)
 	recommendationListsRepository := recommendationlists.NewPostgresRepository(pool)
 	authService := auth.NewService(authRepository, tokenManager)
-	booksService := books.NewService(booksRepository)
+	booksService := books.NewService(booksRepository, storage)
 	profileService := profile.NewService(profileRepository)
 	recommendationListsService := recommendationlists.NewService(recommendationListsRepository)
 

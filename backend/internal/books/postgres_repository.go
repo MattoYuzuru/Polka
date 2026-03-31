@@ -46,6 +46,7 @@ func (repository *PostgresRepository) Create(
 			status,
 			rating,
 			opinion_preview,
+			cover_object_key,
 			cover_palette,
 			rank_position,
 			finished_at
@@ -64,7 +65,8 @@ func (repository *PostgresRepository) Create(
 			$10,
 			$11,
 			$12,
-			ARRAY[]::TEXT[],
+			NULLIF($13, ''),
+			$14,
 			COALESCE((SELECT MAX(rank_position) + 1 FROM books WHERE user_id = $1), 1),
 			CASE WHEN $10 = 'Прочитал' THEN NOW() ELSE NULL END
 		)
@@ -88,6 +90,8 @@ func (repository *PostgresRepository) Create(
 		strings.TrimSpace(input.Status),
 		input.Rating,
 		buildOpinionPreview(input.Opinion),
+		strings.TrimSpace(input.CoverObjectKey),
+		input.CoverPalette,
 	).Scan(&bookID); err != nil {
 		return BookDetails{}, fmt.Errorf("insert book: %w", err)
 	}
@@ -142,6 +146,7 @@ func (repository *PostgresRepository) FindByID(
 			b.status,
 			b.rating,
 			b.opinion_preview,
+			b.cover_object_key,
 			b.cover_palette,
 			b.created_at
 		FROM books b
@@ -151,10 +156,11 @@ func (repository *PostgresRepository) FindByID(
 	`
 
 	var (
-		book       BookDetails
-		rating     sql.NullInt64
-		createdAt  time.Time
-		colorStops []string
+		book           BookDetails
+		rating         sql.NullInt64
+		createdAt      time.Time
+		coverObjectKey sql.NullString
+		colorStops     []string
 	)
 
 	err := repository.pool.QueryRow(ctx, query, bookID, viewerUserID).Scan(
@@ -172,6 +178,7 @@ func (repository *PostgresRepository) FindByID(
 		&book.Status,
 		&rating,
 		&book.OpinionPreview,
+		&coverObjectKey,
 		&colorStops,
 		&createdAt,
 	)
@@ -190,6 +197,9 @@ func (repository *PostgresRepository) FindByID(
 
 	book.ViewerCanEdit = viewerUserID != "" && viewerUserID == book.OwnerID
 	book.CoverPalette = colorStops
+	if coverObjectKey.Valid && strings.TrimSpace(coverObjectKey.String) != "" {
+		book.CoverObjectKey = coverObjectKey.String
+	}
 	book.CreatedAt = createdAt.Format(time.RFC3339)
 
 	quotes, err := repository.loadQuotes(ctx, book.ID)
@@ -234,6 +244,16 @@ func (repository *PostgresRepository) Update(
 			status = $11,
 			rating = $12,
 			opinion_preview = $13,
+			cover_object_key = CASE
+				WHEN $14 THEN NULL
+				WHEN NULLIF($15, '') IS NOT NULL THEN $15
+				ELSE cover_object_key
+			END,
+			cover_palette = CASE
+				WHEN $14 THEN ARRAY[]::TEXT[]
+				WHEN NULLIF($15, '') IS NOT NULL THEN $16
+				ELSE cover_palette
+			END,
 			finished_at = CASE
 				WHEN $11 = 'Прочитал' THEN COALESCE(finished_at, NOW())
 				ELSE NULL
@@ -261,6 +281,9 @@ func (repository *PostgresRepository) Update(
 		strings.TrimSpace(input.Status),
 		input.Rating,
 		buildOpinionPreview(input.Opinion),
+		input.RemoveCover,
+		strings.TrimSpace(input.CoverObjectKey),
+		input.CoverPalette,
 	).Scan(&updatedID); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return BookDetails{}, ErrNotFound
@@ -304,6 +327,66 @@ func (repository *PostgresRepository) Update(
 	}
 
 	return repository.FindByID(ctx, updatedID, ownerUserID)
+}
+
+func (repository *PostgresRepository) FindCoverObjectKey(
+	ctx context.Context,
+	bookID string,
+) (string, error) {
+	var objectKey sql.NullString
+
+	err := repository.pool.QueryRow(
+		ctx,
+		`SELECT cover_object_key FROM books WHERE id::text = $1 LIMIT 1`,
+		bookID,
+	).Scan(&objectKey)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return "", ErrNotFound
+		}
+
+		return "", fmt.Errorf("find book cover object key: %w", err)
+	}
+
+	if !objectKey.Valid || strings.TrimSpace(objectKey.String) == "" {
+		return "", ErrNotFound
+	}
+
+	return objectKey.String, nil
+}
+
+func (repository *PostgresRepository) FindOwnedCoverObjectKey(
+	ctx context.Context,
+	ownerUserID string,
+	bookID string,
+) (string, error) {
+	var objectKey sql.NullString
+
+	err := repository.pool.QueryRow(
+		ctx,
+		`
+			SELECT cover_object_key
+			FROM books
+			WHERE id::text = $1
+			  AND user_id::text = $2
+			LIMIT 1;
+		`,
+		bookID,
+		ownerUserID,
+	).Scan(&objectKey)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return "", ErrNotFound
+		}
+
+		return "", fmt.Errorf("find owner book cover object key: %w", err)
+	}
+
+	if !objectKey.Valid {
+		return "", nil
+	}
+
+	return objectKey.String, nil
 }
 
 func (repository *PostgresRepository) SetVisibility(
