@@ -21,9 +21,9 @@
 | CI pipeline                          | done   | `lint`, `test`, `build`, `publish` в GitHub Actions.                                                     |
 | GHCR publish                         | done   | Публикуются `sha-*`, `branch-*`, `edge`, `main`.                                                         |
 | Публичный URL в README               | done   | `https://polka.keykomi.com` добавлен в README.                                                           |
-| Deploy flow на VPS                   | done   | Есть `k8s` манифесты и bootstrap script, но нужен повторный rollout после последних изменений с `minio`. |
-| Lighthouse >= 80                     | open   | Пока нет зафиксированного замера и скриншота в `docs/`.                                                  |
-| Скриншот Lighthouse в `docs/`        | open   | Не добавлен.                                                                                             |
+| Deploy flow на VPS                   | done   | `k3s` rollout применён 2026-03-31: `postgres`, `minio`, `backend`, `frontend`, ingress и TLS активны.  |
+| Lighthouse >= 80                     | done   | Mobile audit от 2026-03-31: `Accessibility 100`, `Best Practices 100`, `SEO 82`, `Performance 77`.     |
+| Скриншот Lighthouse в `docs/`        | done   | Добавлены `docs/lighthouse/polka-mobile-summary.png` и raw reports `.html/.json`.                       |
 | Импорт из внешних источников         | done   | Добавлен owner-only import JSON для книг.                                                                |
 | История разработки не одним коммитом | done   | История итерационная.                                                                                    |
 
@@ -37,13 +37,19 @@
 
 ## Что осталось критично добить
 
-1. Применить текущий `main` на VPS и проверить `minio` + upload cover уже в проде.
-2. Снять Lighthouse mobile отчёт, положить скриншот в `docs/` и поправить слабые места, если что-то ниже порога.
-3. Добавить реальную Figma ссылку, если это требуется именно в артефактах сдачи.
+1. Добавить реальную Figma ссылку, если это требуется именно в артефактах сдачи.
+2. При желании дожать mobile performance выше `80`, но для штрафов по чеклисту уже закрыты `SEO` и `Best Practices`.
 
 ## Рекомендованные ближайшие итерации
 
-1. `ops/prod-smoke-and-lighthouse`:
-   rollout `main` на VPS, smoke-check `polka.keykomi.com`, Lighthouse отчёт и скриншот.
-2. `docs/final-handoff-and-figma`:
+1. `docs/final-handoff-and-figma`:
    финальный пакет артефактов, если нужна Figma ссылка в сдаче.
+
+## Production smoke 2026-03-31
+
+- `https://polka.keykomi.com` отвечает `200`.
+- `https://polka.keykomi.com/api/v1/health` отвечает `{"status":"ok"}`.
+- `POST /api/v1/auth/login` на публичном домене возвращает `200`.
+- `POST /api/v1/books/cover-upload` возвращает `201`.
+- Owner smoke через API прошёл: create book -> get book -> delete book.
+- `minio`, `postgres`, `backend`, `frontend` в namespace `polka` находятся в `Running`.
