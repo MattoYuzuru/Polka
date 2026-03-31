@@ -3,6 +3,7 @@ package httpserver
 import (
 	"errors"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -18,6 +19,7 @@ import (
 func NewRouter(
 	cfg config.Config,
 	authService *auth.Service,
+	tokenManager *auth.TokenManager,
 	profileService *profile.Service,
 ) http.Handler {
 	router := chi.NewRouter()
@@ -53,7 +55,7 @@ func NewRouter(
 				return
 			}
 
-			session, err := authService.Login(input)
+			session, err := authService.Login(r.Context(), input)
 			if err != nil {
 				if errors.Is(err, auth.ErrInvalidCredentials) {
 					httputil.WriteError(w, http.StatusUnauthorized, "Неверная почта или пароль.")
@@ -70,7 +72,11 @@ func NewRouter(
 		})
 
 		router.Get("/profiles/{nickname}", func(w http.ResponseWriter, r *http.Request) {
-			profileView, err := profileService.ByNickname(chi.URLParam(r, "nickname"))
+			profileView, err := profileService.ByNickname(
+				r.Context(),
+				chi.URLParam(r, "nickname"),
+				extractViewerUserID(r, tokenManager),
+			)
 			if err != nil {
 				if errors.Is(err, profile.ErrNotFound) {
 					httputil.WriteError(w, http.StatusNotFound, "Профиль не найден.")
@@ -88,4 +94,20 @@ func NewRouter(
 	})
 
 	return router
+}
+
+func extractViewerUserID(r *http.Request, tokenManager *auth.TokenManager) string {
+	const bearerPrefix = "Bearer "
+
+	authorizationHeader := r.Header.Get("Authorization")
+	if !strings.HasPrefix(authorizationHeader, bearerPrefix) {
+		return ""
+	}
+
+	claims, err := tokenManager.Parse(strings.TrimPrefix(authorizationHeader, bearerPrefix))
+	if err != nil {
+		return ""
+	}
+
+	return claims.Subject
 }

@@ -25,6 +25,9 @@ services:
     environment:
       APP_ENV: development
       PORT: 8080
+      DATABASE_URL: postgres://${POSTGRES_USER:-polka}:${POSTGRES_PASSWORD:-polka}@postgres:5432/${POSTGRES_DB:-polka}?sslmode=disable
+      JWT_SECRET: ${JWT_SECRET:-polka-dev-secret}
+      AUTO_MIGRATE: "true"
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:4200,http://127.0.0.1:4200,https://polka.keykomi.com}
     ports:
       - "${BACKEND_PORT:-8080}:8080"

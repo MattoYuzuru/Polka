@@ -1,18 +1,20 @@
 package auth
 
 import (
+	"context"
 	"errors"
 	"strings"
-	"time"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 var ErrInvalidCredentials = errors.New("invalid credentials")
 
 type User struct {
-	ID        string    `json:"id"`
-	Nickname  string    `json:"nickname"`
-	Email     string    `json:"email"`
-	CreatedAt time.Time `json:"createdAt"`
+	ID        string `json:"id"`
+	Nickname  string `json:"nickname"`
+	Email     string `json:"email"`
+	CreatedAt string `json:"createdAt"`
 }
 
 type Session struct {
@@ -25,28 +27,57 @@ type LoginInput struct {
 	Password string `json:"password"`
 }
 
-type Service struct{}
-
-func NewService() *Service {
-	return &Service{}
+type authRecord struct {
+	User
+	PasswordHash string
 }
 
-func (service *Service) Login(input LoginInput) (Session, error) {
-	if !strings.EqualFold(strings.TrimSpace(input.Email), "reader@polka.local") {
+type Repository interface {
+	FindByEmail(ctx context.Context, email string) (authRecord, error)
+}
+
+type Service struct {
+	repository   Repository
+	tokenManager *TokenManager
+}
+
+func NewService(repository Repository, tokenManager *TokenManager) *Service {
+	return &Service{
+		repository:   repository,
+		tokenManager: tokenManager,
+	}
+}
+
+func (service *Service) Login(ctx context.Context, input LoginInput) (Session, error) {
+	email := strings.TrimSpace(strings.ToLower(input.Email))
+
+	if email == "" || strings.TrimSpace(input.Password) == "" {
 		return Session{}, ErrInvalidCredentials
 	}
 
-	if input.Password != "Reader1234" {
+	record, err := service.repository.FindByEmail(ctx, email)
+	if err != nil {
+		if errors.Is(err, ErrUserNotFound) {
+			return Session{}, ErrInvalidCredentials
+		}
+
+		return Session{}, err
+	}
+
+	if err := bcrypt.CompareHashAndPassword(
+		[]byte(record.PasswordHash),
+		[]byte(input.Password),
+	); err != nil {
 		return Session{}, ErrInvalidCredentials
+	}
+
+	token, err := service.tokenManager.Issue(record.User)
+	if err != nil {
+		return Session{}, err
 	}
 
 	return Session{
-		Token: "polka-demo-token",
-		User: User{
-			ID:        "7cb8e370-1cb4-4794-b0e3-8cde1cd4ae8b",
-			Nickname:  "mattoy",
-			Email:     "reader@polka.local",
-			CreatedAt: time.Date(2024, time.September, 14, 9, 0, 0, 0, time.UTC),
-		},
+		Token: token,
+		User:  record.User,
 	}, nil
 }
