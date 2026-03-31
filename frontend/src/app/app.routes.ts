@@ -49,6 +49,13 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'lists/:listId',
+    loadComponent: () =>
+      import('./features/recommendation-lists/pages/list-details-page/list-details-page.component').then(
+        (module) => module.ListDetailsPageComponent,
+      ),
+  },
+  {
     path: 'settings/profile',
     canActivate: [authGuard],
     loadComponent: () =>

@@ -1,18 +1,11 @@
 import { BookCard } from './book.model';
+import { RecommendationListCard } from './recommendation-list.model';
 
 export interface ProfileStats {
   memberSinceLabel: string;
   booksCount: number;
   completedCount: number;
   recommendationListsCount: number;
-}
-
-export interface RecommendationListCard {
-  id: string;
-  title: string;
-  description: string;
-  booksCount: number;
-  isPublic: boolean;
 }
 
 export interface PublicProfile {

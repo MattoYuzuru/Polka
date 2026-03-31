@@ -14,6 +14,7 @@ import (
 	"github.com/MattoYuzuru/Polka/backend/internal/books"
 	"github.com/MattoYuzuru/Polka/backend/internal/config"
 	"github.com/MattoYuzuru/Polka/backend/internal/profile"
+	"github.com/MattoYuzuru/Polka/backend/internal/recommendationlists"
 	"github.com/MattoYuzuru/Polka/backend/internal/shared/httputil"
 )
 
@@ -23,6 +24,7 @@ func NewRouter(
 	tokenManager *auth.TokenManager,
 	booksService *books.Service,
 	profileService *profile.Service,
+	recommendationListsService *recommendationlists.Service,
 ) http.Handler {
 	router := chi.NewRouter()
 
@@ -34,7 +36,7 @@ func NewRouter(
 	router.Use(
 		cors.Handler(cors.Options{
 			AllowedOrigins:   cfg.AllowedOrigins,
-			AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodOptions},
+			AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodPatch, http.MethodDelete, http.MethodOptions},
 			AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
 			AllowCredentials: true,
 			MaxAge:           300,
@@ -130,6 +132,37 @@ func NewRouter(
 			}
 
 			httputil.WriteJSON(w, http.StatusCreated, bookDetails)
+		})
+
+		router.Post("/recommendation-lists", func(w http.ResponseWriter, r *http.Request) {
+			claims, ok := requireAuth(w, r, tokenManager)
+			if !ok {
+				return
+			}
+
+			var input recommendationlists.CreateInput
+
+			if err := httputil.DecodeJSON(r, &input); err != nil {
+				httputil.WriteError(w, http.StatusBadRequest, "Некорректный JSON в теле запроса.")
+
+				return
+			}
+
+			recommendationList, err := recommendationListsService.Create(r.Context(), claims.Subject, input)
+			if err != nil {
+				switch {
+				case errors.Is(err, recommendationlists.ErrInvalidInput):
+					httputil.WriteError(w, http.StatusBadRequest, "Укажите название списка и выберите минимум две свои книги.")
+				case errors.Is(err, recommendationlists.ErrUnauthorized):
+					httputil.WriteError(w, http.StatusUnauthorized, "Требуется авторизация.")
+				default:
+					httputil.WriteError(w, http.StatusInternalServerError, "Не удалось создать рекомендательный список.")
+				}
+
+				return
+			}
+
+			httputil.WriteJSON(w, http.StatusCreated, recommendationList)
 		})
 
 		router.Patch("/books/{bookID}", func(w http.ResponseWriter, r *http.Request) {
@@ -330,6 +363,27 @@ func NewRouter(
 			}
 
 			httputil.WriteJSON(w, http.StatusOK, bookDetails)
+		})
+
+		router.Get("/recommendation-lists/{listID}", func(w http.ResponseWriter, r *http.Request) {
+			recommendationList, err := recommendationListsService.FindByID(
+				r.Context(),
+				chi.URLParam(r, "listID"),
+				extractViewerUserID(r, tokenManager),
+			)
+			if err != nil {
+				if errors.Is(err, recommendationlists.ErrNotFound) {
+					httputil.WriteError(w, http.StatusNotFound, "Список рекомендаций не найден.")
+
+					return
+				}
+
+				httputil.WriteError(w, http.StatusInternalServerError, "Не удалось загрузить список рекомендаций.")
+
+				return
+			}
+
+			httputil.WriteJSON(w, http.StatusOK, recommendationList)
 		})
 	})
 
