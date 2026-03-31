@@ -132,6 +132,105 @@ func NewRouter(
 			httputil.WriteJSON(w, http.StatusCreated, bookDetails)
 		})
 
+		router.Patch("/books/{bookID}", func(w http.ResponseWriter, r *http.Request) {
+			claims, ok := requireAuth(w, r, tokenManager)
+			if !ok {
+				return
+			}
+
+			var input books.UpdateBookInput
+
+			if err := httputil.DecodeJSON(r, &input); err != nil {
+				httputil.WriteError(w, http.StatusBadRequest, "Некорректный JSON в теле запроса.")
+
+				return
+			}
+
+			bookDetails, err := booksService.Update(
+				r.Context(),
+				claims.Subject,
+				chi.URLParam(r, "bookID"),
+				input,
+			)
+			if err != nil {
+				switch {
+				case errors.Is(err, books.ErrInvalidInput):
+					httputil.WriteError(w, http.StatusBadRequest, "Заполните обязательные поля книги корректно.")
+				case errors.Is(err, books.ErrNotFound):
+					httputil.WriteError(w, http.StatusNotFound, "Книга не найдена.")
+				case errors.Is(err, books.ErrUnauthorized):
+					httputil.WriteError(w, http.StatusUnauthorized, "Требуется авторизация.")
+				default:
+					httputil.WriteError(w, http.StatusInternalServerError, "Не удалось обновить книгу.")
+				}
+
+				return
+			}
+
+			httputil.WriteJSON(w, http.StatusOK, bookDetails)
+		})
+
+		router.Patch("/books/{bookID}/visibility", func(w http.ResponseWriter, r *http.Request) {
+			claims, ok := requireAuth(w, r, tokenManager)
+			if !ok {
+				return
+			}
+
+			var input books.UpdateVisibilityInput
+
+			if err := httputil.DecodeJSON(r, &input); err != nil {
+				httputil.WriteError(w, http.StatusBadRequest, "Некорректный JSON в теле запроса.")
+
+				return
+			}
+
+			bookDetails, err := booksService.SetVisibility(
+				r.Context(),
+				claims.Subject,
+				chi.URLParam(r, "bookID"),
+				input.IsPublic,
+			)
+			if err != nil {
+				switch {
+				case errors.Is(err, books.ErrNotFound):
+					httputil.WriteError(w, http.StatusNotFound, "Книга не найдена.")
+				case errors.Is(err, books.ErrUnauthorized):
+					httputil.WriteError(w, http.StatusUnauthorized, "Требуется авторизация.")
+				default:
+					httputil.WriteError(w, http.StatusInternalServerError, "Не удалось изменить публичность книги.")
+				}
+
+				return
+			}
+
+			httputil.WriteJSON(w, http.StatusOK, bookDetails)
+		})
+
+		router.Delete("/books/{bookID}", func(w http.ResponseWriter, r *http.Request) {
+			claims, ok := requireAuth(w, r, tokenManager)
+			if !ok {
+				return
+			}
+
+			err := booksService.Delete(r.Context(), claims.Subject, chi.URLParam(r, "bookID"))
+			if err != nil {
+				switch {
+				case errors.Is(err, books.ErrNotFound):
+					httputil.WriteError(w, http.StatusNotFound, "Книга не найдена.")
+				case errors.Is(err, books.ErrUnauthorized):
+					httputil.WriteError(w, http.StatusUnauthorized, "Требуется авторизация.")
+				default:
+					httputil.WriteError(w, http.StatusInternalServerError, "Не удалось удалить книгу.")
+				}
+
+				return
+			}
+
+			httputil.WriteJSON(w, http.StatusOK, map[string]string{
+				"status": "deleted",
+			})
+		})
+
 		router.Get("/profiles/me", func(w http.ResponseWriter, r *http.Request) {
 			claims, ok := requireAuth(w, r, tokenManager)
 			if !ok {

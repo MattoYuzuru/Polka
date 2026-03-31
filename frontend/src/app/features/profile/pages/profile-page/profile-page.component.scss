@@ -161,6 +161,12 @@
   gap: 0.5rem;
 }
 
+.book-owner-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
 .lists-stack {
   display: grid;
   gap: 1rem;

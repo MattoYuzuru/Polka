@@ -1,24 +1,43 @@
 <main class="book-form-page">
   <section class="page-intro" tuiCardLarge tuiSurface>
-    <p tuiChip>Создание книги</p>
-    <h1 tuiHeader="h2">Форма теперь сохраняет книгу в API и возвращает владельца в библиотеку.</h1>
+    <p tuiChip>{{ isEditMode() ? 'Редактирование книги' : 'Создание книги' }}</p>
+    <h1 tuiHeader="h2">
+      {{
+        isEditMode()
+          ? 'Форма редактирует существующую книгу и возвращает владельца к карточке.'
+          : 'Форма сохраняет книгу в API и возвращает владельца в библиотеку.'
+      }}
+    </h1>
     <p>
-      Черновик по-прежнему остаётся в `localStorage`, но основное действие уже уходит в
-      backend и сразу влияет на профиль пользователя.
+      @if (isEditMode()) {
+        Поля подтягиваются из backend. Здесь же можно сменить публичность, текст мнения и
+        сохранённую цитату.
+      } @else {
+        Черновик по-прежнему остаётся в `localStorage`, но основное действие уже уходит в
+        backend и сразу влияет на профиль пользователя.
+      }
     </p>
   </section>
 
-  <section class="form-layout">
+  @if (isLoading()) {
+    <section class="page-intro" tuiCardLarge tuiSurface>
+      <p tuiChip>Загрузка</p>
+      <p>Подтягиваем текущие данные книги для редактирования.</p>
+    </section>
+  } @else {
+    <section class="form-layout">
     <article class="cover-dropzone" tuiCardLarge tuiSurface>
       <p tuiBadge>Обложка</p>
       <div class="cover-dropzone__placeholder">
-        Upload появится в следующем срезе
+        {{ isEditMode() ? 'Загрузка обложки появится следующим срезом' : 'Upload появится в следующем срезе' }}
       </div>
       <p class="muted">
         На этом этапе книга уже создаётся как реальная сущность, но загрузка медиа ещё не
         подключена.
       </p>
-      <button tuiButton type="button" (click)="saveDraftLocally()">Сохранить черновик</button>
+      @if (!isEditMode()) {
+        <button tuiButton type="button" (click)="saveDraftLocally()">Сохранить черновик</button>
+      }
     </article>
 
     <article class="form-card" tuiCardLarge tuiSurface>
@@ -103,7 +122,11 @@
 
         <div class="actions">
           <button tuiButton type="submit" [disabled]="isSubmitting()">
-            {{ isSubmitting() ? 'Создаём...' : 'Добавить книгу' }}
+            {{
+              isSubmitting()
+                ? (isEditMode() ? 'Сохраняем...' : 'Создаём...')
+                : (isEditMode() ? 'Сохранить изменения' : 'Добавить книгу')
+            }}
           </button>
           <button tuiButton type="button" (click)="resetDraft()">Очистить</button>
           @if (authSessionStore.user(); as user) {
@@ -112,5 +135,6 @@
         </div>
       </form>
     </article>
-  </section>
+    </section>
+  }
 </main>

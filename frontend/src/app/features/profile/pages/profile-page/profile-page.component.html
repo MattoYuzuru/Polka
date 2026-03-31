@@ -76,7 +76,7 @@
             <article class="book-card" tuiSurface>
               <div
                 class="book-cover"
-                [style.background-image]="'linear-gradient(145deg, ' + book.coverPalette.join(', ') + ')'"
+                [style.background-image]="'linear-gradient(145deg, ' + (book.coverPalette.length ? book.coverPalette.join(', ') : '#101010, #404040') + ')'"
               >
                 <span class="book-rank">{{ index + 1 }}</span>
                 <span class="book-initials">
@@ -92,6 +92,9 @@
 
                 <div class="book-tags">
                   <span tuiChip>{{ book.status }}</span>
+                  @if (isOwner()) {
+                    <span tuiBadge>{{ book.isPublic ? 'Публичная' : 'Приватная' }}</span>
+                  }
                   @if (book.rating) {
                     <span tuiBadge>★ {{ book.rating }}</span>
                   }
@@ -100,6 +103,27 @@
                 <p class="book-opinion">{{ book.opinionPreview }}</p>
 
                 <a [routerLink]="['/books', book.id]" tuiButton>Мнение и цитаты</a>
+                @if (isOwner()) {
+                  <div class="book-owner-actions">
+                    <a [routerLink]="['/books', book.id, 'edit']" tuiButton>Изменить</a>
+                    <button
+                      tuiButton
+                      type="button"
+                      [disabled]="processingBookId() === book.id"
+                      (click)="toggleBookVisibility(book.id, book.isPublic)"
+                    >
+                      {{ book.isPublic ? 'Сделать приватной' : 'Сделать публичной' }}
+                    </button>
+                    <button
+                      tuiButton
+                      type="button"
+                      [disabled]="processingBookId() === book.id"
+                      (click)="deleteBook(book.id)"
+                    >
+                      Удалить
+                    </button>
+                  </div>
+                }
               </div>
             </article>
           }
