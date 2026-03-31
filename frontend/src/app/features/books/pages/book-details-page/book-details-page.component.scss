@@ -1,0 +1,11 @@
+.book-details-page {
+  padding: clamp(1rem, 3vw, 2rem);
+}
+
+.details-card {
+  display: grid;
+  gap: 1rem;
+  min-height: 16rem;
+  border: 1px solid var(--polka-border);
+  background: rgba(255, 255, 255, 0.86);
+}

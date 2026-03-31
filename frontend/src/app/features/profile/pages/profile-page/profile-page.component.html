@@ -1,0 +1,128 @@
+<main class="profile-page">
+  @if (isLoading()) {
+    <section class="state-card" tuiCardLarge tuiSurface>
+      <p tuiChip>Загрузка</p>
+      <h1 tuiHeader="h3">Собираем библиотеку и метаданные профиля.</h1>
+      <p>Запрос уже ушёл в backend mock API.</p>
+    </section>
+  } @else if (errorMessage()) {
+    <section class="state-card" tuiCardLarge tuiSurface>
+      <p tuiChip>Ошибка</p>
+      <h1 tuiHeader="h3">{{ errorMessage() }}</h1>
+      <a routerLink="/login" tuiButton>Вернуться ко входу</a>
+    </section>
+  } @else if (profile(); as profile) {
+    <section
+      class="profile-hero"
+      tuiCardLarge
+      tuiSurface
+      [style.background-image]="uiPreferencesStore.profileGradientCss()"
+    >
+      <div class="profile-hero__overlay">
+        <div class="profile-identity">
+          <tui-avatar class="profile-avatar" size="xl">
+            {{ profile.user.nickname.slice(0, 2).toUpperCase() }}
+          </tui-avatar>
+
+          <div>
+            <p class="profile-kicker">Персональная библиотека</p>
+            <h1 tuiHeader="h1">{{ profile.user.nickname }}</h1>
+            <p class="profile-tagline">{{ profile.user.tagline }}</p>
+          </div>
+        </div>
+
+        <dl class="profile-stats">
+          <div>
+            <dt>Стаж</dt>
+            <dd>{{ profile.stats.memberSinceLabel }}</dd>
+          </div>
+          <div>
+            <dt>Книг</dt>
+            <dd>{{ profile.stats.booksCount }}</dd>
+          </div>
+          <div>
+            <dt>Прочитано</dt>
+            <dd>{{ profile.stats.completedCount }}</dd>
+          </div>
+          <div>
+            <dt>Подборок</dt>
+            <dd>{{ profile.stats.recommendationListsCount }}</dd>
+          </div>
+        </dl>
+
+        <div class="profile-actions">
+          <button tuiButton type="button" (click)="copyLink()">
+            {{ copied() ? 'Ссылка скопирована' : 'Скопировать ссылку' }}
+          </button>
+
+          @if (isOwner()) {
+            <a routerLink="/books/new" tuiButton>Добавить книгу</a>
+            <a routerLink="/lists/new" tuiButton>Добавить список</a>
+            <button tuiButton type="button" (click)="logout()">Выйти</button>
+          }
+        </div>
+      </div>
+    </section>
+
+    <section class="profile-sections">
+      <div class="profile-section" tuiCardLarge tuiSurface>
+        <p tuiChip>Библиотека</p>
+        <h2 tuiHeader="h3">Книги</h2>
+
+        <div class="books-grid">
+          @for (book of profile.books; track book.id; let index = $index) {
+            <article class="book-card" tuiSurface>
+              <div
+                class="book-cover"
+                [style.background-image]="'linear-gradient(145deg, ' + book.coverPalette.join(', ') + ')'"
+              >
+                <span class="book-rank">{{ index + 1 }}</span>
+                <span class="book-initials">
+                  {{ book.title.slice(0, 1).toUpperCase() }}
+                </span>
+              </div>
+
+              <div class="book-card__body">
+                <h3 tuiHeader="h5">{{ book.title }}</h3>
+                <p class="book-meta">
+                  {{ book.author }} · {{ book.genre }} · {{ book.year }}
+                </p>
+
+                <div class="book-tags">
+                  <span tuiChip>{{ book.status }}</span>
+                  @if (book.rating) {
+                    <span tuiBadge>★ {{ book.rating }}</span>
+                  }
+                </div>
+
+                <p class="book-opinion">{{ book.opinionPreview }}</p>
+
+                <a [routerLink]="['/books', book.id]" tuiButton>Мнение и цитаты</a>
+              </div>
+            </article>
+          }
+        </div>
+      </div>
+
+      <aside class="profile-section profile-section--aside" tuiCardLarge tuiSurface>
+        <p tuiChip>Подборки</p>
+        <h2 tuiHeader="h3">Рекомендательные списки</h2>
+
+        <div class="lists-stack">
+          @for (recommendationList of profile.recommendationLists; track recommendationList.id) {
+            <article class="list-card">
+              <div class="list-card__top">
+                <h3 tuiHeader="h5">{{ recommendationList.title }}</h3>
+                <span tuiBadge>
+                  {{ recommendationList.isPublic ? 'Публичный' : 'Приватный' }}
+                </span>
+              </div>
+              <p>{{ recommendationList.description }}</p>
+              <p class="list-card__meta">{{ recommendationList.booksCount }} книг(и)</p>
+            </article>
+          }
+        </div>
+      </aside>
+    </section>
+  }
+</main>
