@@ -39,9 +39,23 @@
               </button>
 
               @if (isCreateMenuOpen()) {
-                <div class="create-menu">
-                  <a routerLink="/books/new" tuiButton>Добавить книгу</a>
-                  <a routerLink="/lists/new" tuiButton>Добавить список рекомендаций</a>
+                <div
+                  class="floating-menu create-menu"
+                  [style.--accent-gradient]="uiPreferencesStore.profileGradientCss()"
+                >
+                  <a routerLink="/books/new" class="floating-menu__action">
+                    <span class="floating-menu__text" data-gradient-text="Добавить книгу">
+                      Добавить книгу
+                    </span>
+                  </a>
+                  <a routerLink="/lists/new" class="floating-menu__action">
+                    <span
+                      class="floating-menu__text"
+                      data-gradient-text="Добавить список рекомендаций"
+                    >
+                      Добавить список рекомендаций
+                    </span>
+                  </a>
                 </div>
               }
 
@@ -58,18 +72,8 @@
               >
                 <svg class="mask-icon" aria-hidden="true" viewBox="0 0 24 24">
                   <path
-                    d="M5.5 4.5c2.8 0 4.6 1.5 5.2 3.7.4 1.7.3 4.2-.8 6.2-.9 1.6-2.3 2.6-4.1 2.6-1.6 0-2.8-.9-3.4-2.6-.8-2.2-.6-5 .2-7 .5-1.5 1.5-2.9 2.9-2.9Z"
+                    d="M7.14 4C4.84 4 3 6 3 8.46c0 1.7.51 3.48 1.36 4.98C5.31 15.12 6.8 16 8.46 16c1.11 0 2.09-.34 2.94-1.03l.6-.48.6.48c.85.69 1.83 1.03 2.94 1.03 1.66 0 3.15-.88 4.1-2.56.85-1.5 1.36-3.28 1.36-4.98C21 6 19.16 4 16.86 4c-1.8 0-3.11.81-4.24 2.12C11.49 4.81 10.18 4 8.38 4h-1.24Zm.48 3.02c.88 0 1.68.41 2.28 1.2l.37.48-.4.46c-.47.54-.96.8-1.5.8-.42 0-.77-.12-1.03-.35-.27-.23-.4-.56-.4-.98 0-.96.56-1.61 1.68-1.61Zm8.76 0c1.12 0 1.68.65 1.68 1.61 0 .42-.13.75-.4.98-.26.23-.61.35-1.03.35-.54 0-1.03-.26-1.5-.8l-.4-.46.37-.48c.6-.79 1.4-1.2 2.28-1.2ZM8.7 17.76c1.2.76 2.35 1.14 3.3 1.14.95 0 2.1-.38 3.3-1.14l1 1.16c-1.53 1.27-2.97 1.9-4.3 1.9-1.33 0-2.77-.63-4.3-1.9l1-1.16Z"
                   />
-                  <path
-                    d="M18.5 7c-2.5 0-4.2 1.4-4.8 3.4-.5 1.7-.4 4.1.7 5.9.9 1.5 2.3 2.5 4.1 2.5 1.5 0 2.7-.8 3.4-2.4.9-2.1.8-4.8 0-6.7-.6-1.4-1.7-2.7-3.4-2.7Z"
-                  />
-                  <path
-                    d="M5.8 17.1c1.6 1.8 3.6 2.6 6.2 2.6 2.7 0 4.8-.9 6.3-2.7"
-                    fill="none"
-                    stroke-linecap="round"
-                  />
-                  <circle cx="8" cy="10.5" r="0.9" />
-                  <circle cx="16.3" cy="12.5" r="0.9" />
                 </svg>
               </button>
             </div>
@@ -268,34 +272,55 @@
               }
 
               @if (ownerMode() && activeBookMenuId() === book.id) {
-                <div class="book-menu">
-                  <a [routerLink]="['/books', book.id, 'edit']" tuiButton>Изменить</a>
+                <div
+                  class="floating-menu book-menu"
+                  [style.--accent-gradient]="uiPreferencesStore.profileGradientCss()"
+                >
+                  <a [routerLink]="['/books', book.id, 'edit']" class="floating-menu__action">
+                    <span class="floating-menu__text" data-gradient-text="Изменить">
+                      Изменить
+                    </span>
+                  </a>
                   <button
-                    tuiButton
+                    class="floating-menu__action"
                     type="button"
                     [disabled]="processingBookId() === book.id"
                     (click)="toggleBookVisibility(book.id, book.isPublic)"
                   >
-                    {{ book.isPublic ? 'Сделать приватной' : 'Сделать публичной' }}
+                    <span
+                      class="floating-menu__text"
+                      [attr.data-gradient-text]="
+                        book.isPublic ? 'Сделать приватной' : 'Сделать публичной'
+                      "
+                    >
+                      {{ book.isPublic ? 'Сделать приватной' : 'Сделать публичной' }}
+                    </span>
                   </button>
 
                   @if (book.source === 'library') {
                     <button
-                      tuiButton
+                      class="floating-menu__action"
                       type="button"
                       [disabled]="processingBookId() === book.id"
                       (click)="deleteBook(book.id)"
                     >
-                      Удалить из библиотеки
+                      <span
+                        class="floating-menu__text"
+                        data-gradient-text="Удалить из библиотеки"
+                      >
+                        Удалить из библиотеки
+                      </span>
                     </button>
                   } @else {
                     <button
-                      tuiButton
+                      class="floating-menu__action"
                       type="button"
                       [disabled]="processingListId() !== null"
                       (click)="removeBookFromActiveList(book.id)"
                     >
-                      Убрать из списка
+                      <span class="floating-menu__text" data-gradient-text="Убрать из списка">
+                        Убрать из списка
+                      </span>
                     </button>
                   }
                 </div>

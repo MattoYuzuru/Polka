@@ -2,8 +2,8 @@
 
 ## Текущий статус
 
-- Текущая ветка: `feat/minimal-ui-redesign`
-- Текущая фаза: UI/UX redesign основного пользовательского пути
+- Текущая ветка: `fix/profile-and-book-ui-pass-2`
+- Текущая фаза: второй UI/UX polish-pass профиля и полная переработка страницы книги
 - Последнее обновление: 2026-03-31
 
 ## Этапы
@@ -21,9 +21,9 @@
 
 ## Ближайшие шаги
 
-1. Провести ручной визуальный smoke-pass на мобильных брейкпоинтах и длинных библиотеках.
-2. При необходимости расширить browser e2e на owner CRUD рекомендательных списков.
-3. При желании вынести новые UI-паттерны в переиспользуемые shared-компоненты, если редизайн пойдёт дальше.
+1. Провести ручной визуальный smoke-pass профиля и страницы книги на мобильных брейкпоинтах.
+2. Добить следующие страницы под тот же язык интерфейса: логин/регистрация, создание списка, профиль списка.
+3. Если дизайн стабилизируется, вынести orb/menu/toggle паттерны в shared-компоненты.
 
 ## Последняя проверка
 
@@ -41,6 +41,11 @@
 - `npm run lint:styles` после UI redesign
 - `npm run test:frontend` после UI redesign
 - `npm run test:component` после UI redesign
+- `npm run lint:frontend` после profile/book pass 2
+- `npm run lint:styles` после profile/book pass 2
+- `npm run build:frontend` после profile/book pass 2
+- `npm run test:frontend` после profile/book pass 2
+- `npx playwright test playwright/tests/auth-and-profile.spec.ts`
 - `POST https://polka.keykomi.com/api/v1/auth/login`
 - `POST https://polka.keykomi.com/api/v1/books/cover-upload`
 - `POST https://polka.keykomi.com/api/v1/books`

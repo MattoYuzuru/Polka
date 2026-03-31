@@ -86,13 +86,11 @@ test("owner creates, edits and deletes a book with uploaded cover", async ({
   await createdCard.getByRole("link", { name: "Мнение" }).click();
 
   await expect(page.getByRole("heading", { name: createdTitle })).toBeVisible();
-  await expect(page.locator(".book-hero__cover img")).toBeVisible();
-  await page.goto(`${page.url()}/edit`);
-
-  await expect(page).toHaveURL(/\/books\/.+\/edit$/);
-  await page.getByTestId("book-title-input").fill(updatedTitle);
-  await page.getByTestId("book-status-select").selectOption("Прочитал");
-  await page.getByTestId("book-submit").click();
+  await expect(page.locator(".book-pane--meta .book-cover img")).toBeVisible();
+  await page.getByRole("button", { name: "Редактировать книгу" }).click();
+  await page.locator('input[formControlName="title"]').fill(updatedTitle);
+  await page.locator('select[formControlName="status"]').selectOption("Прочитал");
+  await page.getByRole("button", { name: "Сохранить" }).click();
 
   await expect(page.getByRole("heading", { name: updatedTitle })).toBeVisible();
   await expect(page.getByText("Прочитал")).toBeVisible();

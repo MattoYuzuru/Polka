@@ -67,17 +67,18 @@
 
 .profile-title {
   font-size: clamp(3.2rem, 10vw, 6.6rem);
-  line-height: 1;
-  padding-bottom: 0.12em;
+  line-height: 1.08;
+  padding-bottom: 0.18em;
 }
 
 .profile-title span {
-  display: inline-block;
+  display: inline-flex;
+  align-items: flex-end;
+  padding-bottom: 0.08em;
   color: transparent;
-  background-size: cover;
-  background-position: center;
+  background-size: 100% 100%;
   background-clip: text;
-  overflow: visible;
+  -webkit-text-fill-color: transparent;
 }
 
 .profile-subtitle,
@@ -125,24 +126,66 @@
   justify-items: end;
 }
 
-.create-menu {
+.floating-menu {
   position: absolute;
-  top: calc(100% + 0.75rem);
   right: 0;
-  min-width: 16rem;
+  z-index: 25;
+  min-width: 18.5rem;
   display: grid;
-  gap: 0.6rem;
-  padding: 0.75rem;
-  border: 1px solid rgba(13, 13, 13, 0.12);
-  border-radius: 1rem;
-  background: rgba(255, 255, 255, 0.94);
-  box-shadow: 0 24px 40px rgba(13, 13, 13, 0.08);
-  backdrop-filter: blur(18px);
+  gap: 0.15rem;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid rgba(13, 13, 13, 0.08);
+  border-radius: 1.1rem;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 28px 48px rgba(13, 13, 13, 0.08);
+  backdrop-filter: blur(22px);
 }
 
-.create-menu a[tuiButton] {
-  justify-content: flex-start;
+.create-menu {
+  top: calc(100% + 0.75rem);
+}
+
+.floating-menu__action {
   width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0.5rem 0;
+  border: 0;
+  background: transparent;
+  color: var(--polka-ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.floating-menu__text {
+  position: relative;
+  display: inline-block;
+  font-family: var(--polka-display-font);
+  font-size: 1.02rem;
+  line-height: 1.4;
+}
+
+.floating-menu__text::after {
+  content: attr(data-gradient-text);
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  color: transparent;
+  background-image: var(--accent-gradient);
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  transition: opacity 180ms ease;
+}
+
+.floating-menu__action:hover .floating-menu__text::after,
+.floating-menu__action:focus-visible .floating-menu__text::after {
+  opacity: 1;
+}
+
+.floating-menu__action:hover .floating-menu__text,
+.floating-menu__action:focus-visible .floating-menu__text {
+  color: transparent;
 }
 
 .orb-button {
@@ -179,17 +222,12 @@
   color: #fff;
 }
 
-.orb-button--guest .hat-icon {
-  width: 1.65rem;
-  height: 1.65rem;
-}
-
 .mask-icon {
-  width: 1.6rem;
-  height: 1.6rem;
-  fill: none;
-  stroke: #fff;
-  stroke-width: 1.5;
+  width: 1.84rem;
+  height: 1.84rem;
+  color: #fff;
+  fill: currentcolor;
+  filter: drop-shadow(0 0 0.35rem rgba(255, 255, 255, 0.16));
 }
 
 .profile-secondary-actions,
@@ -232,6 +270,7 @@
 
 .shelf-tab {
   position: relative;
+  isolation: isolate;
   min-width: fit-content;
   display: flex;
   align-items: center;
@@ -243,6 +282,25 @@
   background: rgba(255, 255, 255, 0.54);
   color: var(--polka-ink);
   cursor: pointer;
+  transition:
+    color 220ms ease,
+    border-color 220ms ease,
+    background-color 220ms ease,
+    transform 220ms ease;
+}
+
+.shelf-tab::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  background: var(--accent-gradient);
+  opacity: 0;
+  transform: scale(0.92);
+  transition:
+    opacity 260ms ease,
+    transform 260ms ease;
 }
 
 .shelf-tab--accent {
@@ -251,7 +309,8 @@
 }
 
 .shelf-tab--accent::before {
-  z-index: 0;
+  opacity: 1;
+  transform: scale(1);
 }
 
 .shelf-tab__title,
@@ -267,7 +326,6 @@
 
 .shelf-tab__meta {
   color: inherit;
-  opacity: 0.84;
   font-size: 0.84rem;
 }
 
@@ -338,9 +396,9 @@
 
 .book-card__frame {
   position: relative;
-  padding: 1.2rem 1.2rem 0;
-  border: 1px solid rgba(13, 13, 13, 0.08);
-  background: rgba(255, 255, 255, 0.44);
+  padding: 0.9rem 0.9rem 0;
+  border: 1px solid transparent;
+  background: transparent;
 }
 
 .book-rank {
@@ -356,17 +414,16 @@
 
 .book-handle {
   position: absolute;
-  top: 0.85rem;
-  right: 0.85rem;
+  top: 0.25rem;
+  right: 0.3rem;
   z-index: 4;
   display: flex;
   align-items: center;
   gap: 0.22rem;
-  padding: 0.15rem;
+  padding: 0.25rem 0.15rem;
   border: 0;
   background: transparent;
   cursor: grab;
-  box-shadow: none;
 }
 
 .book-handle:active {
@@ -381,25 +438,9 @@
 }
 
 .book-menu {
-  position: absolute;
-  top: 3.6rem;
-  right: 0.85rem;
-  z-index: 5;
-  width: min(15rem, calc(100vw - 4rem));
-  display: grid;
-  gap: 0.45rem;
-  padding: 0.6rem;
-  border: 1px solid var(--polka-border);
-  border-radius: 1rem;
-  background: rgba(255, 255, 255, 0.94);
-  box-shadow: var(--polka-shadow);
-  backdrop-filter: blur(16px);
-}
-
-.book-menu a[tuiButton],
-.book-menu button[tuiButton] {
-  width: 100%;
-  justify-content: flex-start;
+  top: 2.45rem;
+  right: 0;
+  width: min(18rem, calc(100vw - 4rem));
 }
 
 .book-cover {
@@ -437,6 +478,7 @@
 
 .book-card__body h3 {
   font-size: 1.18rem;
+  transform: translateX(0.16rem);
 }
 
 .book-card__opinion {
@@ -490,6 +532,7 @@
     top: calc(100% + 0.6rem);
     right: 0;
     left: auto;
+    min-width: min(18rem, calc(100vw - 2rem));
   }
 
   .books-toolbar {
