@@ -1,5 +1,9 @@
 # Polka
 
+<p align="center">
+  <img src="docs/assets/polka-readme-logo.png" alt="Polka logo" width="420">
+</p>
+
 Polka это full-stack приложение для личной библиотеки с публичным профилем, списками рекомендаций, цитатами и мнениями о книгах.
 
 Текущий статус: собран рабочий auth/profile/books/recommendation-lists foundation с Angular 21, Taiga UI 4, Signal Store, Go API, PostgreSQL и вертикальным срезом `register/login -> JWT session -> owner/guest profile -> create/edit/delete book -> reorder/filter library -> profile analytics -> create/edit/delete recommendation list`.
