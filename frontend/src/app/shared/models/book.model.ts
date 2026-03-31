@@ -87,6 +87,15 @@ export interface CoverUploadResponse {
   coverPalette: string[];
 }
 
+export interface BooksImportPayload {
+  items: CreateBookPayload[];
+}
+
+export interface BooksImportResponse {
+  importedCount: number;
+  books: BookDetails[];
+}
+
 export interface CreateBookPayload {
   title: string;
   author: string;

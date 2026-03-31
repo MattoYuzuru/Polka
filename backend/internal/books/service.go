@@ -73,6 +73,15 @@ type ReorderBooksInput struct {
 	BookIDs []string `json:"bookIds"`
 }
 
+type ImportBooksInput struct {
+	Items []CreateBookInput `json:"items"`
+}
+
+type ImportBooksResult struct {
+	ImportedCount int           `json:"importedCount"`
+	Books         []BookDetails `json:"books"`
+}
+
 type Repository interface {
 	Create(ctx context.Context, ownerUserID string, input CreateBookInput) (BookDetails, error)
 	FindByID(ctx context.Context, bookID string, viewerUserID string) (BookDetails, error)
@@ -298,6 +307,36 @@ func (service *Service) Reorder(
 	input.BookIDs = normalizedBookIDs
 
 	return service.repository.Reorder(ctx, ownerUserID, input)
+}
+
+func (service *Service) Import(
+	ctx context.Context,
+	ownerUserID string,
+	input ImportBooksInput,
+) (ImportBooksResult, error) {
+	if strings.TrimSpace(ownerUserID) == "" {
+		return ImportBooksResult{}, ErrUnauthorized
+	}
+
+	if len(input.Items) == 0 {
+		return ImportBooksResult{}, ErrInvalidInput
+	}
+
+	importedBooks := make([]BookDetails, 0, len(input.Items))
+
+	for _, item := range input.Items {
+		importedBook, err := service.Create(ctx, ownerUserID, item)
+		if err != nil {
+			return ImportBooksResult{}, err
+		}
+
+		importedBooks = append(importedBooks, importedBook)
+	}
+
+	return ImportBooksResult{
+		ImportedCount: len(importedBooks),
+		Books:         importedBooks,
+	}, nil
 }
 
 func (service *Service) UploadCover(

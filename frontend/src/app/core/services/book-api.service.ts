@@ -5,6 +5,8 @@ import { type Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   type BookDetails,
+  type BooksImportPayload,
+  type BooksImportResponse,
   type CoverUploadResponse,
   type CreateBookPayload,
   type ReorderBooksPayload,
@@ -53,6 +55,10 @@ export class BookApiService {
     formData.append('file', file);
 
     return this.http.post<CoverUploadResponse>(`${this.apiBaseUrl}/books/cover-upload`, formData);
+  }
+
+  importBooks(payload: BooksImportPayload): Observable<BooksImportResponse> {
+    return this.http.post<BooksImportResponse>(`${this.apiBaseUrl}/books/import`, payload);
   }
 
   getCoverUrl(bookId: string): string {
