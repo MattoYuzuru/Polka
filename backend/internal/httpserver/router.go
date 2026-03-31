@@ -2,6 +2,7 @@ package httpserver
 
 import (
 	"errors"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -13,6 +14,7 @@ import (
 	"github.com/MattoYuzuru/Polka/backend/internal/auth"
 	"github.com/MattoYuzuru/Polka/backend/internal/books"
 	"github.com/MattoYuzuru/Polka/backend/internal/config"
+	"github.com/MattoYuzuru/Polka/backend/internal/media"
 	"github.com/MattoYuzuru/Polka/backend/internal/profile"
 	"github.com/MattoYuzuru/Polka/backend/internal/recommendationlists"
 	"github.com/MattoYuzuru/Polka/backend/internal/shared/httputil"
@@ -132,6 +134,51 @@ func NewRouter(
 			}
 
 			httputil.WriteJSON(w, http.StatusCreated, bookDetails)
+		})
+
+		router.Post("/books/cover-upload", func(w http.ResponseWriter, r *http.Request) {
+			claims, ok := requireAuth(w, r, tokenManager)
+			if !ok {
+				return
+			}
+
+			if err := r.ParseMultipartForm(8 << 20); err != nil {
+				httputil.WriteError(w, http.StatusBadRequest, "Не удалось прочитать multipart payload.")
+
+				return
+			}
+
+			file, header, err := r.FormFile("file")
+			if err != nil {
+				httputil.WriteError(w, http.StatusBadRequest, "Передайте файл обложки в поле file.")
+
+				return
+			}
+			defer file.Close()
+
+			uploadedCover, err := booksService.UploadCover(
+				r.Context(),
+				claims.Subject,
+				header.Filename,
+				header.Header.Get("Content-Type"),
+				file,
+			)
+			if err != nil {
+				switch {
+				case errors.Is(err, books.ErrInvalidInput):
+					httputil.WriteError(w, http.StatusBadRequest, "Поддерживаются корректные изображения jpg, png, gif или webp.")
+				case errors.Is(err, books.ErrUnauthorized):
+					httputil.WriteError(w, http.StatusUnauthorized, "Требуется авторизация.")
+				case errors.Is(err, media.ErrStorageDisabled):
+					httputil.WriteError(w, http.StatusServiceUnavailable, "Хранилище обложек сейчас недоступно.")
+				default:
+					httputil.WriteError(w, http.StatusInternalServerError, "Не удалось загрузить обложку.")
+				}
+
+				return
+			}
+
+			httputil.WriteJSON(w, http.StatusCreated, uploadedCover)
 		})
 
 		router.Post("/recommendation-lists", func(w http.ResponseWriter, r *http.Request) {
@@ -498,6 +545,33 @@ func NewRouter(
 			}
 
 			httputil.WriteJSON(w, http.StatusOK, bookDetails)
+		})
+
+		router.Get("/books/{bookID}/cover", func(w http.ResponseWriter, r *http.Request) {
+			coverObject, err := booksService.OpenCover(r.Context(), chi.URLParam(r, "bookID"))
+			if err != nil {
+				switch {
+				case errors.Is(err, books.ErrNotFound), errors.Is(err, media.ErrObjectNotFound):
+					httputil.WriteError(w, http.StatusNotFound, "Обложка не найдена.")
+				case errors.Is(err, media.ErrStorageDisabled):
+					httputil.WriteError(w, http.StatusServiceUnavailable, "Хранилище обложек сейчас недоступно.")
+				default:
+					httputil.WriteError(w, http.StatusInternalServerError, "Не удалось получить обложку.")
+				}
+
+				return
+			}
+			defer coverObject.Body.Close()
+
+			contentType := strings.TrimSpace(coverObject.ContentType)
+			if contentType == "" {
+				contentType = "application/octet-stream"
+			}
+
+			w.Header().Set("Content-Type", contentType)
+			w.Header().Set("Cache-Control", "public, max-age=3600")
+			w.WriteHeader(http.StatusOK)
+			_, _ = io.Copy(w, coverObject.Body)
 		})
 
 		router.Get("/recommendation-lists/{listID}", func(w http.ResponseWriter, r *http.Request) {

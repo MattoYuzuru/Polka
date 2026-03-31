@@ -34,6 +34,13 @@
   color: white;
   font-size: 4rem;
   border: 1px solid rgba(15, 15, 16, 0.08);
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
 }
 
 .book-hero__content {

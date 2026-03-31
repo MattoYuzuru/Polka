@@ -1,8 +1,8 @@
 # Roadmap
 
 ## Текущий статус
-- Текущая ветка: `ci/ghcr-and-vps-deploy`
-- Текущая фаза: GitHub Actions, GHCR и безопасный Kubernetes deploy для `polka.keykomi.com`
+- Текущая ветка: `feat/s3-covers-and-owner-playwright`
+- Текущая фаза: media upload через S3-compatible storage, owner CRUD e2e и polishing deploy flow
 - Последнее обновление: 2026-03-31
 
 ## Этапы
@@ -12,16 +12,16 @@
 | 1. Monorepo bootstrap | completed | Angular 21, Taiga UI 4, Signal Store, lazy routes, root scripts, Dockerfiles | `frontend/`, root config |
 | 2. Backend foundation | completed | Go API, Postgres, Docker Compose, startup migrations, seeded auth/profile persistence | `backend/`, `compose.yaml` |
 | 3. Auth и app shell | completed | JWT login/register, token storage, guards, interceptors, profile edit, owner/guest profile visibility | frontend + backend auth modules |
-| 4. Books domain | in progress | create/get/update/delete книг, edit mode, публичность, цитаты, мнения, reorder/top order | books feature |
+| 4. Books domain | in progress | create/get/update/delete книг, edit mode, публичность, цитаты, мнения, reorder/top order, cover upload через S3-compatible storage | books feature |
 | 5. Recommendation lists | in progress | create/get/update/delete списков, edit mode, публичность, owner/guest visibility | recommendation-lists feature |
 | 6. Public profile и статистика | in progress | owner/guest режимы, фильтры, сортировка, метрики, reading analytics | profile feature |
-| 7. QA и delivery | in progress | lint/format tooling, Jest unit tests, Playwright browser scenarios, CI/CD, GHCR, Kubernetes manifests, deploy docs, Lighthouse | `.github/`, `docs/`, `README.md`, `playwright/`, `k8s/` |
+| 7. QA и delivery | in progress | lint/format tooling, Jest unit tests, Playwright browser scenarios, CI/CD, GHCR, Kubernetes manifests, deploy docs, `edge` rollout flow, Lighthouse | `.github/`, `docs/`, `README.md`, `playwright/`, `k8s/` |
 
 ## Ближайшие шаги
-1. Дождаться branch publish в GHCR и проверить, что `sha-` теги доступны для pull.
-2. Применить namespace `polka` на VPS и проверить ingress/certificate для `polka.keykomi.com`.
-3. Расширить Playwright-сценарии до CRUD книг/списков на owner-flow.
-4. Подготовить Lighthouse-замеры, production polish и финальный deploy handoff.
+1. Применить обновлённые `k8s` манифесты с `minio` на VPS и проверить загрузку/выдачу обложек через `polka.keykomi.com`.
+2. Довести production handoff: короткий rollout, smoke-check и rollback note для `edge`/`sha-` тегов.
+3. Добавить Lighthouse-замеры и зафиксировать финальный polish по mobile SEO/Best Practices.
+4. При необходимости расширить browser e2e на owner CRUD рекомендательных списков.
 
 ## Последняя проверка
 - `npm run lint`
@@ -33,7 +33,7 @@
 - `npm run test:component`
 - `npm run test:backend`
 - `npm run compose:check`
-- `ssh ... sudo k3s kubectl get ns/ingress/svc`
+- `curl -X POST /api/v1/books/cover-upload`
 
 ## Принципы итераций
 - Один вертикальный срез на одну небольшую ветку.

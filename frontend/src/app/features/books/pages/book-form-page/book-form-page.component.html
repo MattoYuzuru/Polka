@@ -28,27 +28,64 @@
     <section class="form-layout">
       <article class="cover-dropzone" tuiCardLarge tuiSurface>
         <p tuiBadge>Обложка</p>
-        <div class="cover-dropzone__placeholder">
-          {{
-            isEditMode()
-              ? 'Загрузка обложки появится следующим срезом'
-              : 'Upload появится в следующем срезе'
-          }}
+        <div
+          class="cover-dropzone__placeholder"
+          [style.background-image]="
+            !coverPreviewUrl()
+              ? 'linear-gradient(145deg, ' +
+                (coverPreviewPalette().length
+                  ? coverPreviewPalette().join(', ')
+                  : '#101010, #404040') +
+                ')'
+              : null
+          "
+        >
+          @if (coverPreviewUrl()) {
+            <img
+              [src]="coverPreviewUrl()"
+              [alt]="'Обложка книги ' + (bookForm.controls.title.value || 'без названия')"
+            />
+          } @else {
+            <span>{{ bookForm.controls.title.value.slice(0, 1).toUpperCase() || 'P' }}</span>
+          }
         </div>
         <p class="muted">
-          На этом этапе книга уже создаётся как реальная сущность, но загрузка медиа ещё не
-          подключена.
+          Обложка уходит в S3-compatible storage, а палитра для градиентов собирается на backend.
         </p>
-        @if (!isEditMode()) {
-          <button tuiButton type="button" (click)="saveDraftLocally()">Сохранить черновик</button>
-        }
+
+        <label class="cover-upload-control" data-testid="book-cover-upload-label">
+          <input
+            class="cover-upload-control__input"
+            type="file"
+            accept="image/png,image/jpeg,image/gif,image/webp"
+            data-testid="book-cover-input"
+            (change)="uploadCover($event)"
+          />
+          <span>{{ isUploadingCover() ? 'Загружаем обложку...' : 'Выбрать обложку' }}</span>
+        </label>
+
+        <div class="cover-actions">
+          @if (!isEditMode()) {
+            <button tuiButton type="button" (click)="saveDraftLocally()">Сохранить черновик</button>
+          }
+          @if (hasCover()) {
+            <button tuiButton type="button" data-testid="book-cover-remove" (click)="removeCover()">
+              Удалить обложку
+            </button>
+          }
+        </div>
       </article>
 
       <article class="form-card" tuiCardLarge tuiSurface>
         <form class="book-form" [formGroup]="bookForm" (ngSubmit)="submit()">
           <label class="field">
             <span>Название</span>
-            <input class="field__control" formControlName="title" type="text" />
+            <input
+              class="field__control"
+              formControlName="title"
+              type="text"
+              data-testid="book-title-input"
+            />
           </label>
 
           <label class="field">
@@ -83,7 +120,11 @@
           <div class="field-grid">
             <label class="field">
               <span>Статус</span>
-              <select class="field__control" formControlName="status">
+              <select
+                class="field__control"
+                formControlName="status"
+                data-testid="book-status-select"
+              >
                 @for (status of statusOptions; track status) {
                   <option [value]="status">{{ status }}</option>
                 }
@@ -140,7 +181,7 @@
           }
 
           <div class="actions">
-            <button tuiButton type="submit" [disabled]="isSubmitting()">
+            <button tuiButton type="submit" [disabled]="isSubmitting()" data-testid="book-submit">
               {{
                 isSubmitting()
                   ? isEditMode()

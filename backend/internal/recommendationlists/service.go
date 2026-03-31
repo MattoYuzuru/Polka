@@ -7,14 +7,16 @@ import (
 )
 
 type RecommendationListBook struct {
-	ID           string   `json:"id"`
-	Title        string   `json:"title"`
-	Author       string   `json:"author"`
-	Genre        string   `json:"genre"`
-	Status       string   `json:"status"`
-	Rating       *int     `json:"rating"`
-	IsPublic     bool     `json:"isPublic"`
-	CoverPalette []string `json:"coverPalette"`
+	ID             string   `json:"id"`
+	Title          string   `json:"title"`
+	Author         string   `json:"author"`
+	Genre          string   `json:"genre"`
+	Status         string   `json:"status"`
+	Rating         *int     `json:"rating"`
+	IsPublic       bool     `json:"isPublic"`
+	CoverPalette   []string `json:"coverPalette"`
+	CoverURL       string   `json:"coverUrl"`
+	CoverObjectKey string   `json:"-"`
 }
 
 type Details struct {

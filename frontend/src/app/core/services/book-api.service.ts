@@ -5,6 +5,7 @@ import { type Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   type BookDetails,
+  type CoverUploadResponse,
   type CreateBookPayload,
   type ReorderBooksPayload,
   type UpdateBookPayload,
@@ -13,38 +14,48 @@ import {
 @Injectable({ providedIn: 'root' })
 export class BookApiService {
   private readonly http = inject(HttpClient);
+  private readonly apiBaseUrl = environment.apiBaseUrl;
 
   createBook(payload: CreateBookPayload): Observable<BookDetails> {
-    return this.http.post<BookDetails>(`${environment.apiBaseUrl}/books`, payload);
+    return this.http.post<BookDetails>(`${this.apiBaseUrl}/books`, payload);
   }
 
   getBook(bookId: string): Observable<BookDetails> {
-    return this.http.get<BookDetails>(
-      `${environment.apiBaseUrl}/books/${encodeURIComponent(bookId)}`,
-    );
+    return this.http.get<BookDetails>(`${this.apiBaseUrl}/books/${encodeURIComponent(bookId)}`);
   }
 
   updateBook(bookId: string, payload: UpdateBookPayload): Observable<BookDetails> {
     return this.http.patch<BookDetails>(
-      `${environment.apiBaseUrl}/books/${encodeURIComponent(bookId)}`,
+      `${this.apiBaseUrl}/books/${encodeURIComponent(bookId)}`,
       payload,
     );
   }
 
   setBookVisibility(bookId: string, isPublic: boolean): Observable<BookDetails> {
     return this.http.patch<BookDetails>(
-      `${environment.apiBaseUrl}/books/${encodeURIComponent(bookId)}/visibility`,
+      `${this.apiBaseUrl}/books/${encodeURIComponent(bookId)}/visibility`,
       { isPublic },
     );
   }
 
   deleteBook(bookId: string): Observable<{ status: string }> {
     return this.http.delete<{ status: string }>(
-      `${environment.apiBaseUrl}/books/${encodeURIComponent(bookId)}`,
+      `${this.apiBaseUrl}/books/${encodeURIComponent(bookId)}`,
     );
   }
 
   reorderBooks(payload: ReorderBooksPayload): Observable<{ status: string }> {
-    return this.http.patch<{ status: string }>(`${environment.apiBaseUrl}/books/order`, payload);
+    return this.http.patch<{ status: string }>(`${this.apiBaseUrl}/books/order`, payload);
+  }
+
+  uploadCover(file: File): Observable<CoverUploadResponse> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    return this.http.post<CoverUploadResponse>(`${this.apiBaseUrl}/books/cover-upload`, formData);
+  }
+
+  getCoverUrl(bookId: string): string {
+    return `${this.apiBaseUrl}/books/${encodeURIComponent(bookId)}/cover`;
   }
 }

@@ -15,6 +15,7 @@ export interface RecommendationListBook {
   rating: number | null;
   isPublic: boolean;
   coverPalette: string[];
+  coverUrl: string | null;
 }
 
 export interface RecommendationListDetails {

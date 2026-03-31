@@ -61,6 +61,8 @@ type Book struct {
 	Rating         *int     `json:"rating"`
 	OpinionPreview string   `json:"opinionPreview"`
 	CoverPalette   []string `json:"coverPalette"`
+	CoverURL       string   `json:"coverUrl"`
+	CoverObjectKey string   `json:"-"`
 }
 
 type RecommendationList struct {

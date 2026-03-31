@@ -16,12 +16,18 @@
       <div
         class="book-hero__cover"
         [style.background-image]="
-          'linear-gradient(145deg, ' +
-          (book.coverPalette.length ? book.coverPalette.join(', ') : '#101010, #404040') +
-          ')'
+          !book.coverUrl
+            ? 'linear-gradient(145deg, ' +
+              (book.coverPalette.length ? book.coverPalette.join(', ') : '#101010, #404040') +
+              ')'
+            : null
         "
       >
-        <span>{{ book.title.slice(0, 1).toUpperCase() }}</span>
+        @if (book.coverUrl) {
+          <img [src]="book.coverUrl" [alt]="'Обложка книги ' + book.title" />
+        } @else {
+          <span>{{ book.title.slice(0, 1).toUpperCase() }}</span>
+        }
       </div>
 
       <div class="book-hero__content">
@@ -44,7 +50,9 @@
         <div class="actions">
           <a [routerLink]="backLink()" tuiButton>Назад к библиотеке</a>
           @if (book.viewerCanEdit) {
-            <a [routerLink]="['/books', book.id, 'edit']" tuiButton>Редактировать</a>
+            <a [routerLink]="['/books', book.id, 'edit']" tuiButton data-testid="book-edit-link">
+              Редактировать
+            </a>
             <button
               tuiButton
               type="button"
@@ -53,7 +61,13 @@
             >
               {{ book.isPublic ? 'Сделать приватной' : 'Сделать публичной' }}
             </button>
-            <button tuiButton type="button" [disabled]="isProcessing()" (click)="deleteBook()">
+            <button
+              tuiButton
+              type="button"
+              [disabled]="isProcessing()"
+              data-testid="book-delete-button"
+              (click)="deleteBook()"
+            >
               Удалить
             </button>
           }

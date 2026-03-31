@@ -25,6 +25,7 @@ export interface BookCard {
   rating: number | null;
   opinionPreview: string;
   coverPalette: string[];
+  coverUrl: string | null;
 }
 
 export interface ReorderBooksPayload {
@@ -74,10 +75,16 @@ export interface BookDetails {
   rating: number | null;
   opinionPreview: string;
   coverPalette: string[];
+  coverUrl: string | null;
   viewerCanEdit: boolean;
   createdAt: string;
   quotes: BookQuote[];
   opinions: BookOpinion[];
+}
+
+export interface CoverUploadResponse {
+  coverObjectKey: string;
+  coverPalette: string[];
 }
 
 export interface CreateBookPayload {
@@ -93,6 +100,9 @@ export interface CreateBookPayload {
   rating: number | null;
   opinion: string;
   quote: string;
+  coverPalette: string[];
+  coverObjectKey: string | null;
+  removeCover: boolean;
 }
 
 export type UpdateBookPayload = CreateBookPayload;

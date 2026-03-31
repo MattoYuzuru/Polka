@@ -3,7 +3,7 @@ name: CI CD
 on:
   push:
     branches:
-      - '**'
+      - "**"
   pull_request:
 
 concurrency:
@@ -135,6 +135,7 @@ jobs:
           tags: |
             type=sha,format=short,prefix=sha-
             type=ref,event=branch,prefix=branch-
+            type=raw,value=edge,enable={{is_default_branch}}
             type=raw,value=main,enable={{is_default_branch}}
 
       - name: Build and push image

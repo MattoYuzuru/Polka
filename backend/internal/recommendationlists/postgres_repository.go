@@ -308,6 +308,7 @@ func (repository *PostgresRepository) loadBooks(
 				b.status,
 				b.rating,
 				b.is_public,
+				b.cover_object_key,
 				b.cover_palette
 			FROM recommendation_list_books rlb
 			JOIN books b ON b.id = rlb.book_id
@@ -327,9 +328,10 @@ func (repository *PostgresRepository) loadBooks(
 
 	for rows.Next() {
 		var (
-			book       RecommendationListBook
-			rating     sql.NullInt64
-			colorStops []string
+			book           RecommendationListBook
+			rating         sql.NullInt64
+			coverObjectKey sql.NullString
+			colorStops     []string
 		)
 
 		if err := rows.Scan(
@@ -340,6 +342,7 @@ func (repository *PostgresRepository) loadBooks(
 			&book.Status,
 			&rating,
 			&book.IsPublic,
+			&coverObjectKey,
 			&colorStops,
 		); err != nil {
 			return nil, fmt.Errorf("scan recommendation list book row: %w", err)
@@ -351,6 +354,10 @@ func (repository *PostgresRepository) loadBooks(
 		}
 
 		book.CoverPalette = colorStops
+		if coverObjectKey.Valid && strings.TrimSpace(coverObjectKey.String) != "" {
+			book.CoverObjectKey = coverObjectKey.String
+			book.CoverURL = "/api/v1/books/" + book.ID + "/cover"
+		}
 		books = append(books, book)
 	}
 
