@@ -47,7 +47,8 @@ func (repository *PostgresRepository) Create(
 			rating,
 			opinion_preview,
 			cover_palette,
-			rank_position
+			rank_position,
+			finished_at
 		)
 		VALUES (
 			gen_random_uuid(),
@@ -64,7 +65,8 @@ func (repository *PostgresRepository) Create(
 			$11,
 			$12,
 			ARRAY[]::TEXT[],
-			COALESCE((SELECT MAX(rank_position) + 1 FROM books WHERE user_id = $1), 1)
+			COALESCE((SELECT MAX(rank_position) + 1 FROM books WHERE user_id = $1), 1),
+			CASE WHEN $10 = 'Прочитал' THEN NOW() ELSE NULL END
 		)
 		RETURNING id::text;
 	`
@@ -231,7 +233,11 @@ func (repository *PostgresRepository) Update(
 			is_public = $10,
 			status = $11,
 			rating = $12,
-			opinion_preview = $13
+			opinion_preview = $13,
+			finished_at = CASE
+				WHEN $11 = 'Прочитал' THEN COALESCE(finished_at, NOW())
+				ELSE NULL
+			END
 		WHERE id::text = $1
 		  AND user_id::text = $2
 		RETURNING id::text;

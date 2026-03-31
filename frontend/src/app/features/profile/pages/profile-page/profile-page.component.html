@@ -66,6 +66,92 @@
       </div>
     </section>
 
+    <section class="analytics-panel" tuiCardLarge tuiSurface>
+      <div class="analytics-panel__intro">
+        <div>
+          <p tuiChip>Статистика</p>
+          <h2 tuiHeader="h3">Как выглядит библиотека по цифрам</h2>
+        </div>
+        <p class="analytics-note">
+          Периоды считаются по книгам со статусом «Прочитал» и датой завершения на backend.
+        </p>
+      </div>
+
+      <div class="analytics-grid">
+        <article class="analytics-card">
+          <p class="analytics-card__label">Прочитано за 30 дней</p>
+          <p class="analytics-card__value">
+            {{ profile.analytics.readingWindows.completedLast30Days }}
+          </p>
+        </article>
+
+        <article class="analytics-card">
+          <p class="analytics-card__label">Прочитано за 365 дней</p>
+          <p class="analytics-card__value">
+            {{ profile.analytics.readingWindows.completedLast365Days }}
+          </p>
+        </article>
+
+        <article class="analytics-card">
+          <p class="analytics-card__label">Средняя оценка</p>
+          <p class="analytics-card__value">
+            {{ profile.analytics.readingWindows.averageRating || 0 }}
+          </p>
+        </article>
+
+        <article class="analytics-card">
+          <p class="analytics-card__label">Публичных / приватных книг</p>
+          <p class="analytics-card__value">
+            {{ profile.analytics.readingWindows.publicBooksCount }}
+            <span class="analytics-card__slash">/</span>
+            {{ profile.analytics.readingWindows.privateBooksCount }}
+          </p>
+        </article>
+      </div>
+
+      <div class="analytics-breakdowns">
+        <article class="analytics-breakdown">
+          <div class="analytics-breakdown__header">
+            <p tuiChip>Статусы</p>
+            <h3 tuiHeader="h5">Распределение чтения</h3>
+          </div>
+
+          @if (profile.analytics.statusBreakdown.length) {
+            <div class="breakdown-list">
+              @for (item of profile.analytics.statusBreakdown; track item.status) {
+                <div class="breakdown-row">
+                  <span>{{ item.status }}</span>
+                  <strong>{{ item.count }}</strong>
+                </div>
+              }
+            </div>
+          } @else {
+            <p class="analytics-empty">Пока нет книг для расчёта распределения по статусам.</p>
+          }
+        </article>
+
+        <article class="analytics-breakdown">
+          <div class="analytics-breakdown__header">
+            <p tuiChip>Жанры</p>
+            <h3 tuiHeader="h5">Топ направлений</h3>
+          </div>
+
+          @if (profile.analytics.genreBreakdown.length) {
+            <div class="breakdown-list">
+              @for (item of profile.analytics.genreBreakdown; track item.genre) {
+                <div class="breakdown-row">
+                  <span>{{ item.genre }}</span>
+                  <strong>{{ item.count }}</strong>
+                </div>
+              }
+            </div>
+          } @else {
+            <p class="analytics-empty">Жанровая аналитика появится после первых книг.</p>
+          }
+        </article>
+      </div>
+    </section>
+
     <section class="profile-sections">
       <div class="profile-section" tuiCardLarge tuiSurface>
         <p tuiChip>Библиотека</p>

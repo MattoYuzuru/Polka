@@ -15,6 +15,30 @@ type Stats struct {
 	RecommendationListsCount int    `json:"recommendationListsCount"`
 }
 
+type ReadingWindows struct {
+	CompletedLast30Days  int     `json:"completedLast30Days"`
+	CompletedLast365Days int     `json:"completedLast365Days"`
+	AverageRating        float64 `json:"averageRating"`
+	PublicBooksCount     int     `json:"publicBooksCount"`
+	PrivateBooksCount    int     `json:"privateBooksCount"`
+}
+
+type StatusBreakdownItem struct {
+	Status string `json:"status"`
+	Count  int    `json:"count"`
+}
+
+type GenreBreakdownItem struct {
+	Genre string `json:"genre"`
+	Count int    `json:"count"`
+}
+
+type Analytics struct {
+	ReadingWindows  ReadingWindows        `json:"readingWindows"`
+	StatusBreakdown []StatusBreakdownItem `json:"statusBreakdown"`
+	GenreBreakdown  []GenreBreakdownItem  `json:"genreBreakdown"`
+}
+
 type User struct {
 	Nickname  string    `json:"nickname"`
 	Display   string    `json:"displayName"`
@@ -50,6 +74,7 @@ type RecommendationList struct {
 type PublicProfile struct {
 	User                User                 `json:"user"`
 	Stats               Stats                `json:"stats"`
+	Analytics           Analytics            `json:"analytics"`
 	GradientStops       []string             `json:"gradientStops"`
 	Books               []Book               `json:"books"`
 	RecommendationLists []RecommendationList `json:"recommendationLists"`
