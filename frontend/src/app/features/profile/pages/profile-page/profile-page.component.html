@@ -71,14 +71,61 @@
         <p tuiChip>Библиотека</p>
         <h2 tuiHeader="h3">Книги</h2>
 
+        <div class="books-toolbar">
+          <label class="toolbar-field">
+            <span>Поиск</span>
+            <input
+              [value]="bookSearch()"
+              placeholder="Название, автор или жанр"
+              type="search"
+              (input)="updateBookSearch(($any($event.target).value ?? '').toString())"
+            />
+          </label>
+
+          <label class="toolbar-field">
+            <span>Статус</span>
+            <select
+              [value]="selectedStatus()"
+              (change)="updateStatusFilter(($any($event.target).value ?? '').toString())"
+            >
+              <option value="all">Все</option>
+              @for (status of bookStatuses; track status) {
+                <option [value]="status">{{ status }}</option>
+              }
+            </select>
+          </label>
+
+          <label class="toolbar-field">
+            <span>Сортировка</span>
+            <select
+              [value]="selectedSort()"
+              (change)="updateSortOption(($any($event.target).value ?? '').toString())"
+            >
+              <option value="top">По топу владельца</option>
+              <option value="rating">По оценке</option>
+              <option value="year">По году</option>
+              <option value="title">По названию</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="books-toolbar books-toolbar--meta">
+          <span tuiBadge>Найдено: {{ visibleBooks().length }}</span>
+          @if (canReorderBooks()) {
+            <span tuiBadge>Можно двигать книги по топу</span>
+          } @else if (isOwner()) {
+            <span tuiBadge>Reorder доступен только без фильтров и в сортировке по топу</span>
+          }
+        </div>
+
         <div class="books-grid">
-          @for (book of profile.books; track book.id; let index = $index) {
+          @for (book of visibleBooks(); track book.id) {
             <article class="book-card" tuiSurface>
               <div
                 class="book-cover"
                 [style.background-image]="'linear-gradient(145deg, ' + (book.coverPalette.length ? book.coverPalette.join(', ') : '#101010, #404040') + ')'"
               >
-                <span class="book-rank">{{ index + 1 }}</span>
+                <span class="book-rank">{{ book.rankPosition }}</span>
                 <span class="book-initials">
                   {{ book.title.slice(0, 1).toUpperCase() }}
                 </span>
@@ -123,11 +170,44 @@
                       Удалить
                     </button>
                   </div>
+
+                  @if (canReorderBooks()) {
+                    <div class="book-owner-actions">
+                      <button
+                        tuiButton
+                        type="button"
+                        [disabled]="processingBookId() === book.id || !canMoveBookToTop(book.id)"
+                        (click)="moveBook(book.id, 'top')"
+                      >
+                        В топ
+                      </button>
+                      <button
+                        tuiButton
+                        type="button"
+                        [disabled]="processingBookId() === book.id || !canMoveBook(book.id, 'up')"
+                        (click)="moveBook(book.id, 'up')"
+                      >
+                        Выше
+                      </button>
+                      <button
+                        tuiButton
+                        type="button"
+                        [disabled]="processingBookId() === book.id || !canMoveBook(book.id, 'down')"
+                        (click)="moveBook(book.id, 'down')"
+                      >
+                        Ниже
+                      </button>
+                    </div>
+                  }
                 }
               </div>
             </article>
           }
         </div>
+
+        @if (!visibleBooks().length) {
+          <p class="books-empty">По текущим фильтрам книги не найдены.</p>
+        }
       </div>
 
       <aside class="profile-section profile-section--aside" tuiCardLarge tuiSurface>

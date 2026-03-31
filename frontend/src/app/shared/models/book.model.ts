@@ -12,6 +12,7 @@ export type BookStatus = (typeof BOOK_STATUSES)[number];
 
 export interface BookCard {
   id: string;
+  rankPosition: number;
   title: string;
   author: string;
   description: string;
@@ -24,6 +25,10 @@ export interface BookCard {
   rating: number | null;
   opinionPreview: string;
   coverPalette: string[];
+}
+
+export interface ReorderBooksPayload {
+  bookIds: string[];
 }
 
 export interface BookFormValue {

@@ -60,12 +60,17 @@ type UpdateVisibilityInput struct {
 	IsPublic bool `json:"isPublic"`
 }
 
+type ReorderBooksInput struct {
+	BookIDs []string `json:"bookIds"`
+}
+
 type Repository interface {
 	Create(ctx context.Context, ownerUserID string, input CreateBookInput) (BookDetails, error)
 	FindByID(ctx context.Context, bookID string, viewerUserID string) (BookDetails, error)
 	Update(ctx context.Context, ownerUserID string, bookID string, input UpdateBookInput) (BookDetails, error)
 	SetVisibility(ctx context.Context, ownerUserID string, bookID string, isPublic bool) (BookDetails, error)
 	Delete(ctx context.Context, ownerUserID string, bookID string) error
+	Reorder(ctx context.Context, ownerUserID string, input ReorderBooksInput) error
 }
 
 type Service struct {
@@ -188,4 +193,39 @@ func (service *Service) Delete(
 	}
 
 	return service.repository.Delete(ctx, ownerUserID, bookID)
+}
+
+func (service *Service) Reorder(
+	ctx context.Context,
+	ownerUserID string,
+	input ReorderBooksInput,
+) error {
+	if strings.TrimSpace(ownerUserID) == "" {
+		return ErrUnauthorized
+	}
+
+	if len(input.BookIDs) == 0 {
+		return ErrInvalidInput
+	}
+
+	seen := make(map[string]struct{}, len(input.BookIDs))
+	normalizedBookIDs := make([]string, 0, len(input.BookIDs))
+
+	for _, bookID := range input.BookIDs {
+		trimmed := strings.TrimSpace(bookID)
+		if trimmed == "" {
+			return ErrInvalidInput
+		}
+
+		if _, exists := seen[trimmed]; exists {
+			return ErrInvalidInput
+		}
+
+		seen[trimmed] = struct{}{}
+		normalizedBookIDs = append(normalizedBookIDs, trimmed)
+	}
+
+	input.BookIDs = normalizedBookIDs
+
+	return service.repository.Reorder(ctx, ownerUserID, input)
 }
