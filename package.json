@@ -6,6 +6,9 @@
     "start:frontend": "npm --prefix frontend run start",
     "build:frontend": "npm --prefix frontend run build",
     "test:frontend": "npm --prefix frontend run test",
+    "test:component": "playwright test",
+    "test:component:headed": "playwright test --headed",
+    "playwright:install": "playwright install chromium",
     "lint:frontend": "npm --prefix frontend run lint",
     "lint:styles": "npm --prefix frontend run lint:styles",
     "format:check": "npm --prefix frontend run format:check",
@@ -14,6 +17,10 @@
     "test:backend": "go -C backend test ./...",
     "lint": "npm run lint:frontend && npm run lint:styles",
     "compose:up": "docker compose up --build",
+    "compose:down": "docker compose down",
     "compose:check": "docker compose config"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2"
   }
 }

@@ -27,10 +27,15 @@
       <p>Используйте тестовые данные или перейдите к регистрации своего аккаунта.</p>
     </div>
 
-    <form class="login-form" [formGroup]="loginForm" (ngSubmit)="submit()">
+    <form class="login-form" [formGroup]="loginForm" (ngSubmit)="submit()" data-testid="login-form">
       <label class="field">
         <span class="field__label">Почта</span>
-        <input class="field__control" formControlName="email" type="email" />
+        <input
+          class="field__control"
+          formControlName="email"
+          type="email"
+          data-testid="login-email"
+        />
         @if (loginForm.controls.email.touched && loginForm.controls.email.invalid) {
           <span class="field__error">Введите корректный email.</span>
         }
@@ -38,7 +43,12 @@
 
       <label class="field">
         <span class="field__label">Пароль</span>
-        <input class="field__control" formControlName="password" type="password" />
+        <input
+          class="field__control"
+          formControlName="password"
+          type="password"
+          data-testid="login-password"
+        />
         @if (loginForm.controls.password.touched && loginForm.controls.password.invalid) {
           <span class="field__error">Пароль должен содержать минимум 8 символов.</span>
         }
@@ -50,7 +60,13 @@
         </div>
       }
 
-      <button class="submit-button" tuiButton type="submit" [disabled]="isSubmitting()">
+      <button
+        class="submit-button"
+        tuiButton
+        type="submit"
+        [disabled]="isSubmitting()"
+        data-testid="login-submit"
+      >
         {{ isSubmitting() ? 'Входим...' : 'Войти' }}
       </button>
     </form>

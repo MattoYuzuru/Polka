@@ -20,15 +20,18 @@ import { ProfileApiService } from '../../../../core/services/profile-api.service
 import { RecommendationListApiService } from '../../../../core/services/recommendation-list-api.service';
 import { AuthSessionStore } from '../../../../core/stores/auth-session.store';
 import { UiPreferencesStore } from '../../../../core/stores/ui-preferences.store';
-import {
-  BOOK_STATUSES,
-  type BookCard,
-  type BookStatus,
-} from '../../../../shared/models/book.model';
+import { BOOK_STATUSES, type BookStatus } from '../../../../shared/models/book.model';
 import { type PublicProfile } from '../../../../shared/models/profile.model';
-
-type BookSortOption = 'top' | 'rating' | 'year' | 'title';
-type ReorderDirection = 'top' | 'up' | 'down';
+import {
+  canMoveBook,
+  canMoveBookToTop,
+  getVisibleBooks,
+  hasActiveBookFilters,
+  isKnownBookStatus,
+  reorderBooks,
+  type BookSortOption,
+  type ReorderDirection,
+} from './profile-books.utils';
 
 @Component({
   selector: 'app-profile-page',
@@ -76,8 +79,8 @@ export class ProfilePageComponent implements OnInit {
     return Boolean(profile && user && profile.user.nickname === user.nickname);
   });
 
-  protected readonly hasActiveBookFilters = computed(
-    () => this.bookSearch().trim() !== '' || this.selectedStatus() !== 'all',
+  protected readonly hasActiveBookFilters = computed(() =>
+    hasActiveBookFilters(this.bookSearch(), this.selectedStatus()),
   );
 
   protected readonly canReorderBooks = computed(
@@ -85,38 +88,11 @@ export class ProfilePageComponent implements OnInit {
   );
 
   protected readonly visibleBooks = computed(() => {
-    const books = this.profile()?.books ?? [];
-    const normalizedQuery = this.bookSearch().trim().toLowerCase();
-    const selectedStatus = this.selectedStatus();
-    const sortedBooks = [...books].filter((book) => {
-      const matchesQuery =
-        normalizedQuery === '' ||
-        [book.title, book.author, book.genre].some((value) =>
-          value.toLowerCase().includes(normalizedQuery),
-        );
-      const matchesStatus = selectedStatus === 'all' || book.status === selectedStatus;
-
-      return matchesQuery && matchesStatus;
+    return getVisibleBooks(this.profile()?.books ?? [], {
+      searchQuery: this.bookSearch(),
+      selectedStatus: this.selectedStatus(),
+      selectedSort: this.selectedSort(),
     });
-
-    switch (this.selectedSort()) {
-      case 'rating':
-        return sortedBooks.sort(
-          (left, right) =>
-            (right.rating ?? -1) - (left.rating ?? -1) || left.rankPosition - right.rankPosition,
-        );
-      case 'year':
-        return sortedBooks.sort(
-          (left, right) => right.year - left.year || left.rankPosition - right.rankPosition,
-        );
-      case 'title':
-        return sortedBooks.sort(
-          (left, right) =>
-            left.title.localeCompare(right.title, 'ru') || left.rankPosition - right.rankPosition,
-        );
-      default:
-        return sortedBooks.sort((left, right) => left.rankPosition - right.rankPosition);
-    }
   });
 
   ngOnInit(): void {
@@ -183,8 +159,8 @@ export class ProfilePageComponent implements OnInit {
       return;
     }
 
-    if ((BOOK_STATUSES as readonly string[]).includes(status)) {
-      this.selectedStatus.set(status as BookStatus);
+    if (isKnownBookStatus(status)) {
+      this.selectedStatus.set(status);
     }
   }
 
@@ -220,24 +196,11 @@ export class ProfilePageComponent implements OnInit {
   }
 
   protected canMoveBook(bookId: string, direction: Exclude<ReorderDirection, 'top'>): boolean {
-    const books = this.profile()?.books ?? [];
-    const bookIndex = books.findIndex((book) => book.id === bookId);
-
-    if (bookIndex === -1) {
-      return false;
-    }
-
-    if (direction === 'up') {
-      return bookIndex > 0;
-    }
-
-    return bookIndex < books.length - 1;
+    return canMoveBook(this.profile()?.books ?? [], bookId, direction);
   }
 
   protected canMoveBookToTop(bookId: string): boolean {
-    const books = this.profile()?.books ?? [];
-
-    return books.findIndex((book) => book.id === bookId) > 0;
+    return canMoveBookToTop(this.profile()?.books ?? [], bookId);
   }
 
   protected toggleBookVisibility(bookId: string, isPublic: boolean): void {
@@ -330,40 +293,4 @@ export class ProfilePageComponent implements OnInit {
         error: () => this.errorMessage.set('Не удалось обновить профиль после изменения книги.'),
       });
   }
-}
-
-function reorderBooks(
-  books: BookCard[],
-  bookId: string,
-  direction: ReorderDirection,
-): BookCard[] | null {
-  const reorderedBooks = [...books];
-  const currentIndex = reorderedBooks.findIndex((book) => book.id === bookId);
-
-  if (currentIndex === -1) {
-    return null;
-  }
-
-  if (direction === 'top') {
-    if (currentIndex === 0) {
-      return null;
-    }
-
-    const [book] = reorderedBooks.splice(currentIndex, 1);
-    reorderedBooks.unshift(book);
-
-    return reorderedBooks;
-  }
-
-  const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
-  if (targetIndex < 0 || targetIndex >= reorderedBooks.length) {
-    return null;
-  }
-
-  [reorderedBooks[currentIndex], reorderedBooks[targetIndex]] = [
-    reorderedBooks[targetIndex],
-    reorderedBooks[currentIndex],
-  ];
-
-  return reorderedBooks;
 }
