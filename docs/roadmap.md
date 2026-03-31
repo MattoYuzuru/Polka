@@ -1,8 +1,8 @@
 # Roadmap
 
 ## Текущий статус
-- Текущая ветка: `feat/books-owner-actions`
-- Текущая фаза: owner actions для книг, edit mode и управление публичностью
+- Текущая ветка: `feat/recommendation-lists`
+- Текущая фаза: реальные recommendation lists с выбором книг из библиотеки и публичной страницей списка
 - Последнее обновление: 2026-03-31
 
 ## Этапы
@@ -13,12 +13,12 @@
 | 2. Backend foundation | completed | Go API, Postgres, Docker Compose, startup migrations, seeded auth/profile persistence | `backend/`, `compose.yaml` |
 | 3. Auth и app shell | completed | JWT login/register, token storage, guards, interceptors, profile edit, owner/guest profile visibility | frontend + backend auth modules |
 | 4. Books domain | in progress | create/get/update/delete книг, edit mode, публичность, цитаты, мнения | books feature |
-| 5. Recommendation lists | pending | CRUD списков, выбор книг, публичность, шаринг | recommendation-lists feature |
+| 5. Recommendation lists | in progress | create/get списков, выбор книг, публичная страница списка, owner/guest visibility | recommendation-lists feature |
 | 6. Public profile и статистика | in progress | owner/guest режимы, фильтры, сортировка, метрики | profile feature |
 | 7. QA и delivery | pending | unit tests, component tests, CI/CD, GHCR, deploy docs, Lighthouse | `.github/`, `docs/`, `README.md` |
 
 ## Ближайшие шаги
-1. Реализовать рекомендательные списки как реальную сущность, а не placeholder route.
+1. Добавить update/delete/toggle visibility для recommendation lists и owner actions на профиле.
 2. Добавить reorder/top mechanics и более богатые owner actions в библиотеке.
 3. Настроить ESLint, Stylelint, Jest, Playwright component tests и GitHub Actions.
 4. Подготовить публикацию контейнеров в GHCR и production compose для VPS.
@@ -28,11 +28,10 @@
 - `npm run build:frontend`
 - `npm run test:frontend`
 - `docker compose up -d --build postgres backend`
-- `POST /api/v1/books`
-- `PATCH /api/v1/books/:id`
-- `PATCH /api/v1/books/:id/visibility`
-- `DELETE /api/v1/books/:id`
-- `GET /api/v1/profiles/mattoy` после owner mutations
+- `POST /api/v1/recommendation-lists`
+- `GET /api/v1/recommendation-lists/:id` как гость
+- `GET /api/v1/recommendation-lists/:id` как владелец
+- `GET /api/v1/profiles/mattoy` после создания списка
 
 ## Принципы итераций
 - Один вертикальный срез на одну небольшую ветку.

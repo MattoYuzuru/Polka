@@ -309,15 +309,21 @@ func (repository *PostgresRepository) loadRecommendationLists(
 ) ([]RecommendationList, error) {
 	const query = `
 		SELECT
-			id::text,
-			title,
-			description,
-			books_count,
-			is_public
-		FROM recommendation_lists
-		WHERE user_id = $1
+			rl.id::text,
+			rl.title,
+			rl.description,
+			(
+				SELECT COUNT(*)
+				FROM recommendation_list_books rlb
+				JOIN books b ON b.id = rlb.book_id
+				WHERE rlb.recommendation_list_id = rl.id
+				  AND ($2 OR b.is_public)
+			) AS books_count,
+			rl.is_public
+		FROM recommendation_lists rl
+		WHERE rl.user_id = $1
 		  AND ($2 OR is_public)
-		ORDER BY updated_at DESC, created_at DESC;
+		ORDER BY rl.updated_at DESC, rl.created_at DESC;
 	`
 
 	rows, err := repository.pool.Query(ctx, query, userID, includePrivate)

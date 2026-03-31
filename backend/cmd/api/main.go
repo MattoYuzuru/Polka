@@ -17,6 +17,7 @@ import (
 	"github.com/MattoYuzuru/Polka/backend/internal/database"
 	"github.com/MattoYuzuru/Polka/backend/internal/httpserver"
 	"github.com/MattoYuzuru/Polka/backend/internal/profile"
+	"github.com/MattoYuzuru/Polka/backend/internal/recommendationlists"
 )
 
 func main() {
@@ -40,13 +41,15 @@ func main() {
 	authRepository := auth.NewPostgresRepository(pool)
 	booksRepository := books.NewPostgresRepository(pool)
 	profileRepository := profile.NewPostgresRepository(pool)
+	recommendationListsRepository := recommendationlists.NewPostgresRepository(pool)
 	authService := auth.NewService(authRepository, tokenManager)
 	booksService := books.NewService(booksRepository)
 	profileService := profile.NewService(profileRepository)
+	recommendationListsService := recommendationlists.NewService(recommendationListsRepository)
 
 	server := &http.Server{
 		Addr:              ":" + cfg.Port,
-		Handler:           httpserver.NewRouter(cfg, authService, tokenManager, booksService, profileService),
+		Handler:           httpserver.NewRouter(cfg, authService, tokenManager, booksService, profileService, recommendationListsService),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 

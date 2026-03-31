@@ -136,7 +136,7 @@
 
         <div class="lists-stack">
           @for (recommendationList of profile.recommendationLists; track recommendationList.id) {
-            <article class="list-card">
+            <a class="list-card" [routerLink]="['/lists', recommendationList.id]">
               <div class="list-card__top">
                 <h3 tuiHeader="h5">{{ recommendationList.title }}</h3>
                 <span tuiBadge>
@@ -145,7 +145,7 @@
               </div>
               <p>{{ recommendationList.description }}</p>
               <p class="list-card__meta">{{ recommendationList.booksCount }} книг(и)</p>
-            </article>
+            </a>
           }
         </div>
       </aside>
