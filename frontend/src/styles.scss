@@ -1,24 +1,32 @@
 :root {
-  --polka-paper: #f5f1e8;
-  --polka-paper-shadow: #ece4d3;
-  --polka-ink: #101010;
-  --polka-muted: rgba(16, 16, 16, 0.62);
-  --polka-border: rgba(16, 16, 16, 0.14);
+  --polka-paper: #fff;
+  --polka-paper-soft: rgba(255, 255, 255, 0.84);
+  --polka-paper-muted: rgba(255, 255, 255, 0.66);
+  --polka-ink: #0d0d0d;
+  --polka-muted: rgba(13, 13, 13, 0.56);
+  --polka-border: rgba(13, 13, 13, 0.16);
+  --polka-border-strong: rgba(13, 13, 13, 0.28);
+  --polka-shadow: 0 24px 80px rgba(13, 13, 13, 0.05);
+  --polka-display-font: 'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', serif;
+  --polka-body-font: 'Avenir Next', 'Segoe UI', 'Helvetica Neue', sans-serif;
 }
 
 html,
 body {
   min-height: 100%;
+  background: #fff;
 }
 
 body {
   margin: 0;
   color: var(--polka-ink);
   background:
-    radial-gradient(circle at top left, rgba(255, 255, 255, 0.8), transparent 38%),
-    linear-gradient(180deg, var(--polka-paper), var(--polka-paper-shadow));
-  font-family: 'Avenir Next', 'Segoe UI', 'Helvetica Neue', sans-serif;
-  line-height: 1.5;
+    radial-gradient(circle at top left, rgba(13, 13, 13, 0.05), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(13, 13, 13, 0.04), transparent 24%),
+    linear-gradient(180deg, #fff 0%, #fbfbfb 100%);
+  font-family: var(--polka-body-font);
+  line-height: 1.55;
+  text-rendering: optimizelegibility;
 }
 
 h1,
@@ -28,8 +36,13 @@ h4,
 h5,
 h6 {
   margin: 0;
-  font-family: 'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', serif;
+  font-family: var(--polka-display-font);
   font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+p {
+  margin: 0;
 }
 
 a {
@@ -42,6 +55,106 @@ input,
 select,
 textarea {
   font: inherit;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  transition:
+    border-color 180ms ease,
+    background-color 180ms ease,
+    color 180ms ease,
+    opacity 180ms ease,
+    transform 180ms ease;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid rgba(13, 13, 13, 0.2);
+  outline-offset: 2px;
+}
+
+button[tuiButton],
+a[tuiButton],
+label[tuiButton] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  min-height: 2.9rem;
+  padding: 0.78rem 1.1rem;
+  border: 1px solid var(--polka-border);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.68);
+  color: var(--polka-ink);
+  box-shadow: none;
+  backdrop-filter: blur(18px);
+}
+
+button[tuiButton]:hover,
+a[tuiButton]:hover,
+label[tuiButton]:hover {
+  border-color: var(--polka-border-strong);
+  background: rgba(255, 255, 255, 0.92);
+}
+
+button[tuiButton]:disabled,
+a[tuiButton][aria-disabled='true'] {
+  opacity: 0.48;
+  cursor: not-allowed;
+}
+
+[tuiBadge],
+[tuiChip] {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  width: fit-content;
+  min-height: 1.95rem;
+  padding: 0.35rem 0.7rem;
+  border: 1px solid rgba(13, 13, 13, 0.1);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.58);
+  color: var(--polka-muted);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  border: 1px solid var(--polka-border);
+  border-radius: 1.2rem;
+  background: rgba(255, 255, 255, 0.62);
+  padding: 0.88rem 1rem;
+  color: var(--polka-ink);
+  backdrop-filter: blur(18px);
+}
+
+textarea {
+  min-height: 8rem;
+  resize: vertical;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: rgba(13, 13, 13, 0.36);
+}
+
+code,
+pre {
+  font-family: 'SFMono-Regular', 'Cascadia Mono', 'Liberation Mono', monospace;
+}
+
+::selection {
+  background: rgba(13, 13, 13, 0.12);
 }
 
 *,

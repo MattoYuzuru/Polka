@@ -15,6 +15,7 @@ import { TuiBadge, TuiChip } from '@taiga-ui/kit';
 import { TuiCardLarge, TuiHeader } from '@taiga-ui/layout';
 
 import { RecommendationListApiService } from '../../../../core/services/recommendation-list-api.service';
+import { AuthSessionStore } from '../../../../core/stores/auth-session.store';
 import { type RecommendationListDetails } from '../../../../shared/models/recommendation-list.model';
 
 @Component({
@@ -38,6 +39,7 @@ export class ListDetailsPageComponent {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly recommendationListApiService = inject(RecommendationListApiService);
+  private readonly authSessionStore = inject(AuthSessionStore);
 
   protected readonly recommendationList = signal<RecommendationListDetails | null>(null);
   protected readonly isLoading = signal(true);
@@ -47,6 +49,16 @@ export class ListDetailsPageComponent {
   protected readonly backLink = computed(
     () => `/${this.recommendationList()?.ownerNickname ?? 'login'}`,
   );
+  protected readonly canEdit = computed(() => {
+    const recommendationList = this.recommendationList();
+    const currentUser = this.authSessionStore.user();
+
+    return Boolean(
+      recommendationList &&
+      (recommendationList.viewerCanEdit ||
+        currentUser?.nickname === recommendationList.ownerNickname),
+    );
+  });
 
   protected readonly listId = toSignal(
     this.route.paramMap.pipe(map((params) => params.get('listId') ?? 'unknown')),

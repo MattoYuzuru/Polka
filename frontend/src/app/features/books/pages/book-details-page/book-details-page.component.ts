@@ -16,6 +16,7 @@ import { TuiBadge, TuiChip } from '@taiga-ui/kit';
 import { TuiCardLarge, TuiHeader } from '@taiga-ui/layout';
 
 import { BookApiService } from '../../../../core/services/book-api.service';
+import { AuthSessionStore } from '../../../../core/stores/auth-session.store';
 import { type BookDetails } from '../../../../shared/models/book.model';
 
 @Component({
@@ -39,12 +40,19 @@ export class BookDetailsPageComponent {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly bookApiService = inject(BookApiService);
+  private readonly authSessionStore = inject(AuthSessionStore);
 
   protected readonly book = signal<BookDetails | null>(null);
   protected readonly isLoading = signal(true);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly isProcessing = signal(false);
   protected readonly backLink = computed(() => `/${this.book()?.ownerNickname ?? 'login'}`);
+  protected readonly canEdit = computed(() => {
+    const book = this.book();
+    const currentUser = this.authSessionStore.user();
+
+    return Boolean(book && (book.viewerCanEdit || currentUser?.nickname === book.ownerNickname));
+  });
 
   protected readonly bookId = toSignal(
     this.route.paramMap.pipe(map((params) => params.get('bookId') ?? 'unknown')),

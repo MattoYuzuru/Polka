@@ -33,7 +33,7 @@
         <button tuiButton type="button" (click)="copyLink()">
           {{ copied() ? 'Ссылка скопирована' : 'Скопировать ссылку' }}
         </button>
-        @if (recommendationList.viewerCanEdit) {
+        @if (canEdit()) {
           <a [routerLink]="['/lists', recommendationList.id, 'edit']" tuiButton>Редактировать</a>
           <button tuiButton type="button" [disabled]="isProcessing()" (click)="toggleVisibility()">
             {{ recommendationList.isPublic ? 'Сделать приватным' : 'Сделать публичным' }}
@@ -51,7 +51,7 @@
           <p tuiChip>Состав</p>
           <h2 tuiHeader="h3">Книги внутри подборки</h2>
         </div>
-        @if (recommendationList.viewerCanEdit) {
+        @if (canEdit()) {
           <p class="owner-note">
             Владелец видит и приватные книги. Для гостей состав зависит от публичности книг.
           </p>
@@ -91,7 +91,7 @@
                   @if (book.rating) {
                     <span tuiBadge>★ {{ book.rating }}</span>
                   }
-                  @if (recommendationList.viewerCanEdit) {
+                  @if (canEdit()) {
                     <span tuiBadge>{{ book.isPublic ? 'Публичная' : 'Приватная' }}</span>
                   }
                 </div>

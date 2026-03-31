@@ -4,7 +4,7 @@
 
 .list-details-page {
   display: grid;
-  gap: 1.5rem;
+  gap: 1rem;
   padding: clamp(1rem, 3vw, 2rem);
 }
 
@@ -12,7 +12,9 @@
 .hero-card,
 .books-panel {
   border: 1px solid var(--polka-border);
-  background-color: rgba(255, 255, 255, 0.84);
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: var(--polka-shadow);
+  backdrop-filter: blur(18px);
 }
 
 .state-card {
@@ -52,7 +54,7 @@
 
 .books-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1rem;
 }
 
@@ -60,14 +62,15 @@
   display: grid;
   gap: 1rem;
   padding: 1rem;
-  border: 1px solid rgba(15, 15, 16, 0.08);
+  border: 1px solid rgba(13, 13, 13, 0.08);
+  background: rgba(255, 255, 255, 0.46);
   color: inherit;
   text-decoration: none;
 }
 
 .book-cover {
   position: relative;
-  min-height: 14rem;
+  min-height: 16rem;
   display: grid;
   place-items: center;
   color: white;
@@ -82,11 +85,11 @@
 
 .book-rank {
   position: absolute;
-  inset: 0.75rem auto auto 0.75rem;
-  font-size: 2rem;
-  font-weight: 700;
+  inset: 0.65rem auto auto 0.65rem;
+  font-family: var(--polka-display-font);
+  font-size: 2.2rem;
   color: transparent;
-  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.8);
+  -webkit-text-stroke: 1px rgba(13, 13, 13, 0.18);
 }
 
 .book-initial {
@@ -97,4 +100,16 @@
 .book-card__body {
   display: grid;
   gap: 0.75rem;
+}
+
+@media (max-width: 980px) {
+  .books-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .books-grid {
+    grid-template-columns: 1fr;
+  }
 }

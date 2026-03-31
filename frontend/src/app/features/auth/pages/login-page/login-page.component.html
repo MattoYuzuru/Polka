@@ -1,30 +1,30 @@
 <main class="login-page">
   <section class="login-hero">
-    <p class="eyebrow" tuiChip>Polka / auth flow</p>
-    <h1 tuiHeader="h1">Каталог книг, заметок и личных рекомендаций.</h1>
+    <p class="eyebrow" tuiChip>Polka / вход</p>
+    <h1 tuiHeader="h1">Пространство для личной библиотеки, заметок и рекомендаций.</h1>
     <p class="lead">
-      В проекте уже работают login/register, JWT-сессия, owner/guest профиль и базовые защищённые
-      сценарии для владельца библиотеки.
+      Владелец попадает сразу на свою публичную полку, где может добавлять книги, собирать списки
+      рекомендаций и смотреть профиль глазами гостя.
     </p>
 
-    <div class="hero-badges">
-      <span class="hero-badge" tuiBadge>Angular 21</span>
-      <span class="hero-badge" tuiBadge>Taiga UI 4</span>
-      <span class="hero-badge" tuiBadge>Go API</span>
+    <div class="hero-lines">
+      <p>Белый фон, тонкие чёрные линии, акцентные градиенты из палитры обложек.</p>
+      <p>Ни одного лишнего блока между человеком и его книгами.</p>
     </div>
 
-    <a class="demo-link" routerLink="/mattoy" tuiButton> Открыть демо-профиль без логина </a>
-
-    <a class="demo-link demo-link--secondary" routerLink="/register" tuiButton>
-      Создать новый аккаунт
-    </a>
+    <div class="hero-actions">
+      <a class="demo-link" routerLink="/mattoy" tuiButton>Открыть демо-профиль</a>
+      <a class="demo-link demo-link--secondary" routerLink="/register" tuiButton>
+        Создать аккаунт
+      </a>
+    </div>
   </section>
 
   <section class="login-card" tuiCardLarge tuiSurface>
     <div class="login-card__header">
-      <p class="login-card__meta">Демо-учётка</p>
+      <p class="login-card__meta">Вход</p>
       <h2 tuiHeader="h3">Вход в библиотеку</h2>
-      <p>Используйте тестовые данные или перейдите к регистрации своего аккаунта.</p>
+      <p>Используйте демо-учётку или войдите в собственный профиль.</p>
     </div>
 
     <form class="login-form" [formGroup]="loginForm" (ngSubmit)="submit()" data-testid="login-form">
@@ -72,6 +72,10 @@
     </form>
 
     <dl class="demo-credentials">
+      <div class="demo-credentials__title">
+        <dt>Демо-учётка</dt>
+        <dd>Быстрый вход без подготовки данных</dd>
+      </div>
       <div>
         <dt>Почта</dt>
         <dd>`reader@polka.local`</dd>

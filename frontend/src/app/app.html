@@ -1,3 +1,21 @@
 <tui-root>
-  <router-outlet />
+  <div class="app-shell">
+    <div class="app-shell__content">
+      <router-outlet />
+    </div>
+
+    <footer class="site-footer">
+      <div class="site-footer__meta">
+        <p class="site-footer__label">Polka</p>
+        <p>Личная библиотека, заметки и публичные книжные подборки.</p>
+      </div>
+
+      <div class="site-footer__links">
+        <p>Создатель: MattoYuzuru</p>
+        <a href="https://github.com/MattoYuzuru/Polka" rel="noreferrer" target="_blank">
+          GitHub repository
+        </a>
+      </div>
+    </footer>
+  </div>
 </tui-root>

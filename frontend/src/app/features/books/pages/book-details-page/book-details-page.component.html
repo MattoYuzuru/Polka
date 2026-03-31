@@ -18,7 +18,7 @@
         [style.background-image]="
           !book.coverUrl
             ? 'linear-gradient(145deg, ' +
-              (book.coverPalette.length ? book.coverPalette.join(', ') : '#101010, #404040') +
+              (book.coverPalette.length ? book.coverPalette.join(', ') : '#111111, #5d5d5d') +
               ')'
             : null
         "
@@ -31,25 +31,49 @@
       </div>
 
       <div class="book-hero__content">
-        <p tuiChip>Профиль книги</p>
-        <h1 tuiHeader="h2">{{ book.title }}</h1>
-        <p class="book-author">{{ book.author }}</p>
+        <div class="book-hero__headline">
+          <p tuiChip>Профиль книги</p>
+          <h1 tuiHeader="h2">{{ book.title }}</h1>
+          <p class="book-author">{{ book.author }}</p>
+        </div>
+
         <p class="book-description">{{ book.description || 'Описание пока не добавлено.' }}</p>
 
-        <div class="book-meta">
-          <span tuiBadge>{{ book.genre }}</span>
-          <span tuiBadge>{{ book.year }}</span>
-          <span tuiBadge>{{ book.publisher }}</span>
-          <span tuiBadge>{{ book.status }}</span>
-          @if (book.rating) {
-            <span tuiBadge>★ {{ book.rating }}</span>
-          }
+        <div class="book-meta-grid">
+          <div class="book-meta-grid__item">
+            <span>Жанр</span>
+            <strong>{{ book.genre }}</strong>
+          </div>
+          <div class="book-meta-grid__item">
+            <span>Год</span>
+            <strong>{{ book.year }}</strong>
+          </div>
+          <div class="book-meta-grid__item">
+            <span>Издательство</span>
+            <strong>{{ book.publisher }}</strong>
+          </div>
+          <div class="book-meta-grid__item">
+            <span>Статус</span>
+            <strong>{{ book.status }}</strong>
+          </div>
+          <div class="book-meta-grid__item">
+            <span>Возраст</span>
+            <strong>{{ book.ageRating }}</strong>
+          </div>
+          <div class="book-meta-grid__item">
+            <span>Оценка</span>
+            <strong>{{ book.rating || '—' }}</strong>
+          </div>
+        </div>
+
+        <div class="book-pills">
           <span tuiBadge>{{ book.isPublic ? 'Публичная' : 'Приватная' }}</span>
+          <span tuiBadge>{{ book.createdAt | date: 'longDate' : undefined : 'ru-RU' }}</span>
         </div>
 
         <div class="actions">
           <a [routerLink]="backLink()" tuiButton>Назад к библиотеке</a>
-          @if (book.viewerCanEdit) {
+          @if (canEdit()) {
             <a [routerLink]="['/books', book.id, 'edit']" tuiButton data-testid="book-edit-link">
               Редактировать
             </a>
@@ -77,7 +101,7 @@
 
     <section class="details-layout">
       <article class="details-panel" tuiCardLarge tuiSurface>
-        <p tuiChip>Мнения</p>
+        <p tuiChip>Мнение</p>
         <h2 tuiHeader="h3">Что думает владелец</h2>
 
         @if (book.opinions.length) {
@@ -96,7 +120,7 @@
         }
       </article>
 
-      <article class="details-panel" tuiCardLarge tuiSurface>
+      <article class="details-panel details-panel--quotes" tuiCardLarge tuiSurface>
         <p tuiChip>Цитаты</p>
         <h2 tuiHeader="h3">Сохранённые фрагменты</h2>
 

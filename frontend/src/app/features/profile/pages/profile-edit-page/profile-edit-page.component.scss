@@ -11,7 +11,9 @@
   gap: 1rem;
   max-width: 48rem;
   border: 1px solid var(--polka-border);
-  background: rgba(255, 255, 255, 0.86);
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: var(--polka-shadow);
+  backdrop-filter: blur(18px);
 }
 
 .profile-edit-form {
@@ -24,16 +26,15 @@
   gap: 0.45rem;
 }
 
-.field__control {
-  min-height: 3.25rem;
-  padding: 0.85rem 1rem;
-  border: 1px solid var(--polka-border);
-  background: rgba(255, 255, 255, 0.94);
+.field span {
+  color: var(--polka-muted);
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .field__control--textarea {
-  min-height: 8rem;
-  resize: vertical;
+  min-height: 9rem;
 }
 
 .error-box,
@@ -46,11 +47,16 @@
   padding: 0.85rem 1rem;
   color: #9d2916;
   border: 1px solid rgba(157, 41, 22, 0.2);
-  background: rgba(255, 240, 236, 0.92);
+  border-radius: 1.1rem;
+  background: rgba(255, 240, 236, 0.86);
 }
 
 .success-box {
+  padding: 0.85rem 1rem;
   color: #245e32;
+  border: 1px solid rgba(36, 94, 50, 0.16);
+  border-radius: 1.1rem;
+  background: rgba(232, 245, 237, 0.72);
 }
 
 .muted {

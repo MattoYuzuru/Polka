@@ -4,7 +4,7 @@
 
 .book-form-page {
   display: grid;
-  gap: 1.5rem;
+  gap: 1rem;
   padding: clamp(1rem, 3vw, 2rem);
 }
 
@@ -12,22 +12,35 @@
 .cover-dropzone,
 .form-card {
   border: 1px solid var(--polka-border);
-  background: rgba(255, 255, 255, 0.86);
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: var(--polka-shadow);
+  backdrop-filter: blur(18px);
+}
+
+.page-intro,
+.cover-dropzone,
+.form-card {
+  display: grid;
+  gap: 1rem;
 }
 
 .form-layout {
   display: grid;
-  grid-template-columns: minmax(16rem, 20rem) minmax(0, 1fr);
-  gap: 1.5rem;
+  grid-template-columns: minmax(18rem, 24rem) minmax(0, 1fr);
+  gap: 1rem;
+}
+
+.cover-dropzone__header {
+  display: grid;
+  gap: 0.55rem;
 }
 
 .cover-dropzone__placeholder {
-  min-height: 18rem;
+  min-height: 24rem;
   display: grid;
   place-items: center;
-  margin: 1rem 0;
-  border: 1px dashed rgba(15, 15, 16, 0.22);
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(243, 238, 228, 0.95));
+  border: 1px dashed rgba(13, 13, 13, 0.22);
+  background: rgba(255, 255, 255, 0.3);
   overflow: hidden;
 
   img {
@@ -38,56 +51,9 @@
 
   span {
     font-size: clamp(3rem, 8vw, 6rem);
-    font-weight: 700;
-    color: rgba(255, 255, 255, 0.9);
+    color: rgba(255, 255, 255, 0.88);
     text-transform: uppercase;
   }
-}
-
-.book-form {
-  display: grid;
-  gap: 1rem;
-}
-
-.field {
-  display: grid;
-  gap: 0.45rem;
-}
-
-.checkbox-field {
-  display: flex;
-  gap: 0.75rem;
-  align-items: center;
-}
-
-.field-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
-}
-
-.field__control {
-  min-height: 3rem;
-  padding: 0.8rem 1rem;
-  border: 1px solid var(--polka-border);
-  background: rgba(255, 255, 255, 0.94);
-}
-
-.field__control--textarea {
-  min-height: 8rem;
-  resize: vertical;
-}
-
-.actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-}
-
-.cover-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
 }
 
 .cover-upload-control {
@@ -96,10 +62,10 @@
   align-items: center;
   justify-content: center;
   min-height: 3rem;
-  padding: 0.8rem 1rem;
   border: 1px solid var(--polka-border);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.6);
   cursor: pointer;
-  background: rgba(255, 255, 255, 0.94);
 }
 
 .cover-upload-control__input {
@@ -107,6 +73,66 @@
   inset: 0;
   opacity: 0;
   cursor: pointer;
+}
+
+.cover-actions,
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+}
+
+.book-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.form-section {
+  display: grid;
+  gap: 1rem;
+  padding: 1.1rem;
+  border: 1px solid rgba(13, 13, 13, 0.08);
+  background: rgba(255, 255, 255, 0.34);
+}
+
+.form-section__heading {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.field {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.field span {
+  color: var(--polka-muted);
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.field__control--textarea {
+  min-height: 9rem;
+}
+
+.checkbox-field {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(13, 13, 13, 0.08);
+  background: rgba(255, 255, 255, 0.42);
+}
+
+.checkbox-field input {
+  width: auto;
 }
 
 .muted {
@@ -117,10 +143,11 @@
   padding: 0.85rem 1rem;
   color: #9d2916;
   border: 1px solid rgba(157, 41, 22, 0.2);
-  background: rgba(255, 240, 236, 0.92);
+  border-radius: 1.1rem;
+  background: rgba(255, 240, 236, 0.86);
 }
 
-@media (max-width: 860px) {
+@media (max-width: 900px) {
   .form-layout,
   .field-grid {
     grid-template-columns: 1fr;

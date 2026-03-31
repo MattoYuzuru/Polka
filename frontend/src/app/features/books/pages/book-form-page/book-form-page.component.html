@@ -1,20 +1,18 @@
 <main class="book-form-page">
   <section class="page-intro" tuiCardLarge tuiSurface>
-    <p tuiChip>{{ isEditMode() ? 'Редактирование книги' : 'Создание книги' }}</p>
+    <p tuiChip>{{ isEditMode() ? 'Редактирование книги' : 'Новая книга' }}</p>
     <h1 tuiHeader="h2">
       {{
         isEditMode()
-          ? 'Форма редактирует существующую книгу и возвращает владельца к карточке.'
-          : 'Форма сохраняет книгу в API и возвращает владельца в библиотеку.'
+          ? 'Обновите обложку, метаданные и личные заметки о книге.'
+          : 'Добавьте книгу в библиотеку и сохраните всё, что уже хотите о ней сказать.'
       }}
     </h1>
     <p>
       @if (isEditMode()) {
-        Поля подтягиваются из backend. Здесь же можно сменить публичность, текст мнения и
-        сохранённую цитату.
+        Здесь же можно сменить публичность, описание, мнение и цитату.
       } @else {
-        Черновик по-прежнему остаётся в `localStorage`, но основное действие уже уходит в backend и
-        сразу влияет на профиль пользователя.
+        Черновик сохраняется локально, поэтому после `F5` текст и поля не потеряются.
       }
     </p>
   </section>
@@ -27,7 +25,14 @@
   } @else {
     <section class="form-layout">
       <article class="cover-dropzone" tuiCardLarge tuiSurface>
-        <p tuiBadge>Обложка</p>
+        <div class="cover-dropzone__header">
+          <p tuiBadge>Обложка</p>
+          <p class="muted">
+            Загрузите изображение перетаскиванием или кликом. Палитра обложки используется для
+            акцентного градиента профиля.
+          </p>
+        </div>
+
         <div
           class="cover-dropzone__placeholder"
           [style.background-image]="
@@ -35,7 +40,7 @@
               ? 'linear-gradient(145deg, ' +
                 (coverPreviewPalette().length
                   ? coverPreviewPalette().join(', ')
-                  : '#101010, #404040') +
+                  : '#111111, #5d5d5d') +
                 ')'
               : null
           "
@@ -49,9 +54,6 @@
             <span>{{ bookForm.controls.title.value.slice(0, 1).toUpperCase() || 'P' }}</span>
           }
         </div>
-        <p class="muted">
-          Обложка уходит в S3-compatible storage, а палитра для градиентов собирается на backend.
-        </p>
 
         <label class="cover-upload-control" data-testid="book-cover-upload-label">
           <input
@@ -78,99 +80,113 @@
 
       <article class="form-card" tuiCardLarge tuiSurface>
         <form class="book-form" [formGroup]="bookForm" (ngSubmit)="submit()">
-          <label class="field">
-            <span>Название</span>
-            <input
-              class="field__control"
-              formControlName="title"
-              type="text"
-              data-testid="book-title-input"
-            />
-          </label>
-
-          <label class="field">
-            <span>Автор</span>
-            <input class="field__control" formControlName="author" type="text" />
-          </label>
-
-          <div class="field-grid">
-            <label class="field">
-              <span>Жанр</span>
-              <input class="field__control" formControlName="genre" type="text" />
-            </label>
+          <div class="form-section">
+            <div class="form-section__heading">
+              <p tuiBadge>Метаинформация</p>
+              <p class="muted">Основные данные о книге и её месте в библиотеке.</p>
+            </div>
 
             <label class="field">
-              <span>Год</span>
-              <input class="field__control" formControlName="year" type="number" />
-            </label>
-          </div>
-
-          <div class="field-grid">
-            <label class="field">
-              <span>Издательство</span>
-              <input class="field__control" formControlName="publisher" type="text" />
-            </label>
-
-            <label class="field">
-              <span>Возрастное ограничение</span>
-              <input class="field__control" formControlName="ageRating" type="text" />
-            </label>
-          </div>
-
-          <div class="field-grid">
-            <label class="field">
-              <span>Статус</span>
-              <select
-                class="field__control"
-                formControlName="status"
-                data-testid="book-status-select"
-              >
-                @for (status of statusOptions; track status) {
-                  <option [value]="status">{{ status }}</option>
-                }
-              </select>
-            </label>
-
-            <label class="field">
-              <span>Оценка</span>
+              <span>Название</span>
               <input
                 class="field__control"
-                formControlName="rating"
-                type="number"
-                min="0"
-                max="10"
+                formControlName="title"
+                type="text"
+                data-testid="book-title-input"
               />
+            </label>
+
+            <label class="field">
+              <span>Автор</span>
+              <input class="field__control" formControlName="author" type="text" />
+            </label>
+
+            <div class="field-grid">
+              <label class="field">
+                <span>Жанр</span>
+                <input class="field__control" formControlName="genre" type="text" />
+              </label>
+
+              <label class="field">
+                <span>Год</span>
+                <input class="field__control" formControlName="year" type="number" />
+              </label>
+            </div>
+
+            <div class="field-grid">
+              <label class="field">
+                <span>Издательство</span>
+                <input class="field__control" formControlName="publisher" type="text" />
+              </label>
+
+              <label class="field">
+                <span>Возрастное ограничение</span>
+                <input class="field__control" formControlName="ageRating" type="text" />
+              </label>
+            </div>
+
+            <div class="field-grid">
+              <label class="field">
+                <span>Статус</span>
+                <select
+                  class="field__control"
+                  formControlName="status"
+                  data-testid="book-status-select"
+                >
+                  @for (status of statusOptions; track status) {
+                    <option [value]="status">{{ status }}</option>
+                  }
+                </select>
+              </label>
+
+              <label class="field">
+                <span>Оценка</span>
+                <input
+                  class="field__control"
+                  formControlName="rating"
+                  type="number"
+                  min="0"
+                  max="10"
+                />
+              </label>
+            </div>
+
+            <label class="checkbox-field">
+              <input formControlName="isPublic" type="checkbox" />
+              <span>Показывать книгу в публичной библиотеке</span>
             </label>
           </div>
 
-          <label class="checkbox-field">
-            <input formControlName="isPublic" type="checkbox" />
-            <span>Показывать книгу в публичной библиотеке</span>
-          </label>
+          <div class="form-section">
+            <div class="form-section__heading">
+              <p tuiBadge>Текст</p>
+              <p class="muted">Описание, мнение и цитата, которые должны остаться с книгой.</p>
+            </div>
 
-          <label class="field">
-            <span>Описание</span>
-            <textarea
-              class="field__control field__control--textarea"
-              formControlName="description"
-            ></textarea>
-          </label>
+            <label class="field">
+              <span>Описание</span>
+              <textarea
+                class="field__control field__control--textarea"
+                formControlName="description"
+              ></textarea>
+            </label>
 
-          <label class="field">
-            <span>Мнение</span>
-            <textarea
-              class="field__control field__control--textarea"
-              formControlName="opinion"
-            ></textarea>
-          </label>
+            <label class="field">
+              <span>Мнение</span>
+              <textarea
+                class="field__control field__control--textarea"
+                formControlName="opinion"
+              ></textarea>
+            </label>
 
-          <label class="field">
-            <span>Цитата</span>
-            <textarea
-              class="field__control field__control--textarea"
-              formControlName="quote"
-            ></textarea>
-          </label>
+            <label class="field">
+              <span>Цитата</span>
+              <textarea
+                class="field__control field__control--textarea"
+                formControlName="quote"
+              ></textarea>
+            </label>
+          </div>
 
           @if (draftMessage()) {
             <p class="muted">{{ draftMessage() }}</p>
