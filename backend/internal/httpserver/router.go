@@ -11,6 +11,7 @@ import (
 	"github.com/go-chi/cors"
 
 	"github.com/MattoYuzuru/Polka/backend/internal/auth"
+	"github.com/MattoYuzuru/Polka/backend/internal/books"
 	"github.com/MattoYuzuru/Polka/backend/internal/config"
 	"github.com/MattoYuzuru/Polka/backend/internal/profile"
 	"github.com/MattoYuzuru/Polka/backend/internal/shared/httputil"
@@ -20,6 +21,7 @@ func NewRouter(
 	cfg config.Config,
 	authService *auth.Service,
 	tokenManager *auth.TokenManager,
+	booksService *books.Service,
 	profileService *profile.Service,
 ) http.Handler {
 	router := chi.NewRouter()
@@ -97,6 +99,37 @@ func NewRouter(
 			}
 
 			httputil.WriteJSON(w, http.StatusCreated, session)
+		})
+
+		router.Post("/books", func(w http.ResponseWriter, r *http.Request) {
+			claims, ok := requireAuth(w, r, tokenManager)
+			if !ok {
+				return
+			}
+
+			var input books.CreateBookInput
+
+			if err := httputil.DecodeJSON(r, &input); err != nil {
+				httputil.WriteError(w, http.StatusBadRequest, "Некорректный JSON в теле запроса.")
+
+				return
+			}
+
+			bookDetails, err := booksService.Create(r.Context(), claims.Subject, input)
+			if err != nil {
+				switch {
+				case errors.Is(err, books.ErrInvalidInput):
+					httputil.WriteError(w, http.StatusBadRequest, "Заполните обязательные поля книги корректно.")
+				case errors.Is(err, books.ErrUnauthorized):
+					httputil.WriteError(w, http.StatusUnauthorized, "Требуется авторизация.")
+				default:
+					httputil.WriteError(w, http.StatusInternalServerError, "Не удалось создать книгу.")
+				}
+
+				return
+			}
+
+			httputil.WriteJSON(w, http.StatusCreated, bookDetails)
 		})
 
 		router.Get("/profiles/me", func(w http.ResponseWriter, r *http.Request) {
@@ -177,6 +210,27 @@ func NewRouter(
 			}
 
 			httputil.WriteJSON(w, http.StatusOK, profileView)
+		})
+
+		router.Get("/books/{bookID}", func(w http.ResponseWriter, r *http.Request) {
+			bookDetails, err := booksService.FindByID(
+				r.Context(),
+				chi.URLParam(r, "bookID"),
+				extractViewerUserID(r, tokenManager),
+			)
+			if err != nil {
+				if errors.Is(err, books.ErrNotFound) {
+					httputil.WriteError(w, http.StatusNotFound, "Книга не найдена.")
+
+					return
+				}
+
+				httputil.WriteError(w, http.StatusInternalServerError, "Не удалось загрузить книгу.")
+
+				return
+			}
+
+			httputil.WriteJSON(w, http.StatusOK, bookDetails)
 		})
 	})
 

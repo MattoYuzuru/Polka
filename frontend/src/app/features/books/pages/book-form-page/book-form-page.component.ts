@@ -1,13 +1,15 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
-import { debounceTime } from 'rxjs';
+import { Router, RouterLink } from '@angular/router';
+import { debounceTime, finalize } from 'rxjs';
 import { TuiButton } from '@taiga-ui/core';
 import { TuiSurface } from '@taiga-ui/core';
 import { TuiBadge, TuiChip } from '@taiga-ui/kit';
 import { TuiCardLarge, TuiHeader } from '@taiga-ui/layout';
 
+import { BookApiService } from '../../../../core/services/book-api.service';
+import { AuthSessionStore } from '../../../../core/stores/auth-session.store';
 import { BOOK_STATUS_OPTIONS } from '../../../../shared/data/book-form.constants';
 
 const BOOK_DRAFT_KEY = 'polka.books.create-draft';
@@ -31,16 +33,24 @@ const BOOK_DRAFT_KEY = 'polka.books.create-draft';
 export class BookFormPageComponent {
   private readonly formBuilder = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly router = inject(Router);
+  private readonly bookApiService = inject(BookApiService);
+  protected readonly authSessionStore = inject(AuthSessionStore);
 
   protected readonly statusOptions = BOOK_STATUS_OPTIONS;
-  protected readonly savedMessage = signal<string | null>(null);
+  protected readonly draftMessage = signal<string | null>(null);
+  protected readonly errorMessage = signal<string | null>(null);
+  protected readonly isSubmitting = signal(false);
 
   protected readonly bookForm = this.formBuilder.nonNullable.group({
     title: ['', [Validators.required, Validators.minLength(2)]],
     author: ['', [Validators.required, Validators.minLength(2)]],
     genre: ['', [Validators.required]],
-    year: [2024, [Validators.required, Validators.min(0)]],
+    publisher: ['', [Validators.required, Validators.minLength(2)]],
+    ageRating: ['16+', [Validators.required]],
+    year: [new Date().getFullYear(), [Validators.required, Validators.min(0)]],
     status: [BOOK_STATUS_OPTIONS[6], [Validators.required]],
+    isPublic: [true],
     rating: [null as number | null],
     description: [''],
     opinion: [''],
@@ -65,14 +75,38 @@ export class BookFormPageComponent {
       });
   }
 
-  protected saveDraftLocally(): void {
+  protected submit(): void {
     if (this.bookForm.invalid) {
       this.bookForm.markAllAsTouched();
 
       return;
     }
 
-    this.savedMessage.set(
+    this.errorMessage.set(null);
+    this.draftMessage.set(null);
+    this.isSubmitting.set(true);
+
+    this.bookApiService
+      .createBook(this.bookForm.getRawValue())
+      .pipe(
+        finalize(() => this.isSubmitting.set(false)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: () => {
+          globalThis.localStorage?.removeItem(BOOK_DRAFT_KEY);
+
+          const nickname = this.authSessionStore.user()?.nickname ?? 'login';
+          void this.router.navigateByUrl(`/${nickname}`);
+        },
+        error: (error: { error?: { message?: string } }) => {
+          this.errorMessage.set(error.error?.message ?? 'Не удалось создать книгу.');
+        },
+      });
+  }
+
+  protected saveDraftLocally(): void {
+    this.draftMessage.set(
       `Черновик обновлён ${new Intl.DateTimeFormat('ru-RU', {
         dateStyle: 'medium',
         timeStyle: 'short',
@@ -85,14 +119,18 @@ export class BookFormPageComponent {
       title: '',
       author: '',
       genre: '',
+      publisher: '',
+      ageRating: '16+',
       year: new Date().getFullYear(),
       status: BOOK_STATUS_OPTIONS[6],
+      isPublic: true,
       rating: null,
       description: '',
       opinion: '',
       quote: '',
     });
-    this.savedMessage.set('Черновик очищен.');
+    this.draftMessage.set('Черновик очищен.');
+    this.errorMessage.set(null);
     globalThis.localStorage?.removeItem(BOOK_DRAFT_KEY);
   }
 }
