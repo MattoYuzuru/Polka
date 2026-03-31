@@ -9,6 +9,7 @@
     "test:component": "playwright test",
     "test:component:headed": "playwright test --headed",
     "playwright:install": "playwright install chromium",
+    "deploy:polka:k8s": "./scripts/deploy/polka-bootstrap-k8s.sh",
     "lint:frontend": "npm --prefix frontend run lint",
     "lint:styles": "npm --prefix frontend run lint:styles",
     "format:check": "npm --prefix frontend run format:check",
