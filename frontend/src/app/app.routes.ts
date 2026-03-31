@@ -11,6 +11,13 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'register',
+    loadComponent: () =>
+      import('./features/auth/pages/register-page/register-page.component').then(
+        (module) => module.RegisterPageComponent,
+      ),
+  },
+  {
     path: 'books/new',
     canActivate: [authGuard],
     loadComponent: () =>
@@ -31,6 +38,14 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/recommendation-lists/pages/list-form-page/list-form-page.component').then(
         (module) => module.ListFormPageComponent,
+      ),
+  },
+  {
+    path: 'settings/profile',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/profile/pages/profile-edit-page/profile-edit-page.component').then(
+        (module) => module.ProfileEditPageComponent,
       ),
   },
   {

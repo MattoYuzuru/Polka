@@ -71,6 +71,93 @@ func NewRouter(
 			httputil.WriteJSON(w, http.StatusOK, session)
 		})
 
+		router.Post("/auth/register", func(w http.ResponseWriter, r *http.Request) {
+			var input auth.RegisterInput
+
+			if err := httputil.DecodeJSON(r, &input); err != nil {
+				httputil.WriteError(w, http.StatusBadRequest, "Некорректный JSON в теле запроса.")
+
+				return
+			}
+
+			session, err := authService.Register(r.Context(), input)
+			if err != nil {
+				switch {
+				case errors.Is(err, auth.ErrEmailAlreadyExists):
+					httputil.WriteError(w, http.StatusConflict, "Пользователь с такой почтой уже существует.")
+				case errors.Is(err, auth.ErrNicknameAlreadyExists):
+					httputil.WriteError(w, http.StatusConflict, "Пользователь с таким никнеймом уже существует.")
+				case errors.Is(err, auth.ErrInvalidCredentials):
+					httputil.WriteError(w, http.StatusBadRequest, "Заполните никнейм, почту и пароль.")
+				default:
+					httputil.WriteError(w, http.StatusInternalServerError, "Не удалось зарегистрировать пользователя.")
+				}
+
+				return
+			}
+
+			httputil.WriteJSON(w, http.StatusCreated, session)
+		})
+
+		router.Get("/profiles/me", func(w http.ResponseWriter, r *http.Request) {
+			claims, ok := requireAuth(w, r, tokenManager)
+			if !ok {
+				return
+			}
+
+			editableProfile, err := profileService.GetEditableByUserID(r.Context(), claims.Subject)
+			if err != nil {
+				if errors.Is(err, profile.ErrNotFound) {
+					httputil.WriteError(w, http.StatusNotFound, "Профиль не найден.")
+
+					return
+				}
+
+				httputil.WriteError(w, http.StatusInternalServerError, "Не удалось загрузить редактируемый профиль.")
+
+				return
+			}
+
+			httputil.WriteJSON(w, http.StatusOK, editableProfile)
+		})
+
+		router.Patch("/profiles/me", func(w http.ResponseWriter, r *http.Request) {
+			claims, ok := requireAuth(w, r, tokenManager)
+			if !ok {
+				return
+			}
+
+			var input profile.UpdateProfileInput
+
+			if err := httputil.DecodeJSON(r, &input); err != nil {
+				httputil.WriteError(w, http.StatusBadRequest, "Некорректный JSON в теле запроса.")
+
+				return
+			}
+
+			if strings.TrimSpace(input.Nickname) == "" || strings.TrimSpace(input.DisplayName) == "" {
+				httputil.WriteError(w, http.StatusBadRequest, "Никнейм и отображаемое имя обязательны.")
+
+				return
+			}
+
+			editableProfile, err := profileService.UpdateByUserID(r.Context(), claims.Subject, input)
+			if err != nil {
+				switch {
+				case errors.Is(err, profile.ErrNicknameAlreadyExists):
+					httputil.WriteError(w, http.StatusConflict, "Пользователь с таким никнеймом уже существует.")
+				case errors.Is(err, profile.ErrNotFound):
+					httputil.WriteError(w, http.StatusNotFound, "Профиль не найден.")
+				default:
+					httputil.WriteError(w, http.StatusInternalServerError, "Не удалось обновить профиль.")
+				}
+
+				return
+			}
+
+			httputil.WriteJSON(w, http.StatusOK, editableProfile)
+		})
+
 		router.Get("/profiles/{nickname}", func(w http.ResponseWriter, r *http.Request) {
 			profileView, err := profileService.ByNickname(
 				r.Context(),
@@ -110,4 +197,28 @@ func extractViewerUserID(r *http.Request, tokenManager *auth.TokenManager) strin
 	}
 
 	return claims.Subject
+}
+
+func requireAuth(
+	w http.ResponseWriter,
+	r *http.Request,
+	tokenManager *auth.TokenManager,
+) (auth.TokenClaims, bool) {
+	const bearerPrefix = "Bearer "
+
+	authorizationHeader := r.Header.Get("Authorization")
+	if !strings.HasPrefix(authorizationHeader, bearerPrefix) {
+		httputil.WriteError(w, http.StatusUnauthorized, "Требуется авторизация.")
+
+		return auth.TokenClaims{}, false
+	}
+
+	claims, err := tokenManager.Parse(strings.TrimPrefix(authorizationHeader, bearerPrefix))
+	if err != nil {
+		httputil.WriteError(w, http.StatusUnauthorized, "Токен недействителен.")
+
+		return auth.TokenClaims{}, false
+	}
+
+	return claims, true
 }

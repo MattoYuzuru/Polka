@@ -53,8 +53,26 @@ type PublicProfile struct {
 	RecommendationLists []RecommendationList `json:"recommendationLists"`
 }
 
+type EditableProfile struct {
+	UserID        string    `json:"userId"`
+	Nickname      string    `json:"nickname"`
+	Email         string    `json:"email"`
+	DisplayName   string    `json:"displayName"`
+	Tagline       string    `json:"tagline"`
+	GradientStops []string  `json:"gradientStops"`
+	CreatedAt     time.Time `json:"createdAt"`
+}
+
+type UpdateProfileInput struct {
+	Nickname    string `json:"nickname"`
+	DisplayName string `json:"displayName"`
+	Tagline     string `json:"tagline"`
+}
+
 type Repository interface {
 	FindByNickname(ctx context.Context, nickname string, viewerUserID string) (PublicProfile, error)
+	GetEditableByUserID(ctx context.Context, userID string) (EditableProfile, error)
+	UpdateByUserID(ctx context.Context, userID string, input UpdateProfileInput) (EditableProfile, error)
 }
 
 type Service struct {
@@ -73,4 +91,19 @@ func (service *Service) ByNickname(
 	viewerUserID string,
 ) (PublicProfile, error) {
 	return service.repository.FindByNickname(ctx, nickname, viewerUserID)
+}
+
+func (service *Service) GetEditableByUserID(
+	ctx context.Context,
+	userID string,
+) (EditableProfile, error) {
+	return service.repository.GetEditableByUserID(ctx, userID)
+}
+
+func (service *Service) UpdateByUserID(
+	ctx context.Context,
+	userID string,
+	input UpdateProfileInput,
+) (EditableProfile, error) {
+	return service.repository.UpdateByUserID(ctx, userID, input)
 }

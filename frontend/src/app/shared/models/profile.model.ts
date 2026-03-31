@@ -27,3 +27,19 @@ export interface PublicProfile {
   books: BookCard[];
   recommendationLists: RecommendationListCard[];
 }
+
+export interface EditableProfile {
+  userId: string;
+  nickname: string;
+  email: string;
+  displayName: string;
+  tagline: string;
+  gradientStops: string[];
+  createdAt: string;
+}
+
+export interface UpdateProfilePayload {
+  nickname: string;
+  displayName: string;
+  tagline: string;
+}

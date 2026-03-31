@@ -3,7 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import { AuthSession, LoginPayload } from '../../shared/models/auth.model';
+import { AuthSession, LoginPayload, RegisterPayload } from '../../shared/models/auth.model';
 
 @Injectable({ providedIn: 'root' })
 export class AuthApiService {
@@ -11,5 +11,9 @@ export class AuthApiService {
 
   login(payload: LoginPayload): Observable<AuthSession> {
     return this.http.post<AuthSession>(`${environment.apiBaseUrl}/auth/login`, payload);
+  }
+
+  register(payload: RegisterPayload): Observable<AuthSession> {
+    return this.http.post<AuthSession>(`${environment.apiBaseUrl}/auth/register`, payload);
   }
 }

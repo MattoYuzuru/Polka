@@ -1,0 +1,48 @@
+<main class="profile-edit-page">
+  <section class="profile-edit-card" tuiCardLarge tuiSurface>
+    <p tuiChip>Настройки профиля</p>
+    <h1 tuiHeader="h2">Редактирование публичной страницы</h1>
+    <p>
+      Изменения сразу влияют на адрес страницы, заголовок профиля и описание, которое
+      видят посетители.
+    </p>
+
+    @if (isLoading()) {
+      <p class="muted">Загружаем текущие данные пользователя...</p>
+    } @else {
+      <form class="profile-edit-form" [formGroup]="profileForm" (ngSubmit)="submit()">
+        <label class="field">
+          <span>Никнейм</span>
+          <input class="field__control" formControlName="nickname" type="text" />
+        </label>
+
+        <label class="field">
+          <span>Отображаемое имя</span>
+          <input class="field__control" formControlName="displayName" type="text" />
+        </label>
+
+        <label class="field">
+          <span>Теглайн</span>
+          <textarea class="field__control field__control--textarea" formControlName="tagline"></textarea>
+        </label>
+
+        @if (errorMessage()) {
+          <div class="error-box">{{ errorMessage() }}</div>
+        }
+
+        @if (successMessage()) {
+          <p class="success-box">{{ successMessage() }}</p>
+        }
+
+        <div class="actions">
+          <button tuiButton type="submit" [disabled]="isSubmitting()">
+            {{ isSubmitting() ? 'Сохраняем...' : 'Сохранить профиль' }}
+          </button>
+          @if (authSessionStore.user(); as user) {
+            <a [routerLink]="['/', user.nickname]" tuiButton>Вернуться в профиль</a>
+          }
+        </div>
+      </form>
+    }
+  </section>
+</main>
