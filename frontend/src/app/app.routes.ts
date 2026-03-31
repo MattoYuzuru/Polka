@@ -1,0 +1,52 @@
+import { Routes } from '@angular/router';
+
+import { authGuard } from './core/guards/auth.guard';
+
+export const routes: Routes = [
+  {
+    path: 'login',
+    loadComponent: () =>
+      import('./features/auth/pages/login-page/login-page.component').then(
+        (module) => module.LoginPageComponent,
+      ),
+  },
+  {
+    path: 'books/new',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/books/pages/book-form-page/book-form-page.component').then(
+        (module) => module.BookFormPageComponent,
+      ),
+  },
+  {
+    path: 'books/:bookId',
+    loadComponent: () =>
+      import('./features/books/pages/book-details-page/book-details-page.component').then(
+        (module) => module.BookDetailsPageComponent,
+      ),
+  },
+  {
+    path: 'lists/new',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/recommendation-lists/pages/list-form-page/list-form-page.component').then(
+        (module) => module.ListFormPageComponent,
+      ),
+  },
+  {
+    path: ':nickname',
+    loadComponent: () =>
+      import('./features/profile/pages/profile-page/profile-page.component').then(
+        (module) => module.ProfilePageComponent,
+      ),
+  },
+  {
+    path: '',
+    pathMatch: 'full',
+    redirectTo: 'login',
+  },
+  {
+    path: '**',
+    redirectTo: 'login',
+  },
+];

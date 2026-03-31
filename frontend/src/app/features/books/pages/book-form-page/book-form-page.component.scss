@@ -1,0 +1,77 @@
+:host {
+  display: block;
+}
+
+.book-form-page {
+  display: grid;
+  gap: 1.5rem;
+  padding: clamp(1rem, 3vw, 2rem);
+}
+
+.page-intro,
+.cover-dropzone,
+.form-card {
+  border: 1px solid var(--polka-border);
+  background: rgba(255, 255, 255, 0.86);
+}
+
+.form-layout {
+  display: grid;
+  grid-template-columns: minmax(16rem, 20rem) minmax(0, 1fr);
+  gap: 1.5rem;
+}
+
+.cover-dropzone__placeholder {
+  min-height: 18rem;
+  display: grid;
+  place-items: center;
+  margin: 1rem 0;
+  border: 1px dashed rgba(15, 15, 16, 0.22);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(243, 238, 228, 0.95));
+}
+
+.book-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.field {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.field__control {
+  min-height: 3rem;
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--polka-border);
+  background: rgba(255, 255, 255, 0.94);
+}
+
+.field__control--textarea {
+  min-height: 8rem;
+  resize: vertical;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.muted {
+  color: var(--polka-muted);
+}
+
+@media (max-width: 860px) {
+  .form-layout,
+  .field-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,90 @@
+<main class="book-form-page">
+  <section class="page-intro" tuiCardLarge tuiSurface>
+    <p tuiChip>Создание книги</p>
+    <h1 tuiHeader="h2">Форма уже готова под валидацию и локальный draft cache.</h1>
+    <p>
+      На следующем этапе эта страница будет связана с backend CRUD, загрузкой обложек и
+      цитатами как отдельной сущностью.
+    </p>
+  </section>
+
+  <section class="form-layout">
+    <article class="cover-dropzone" tuiCardLarge tuiSurface>
+      <p tuiBadge>Обложка</p>
+      <div class="cover-dropzone__placeholder">
+        Drag & drop / click upload
+      </div>
+      <p class="muted">
+        Пока подключён только UI-shell. Загрузка файла будет добавлена вместе с API для
+        медиа-хранилища.
+      </p>
+    </article>
+
+    <article class="form-card" tuiCardLarge tuiSurface>
+      <form class="book-form" [formGroup]="bookForm" (ngSubmit)="saveDraftLocally()">
+        <label class="field">
+          <span>Название</span>
+          <input class="field__control" formControlName="title" type="text" />
+        </label>
+
+        <label class="field">
+          <span>Автор</span>
+          <input class="field__control" formControlName="author" type="text" />
+        </label>
+
+        <div class="field-grid">
+          <label class="field">
+            <span>Жанр</span>
+            <input class="field__control" formControlName="genre" type="text" />
+          </label>
+
+          <label class="field">
+            <span>Год</span>
+            <input class="field__control" formControlName="year" type="number" />
+          </label>
+        </div>
+
+        <div class="field-grid">
+          <label class="field">
+            <span>Статус</span>
+            <select class="field__control" formControlName="status">
+              @for (status of statusOptions; track status) {
+                <option [value]="status">{{ status }}</option>
+              }
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Оценка</span>
+            <input class="field__control" formControlName="rating" type="number" min="0" max="10" />
+          </label>
+        </div>
+
+        <label class="field">
+          <span>Описание</span>
+          <textarea class="field__control field__control--textarea" formControlName="description"></textarea>
+        </label>
+
+        <label class="field">
+          <span>Мнение</span>
+          <textarea class="field__control field__control--textarea" formControlName="opinion"></textarea>
+        </label>
+
+        <label class="field">
+          <span>Цитата</span>
+          <textarea class="field__control field__control--textarea" formControlName="quote"></textarea>
+        </label>
+
+        @if (savedMessage()) {
+          <p class="muted">{{ savedMessage() }}</p>
+        }
+
+        <div class="actions">
+          <button tuiButton type="submit">Сохранить черновик</button>
+          <button tuiButton type="button" (click)="resetDraft()">Очистить</button>
+          <a routerLink="/mattoy" tuiButton>К профилю</a>
+        </div>
+      </form>
+    </article>
+  </section>
+</main>

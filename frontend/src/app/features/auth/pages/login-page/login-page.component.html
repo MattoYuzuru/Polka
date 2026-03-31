@@ -1,0 +1,67 @@
+<main class="login-page">
+  <section class="login-hero">
+    <p class="eyebrow" tuiChip>Polka / auth flow bootstrap</p>
+    <h1 tuiHeader="h1">Каталог книг, заметок и личных рекомендаций.</h1>
+    <p class="lead">
+      Первый вертикальный срез уже собран: Angular app shell, Signal Store, Go mock API,
+      login flow, guards, interceptors и публичная страница профиля.
+    </p>
+
+    <div class="hero-badges">
+      <span class="hero-badge" tuiBadge>Angular 21</span>
+      <span class="hero-badge" tuiBadge>Taiga UI 4</span>
+      <span class="hero-badge" tuiBadge>Go API</span>
+    </div>
+
+    <a class="demo-link" routerLink="/mattoy" tuiButton>
+      Открыть демо-профиль без логина
+    </a>
+  </section>
+
+  <section class="login-card" tuiCardLarge tuiSurface>
+    <div class="login-card__header">
+      <p class="login-card__meta">Демо-учётка</p>
+      <h2 tuiHeader="h3">Вход в библиотеку</h2>
+      <p>Используйте тестовые данные или замените их своими после подключения регистрации.</p>
+    </div>
+
+    <form class="login-form" [formGroup]="loginForm" (ngSubmit)="submit()">
+      <label class="field">
+        <span class="field__label">Почта</span>
+        <input class="field__control" formControlName="email" type="email" />
+        @if (loginForm.controls.email.touched && loginForm.controls.email.invalid) {
+          <span class="field__error">Введите корректный email.</span>
+        }
+      </label>
+
+      <label class="field">
+        <span class="field__label">Пароль</span>
+        <input class="field__control" formControlName="password" type="password" />
+        @if (loginForm.controls.password.touched && loginForm.controls.password.invalid) {
+          <span class="field__error">Пароль должен содержать минимум 8 символов.</span>
+        }
+      </label>
+
+      @if (errorMessage()) {
+        <div class="error-box">
+          {{ errorMessage() }}
+        </div>
+      }
+
+      <button class="submit-button" tuiButton type="submit" [disabled]="isSubmitting()">
+        {{ isSubmitting() ? 'Входим...' : 'Войти' }}
+      </button>
+    </form>
+
+    <dl class="demo-credentials">
+      <div>
+        <dt>Почта</dt>
+        <dd>`reader@polka.local`</dd>
+      </div>
+      <div>
+        <dt>Пароль</dt>
+        <dd>`Reader1234`</dd>
+      </div>
+    </dl>
+  </section>
+</main>
