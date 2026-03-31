@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/MattoYuzuru/Polka/backend/internal/auth"
+	"github.com/MattoYuzuru/Polka/backend/internal/books"
 	"github.com/MattoYuzuru/Polka/backend/internal/config"
 	"github.com/MattoYuzuru/Polka/backend/internal/database"
 	"github.com/MattoYuzuru/Polka/backend/internal/httpserver"
@@ -37,13 +38,15 @@ func main() {
 
 	tokenManager := auth.NewTokenManager(cfg.JWTSecret, 24*time.Hour)
 	authRepository := auth.NewPostgresRepository(pool)
+	booksRepository := books.NewPostgresRepository(pool)
 	profileRepository := profile.NewPostgresRepository(pool)
 	authService := auth.NewService(authRepository, tokenManager)
+	booksService := books.NewService(booksRepository)
 	profileService := profile.NewService(profileRepository)
 
 	server := &http.Server{
 		Addr:              ":" + cfg.Port,
-		Handler:           httpserver.NewRouter(cfg, authService, tokenManager, profileService),
+		Handler:           httpserver.NewRouter(cfg, authService, tokenManager, booksService, profileService),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 

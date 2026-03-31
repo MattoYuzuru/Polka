@@ -1,11 +1,87 @@
 <main class="book-details-page">
-  <section class="details-card" tuiCardLarge tuiSurface>
-    <p tuiChip>Карточка книги</p>
-    <h1 tuiHeader="h2">Книга {{ bookId() }}</h1>
-    <p>
-      Здесь появятся развёрнутые цитаты, мнение пользователя и вся метаинформация по книге.
-      Пока это placeholder route для проверки навигации и будущего доменного разреза.
-    </p>
-    <a routerLink="/mattoy" tuiButton>Назад к библиотеке</a>
-  </section>
+  @if (isLoading()) {
+    <section class="details-card" tuiCardLarge tuiSurface>
+      <p tuiChip>Загрузка</p>
+      <h1 tuiHeader="h3">Получаем данные книги {{ bookId() }}</h1>
+      <p>Запрос уже ушёл в API.</p>
+    </section>
+  } @else if (errorMessage()) {
+    <section class="details-card" tuiCardLarge tuiSurface>
+      <p tuiChip>Ошибка</p>
+      <h1 tuiHeader="h3">{{ errorMessage() }}</h1>
+      <a routerLink="/login" tuiButton>Ко входу</a>
+    </section>
+  } @else if (book(); as book) {
+    <section class="book-hero" tuiCardLarge tuiSurface>
+      <div
+        class="book-hero__cover"
+        [style.background-image]="'linear-gradient(145deg, ' + (book.coverPalette.length ? book.coverPalette.join(', ') : '#101010, #404040') + ')'"
+      >
+        <span>{{ book.title.slice(0, 1).toUpperCase() }}</span>
+      </div>
+
+      <div class="book-hero__content">
+        <p tuiChip>Профиль книги</p>
+        <h1 tuiHeader="h2">{{ book.title }}</h1>
+        <p class="book-author">{{ book.author }}</p>
+        <p class="book-description">{{ book.description || 'Описание пока не добавлено.' }}</p>
+
+        <div class="book-meta">
+          <span tuiBadge>{{ book.genre }}</span>
+          <span tuiBadge>{{ book.year }}</span>
+          <span tuiBadge>{{ book.publisher }}</span>
+          <span tuiBadge>{{ book.status }}</span>
+          @if (book.rating) {
+            <span tuiBadge>★ {{ book.rating }}</span>
+          }
+          <span tuiBadge>{{ book.isPublic ? 'Публичная' : 'Приватная' }}</span>
+        </div>
+
+        <div class="actions">
+          <a [routerLink]="backLink()" tuiButton>Назад к библиотеке</a>
+          @if (book.viewerCanEdit) {
+            <a routerLink="/books/new" tuiButton>Добавить ещё книгу</a>
+          }
+        </div>
+      </div>
+    </section>
+
+    <section class="details-layout">
+      <article class="details-panel" tuiCardLarge tuiSurface>
+        <p tuiChip>Мнения</p>
+        <h2 tuiHeader="h3">Что думает владелец</h2>
+
+        @if (book.opinions.length) {
+          <div class="entries-stack">
+            @for (opinion of book.opinions; track opinion.id) {
+              <article class="entry-card">
+                <p>{{ opinion.content }}</p>
+                <p class="entry-date">{{ opinion.createdAt | date: 'longDate' : undefined : 'ru-RU' }}</p>
+              </article>
+            }
+          </div>
+        } @else {
+          <p class="empty-state">Развёрнутое мнение пока не добавлено.</p>
+        }
+      </article>
+
+      <article class="details-panel" tuiCardLarge tuiSurface>
+        <p tuiChip>Цитаты</p>
+        <h2 tuiHeader="h3">Сохранённые фрагменты</h2>
+
+        @if (book.quotes.length) {
+          <div class="entries-stack">
+            @for (quote of book.quotes; track quote.id) {
+              <blockquote class="entry-card entry-card--quote">
+                <p>{{ quote.content }}</p>
+                <footer class="entry-date">{{ quote.createdAt | date: 'longDate' : undefined : 'ru-RU' }}</footer>
+              </blockquote>
+            }
+          </div>
+        } @else {
+          <p class="empty-state">Цитаты ещё не добавлены.</p>
+        }
+      </article>
+    </section>
+  }
 </main>

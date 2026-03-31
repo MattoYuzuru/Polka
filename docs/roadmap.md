@@ -1,8 +1,8 @@
 # Roadmap
 
 ## Текущий статус
-- Текущая ветка: `feat/register-and-profile-edit`
-- Текущая фаза: регистрация и редактирование профиля поверх Postgres-backed auth
+- Текущая ветка: `feat/books-crud-foundation`
+- Текущая фаза: books create/get foundation с реальной формой и страницей книги
 - Последнее обновление: 2026-03-31
 
 ## Этапы
@@ -12,14 +12,14 @@
 | 1. Monorepo bootstrap | completed | Angular 21, Taiga UI 4, Signal Store, lazy routes, root scripts, Dockerfiles | `frontend/`, root config |
 | 2. Backend foundation | completed | Go API, Postgres, Docker Compose, startup migrations, seeded auth/profile persistence | `backend/`, `compose.yaml` |
 | 3. Auth и app shell | completed | JWT login/register, token storage, guards, interceptors, profile edit, owner/guest profile visibility | frontend + backend auth modules |
-| 4. Books domain | pending | CRUD книг, форма, статусы, рейтинг, цитаты, мнения | books feature |
+| 4. Books domain | in progress | create/get книг, форма, статусы, рейтинг, цитаты, мнения | books feature |
 | 5. Recommendation lists | pending | CRUD списков, выбор книг, публичность, шаринг | recommendation-lists feature |
 | 6. Public profile и статистика | in progress | owner/guest режимы, фильтры, сортировка, метрики | profile feature |
 | 7. QA и delivery | pending | unit tests, component tests, CI/CD, GHCR, deploy docs, Lighthouse | `.github/`, `docs/`, `README.md` |
 
 ## Ближайшие шаги
-1. Реализовать backend CRUD книг, цитат, мнений и рекомендательных списков.
-2. Добавить реальные owner actions в UI для книг и списков.
+1. Довести books domain до полного CRUD: редактирование, удаление, приватность и owner actions.
+2. Реализовать рекомендательные списки как реальную сущность, а не placeholder route.
 3. Настроить ESLint, Stylelint, Jest, Playwright component tests и GitHub Actions.
 4. Подготовить публикацию контейнеров в GHCR и production compose для VPS.
 
@@ -27,12 +27,10 @@
 - `npm run test:backend`
 - `npm run build:frontend`
 - `npm run test:frontend`
-- `npm run compose:check`
 - `docker compose up -d --build postgres backend`
-- `POST /api/v1/auth/register`
-- `GET /api/v1/profiles/me`
-- `PATCH /api/v1/profiles/me`
-- `GET /api/v1/profiles/:nickname` после смены никнейма
+- `POST /api/v1/books`
+- `GET /api/v1/books/:id`
+- `GET /api/v1/profiles/mattoy` с новой книгой в библиотеке
 
 ## Принципы итераций
 - Один вертикальный срез на одну небольшую ветку.
