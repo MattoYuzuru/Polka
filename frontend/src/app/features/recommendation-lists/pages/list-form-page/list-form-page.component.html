@@ -2,14 +2,18 @@
   @if (isLoading()) {
     <section class="state-card" tuiCardLarge tuiSurface>
       <p tuiChip>Загрузка</p>
-      <h1 tuiHeader="h3">Собираем библиотеку для новой подборки.</h1>
+      <h1 tuiHeader="h3">
+        {{ isEditMode() ? 'Готовим редактирование подборки.' : 'Собираем библиотеку для новой подборки.' }}
+      </h1>
       <p>Нужны книги владельца, включая приватные.</p>
     </section>
   } @else {
     <section class="list-form-layout">
       <form class="list-card" [formGroup]="listForm" (ngSubmit)="submit()" tuiCardLarge tuiSurface>
-        <p tuiChip>Новая подборка</p>
-        <h1 tuiHeader="h2">Список рекомендаций с реальным выбором книг</h1>
+        <p tuiChip>{{ isEditMode() ? 'Редактирование' : 'Новая подборка' }}</p>
+        <h1 tuiHeader="h2">
+          {{ isEditMode() ? 'Обновление списка рекомендаций' : 'Список рекомендаций с реальным выбором книг' }}
+        </h1>
         <p class="lead">
           Подборка должна содержать минимум две книги. Порядок выбора сохраняется и
           становится порядком карточек внутри списка.
@@ -61,12 +65,23 @@
 
         <div class="actions">
           <button [disabled]="isSubmitting()" tuiButton type="submit">
-            {{ isSubmitting() ? 'Сохраняем...' : 'Создать список' }}
+            {{
+              isSubmitting()
+                ? (isEditMode() ? 'Обновляем...' : 'Сохраняем...')
+                : (isEditMode() ? 'Обновить список' : 'Создать список')
+            }}
           </button>
-          <button tuiButton type="button" (click)="saveDraftLocally()">Сохранить черновик</button>
+          @if (!isEditMode()) {
+            <button tuiButton type="button" (click)="saveDraftLocally()">Сохранить черновик</button>
+          }
           <button tuiButton type="button" (click)="resetDraft()">Очистить</button>
-          <a [routerLink]="['/', authSessionStore.user()?.nickname ?? 'login']" tuiButton>
-            Вернуться в профиль
+          <a
+            [routerLink]="
+              isEditMode() && currentListId() ? ['/lists', currentListId()] : ['/', authSessionStore.user()?.nickname ?? 'login']
+            "
+            tuiButton
+          >
+            {{ isEditMode() ? 'К списку' : 'Вернуться в профиль' }}
           </a>
         </div>
       </form>

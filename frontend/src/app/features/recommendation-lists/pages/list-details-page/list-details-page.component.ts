@@ -8,8 +8,8 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, RouterLink } from '@angular/router';
-import { catchError, distinctUntilChanged, EMPTY, map, switchMap, tap } from 'rxjs';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { catchError, distinctUntilChanged, EMPTY, finalize, map, switchMap, tap } from 'rxjs';
 import { TuiButton, TuiSurface } from '@taiga-ui/core';
 import { TuiBadge, TuiChip } from '@taiga-ui/kit';
 import { TuiCardLarge, TuiHeader } from '@taiga-ui/layout';
@@ -35,12 +35,14 @@ import { RecommendationListDetails } from '../../../../shared/models/recommendat
 })
 export class ListDetailsPageComponent {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly recommendationListApiService = inject(RecommendationListApiService);
 
   protected readonly recommendationList = signal<RecommendationListDetails | null>(null);
   protected readonly isLoading = signal(true);
   protected readonly errorMessage = signal<string | null>(null);
+  protected readonly isProcessing = signal(false);
   protected readonly copied = signal(false);
   protected readonly backLink = computed(
     () => `/${this.recommendationList()?.ownerNickname ?? 'login'}`,
@@ -98,5 +100,45 @@ export class ListDetailsPageComponent {
       this.copied.set(true);
       globalThis.setTimeout(() => this.copied.set(false), 1800);
     });
+  }
+
+  protected toggleVisibility(): void {
+    const recommendationList = this.recommendationList();
+    if (!recommendationList) {
+      return;
+    }
+
+    this.isProcessing.set(true);
+
+    this.recommendationListApiService
+      .setListVisibility(recommendationList.id, !recommendationList.isPublic)
+      .pipe(
+        finalize(() => this.isProcessing.set(false)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (updatedList) => this.recommendationList.set(updatedList),
+        error: () => this.errorMessage.set('Не удалось изменить публичность списка рекомендаций.'),
+      });
+  }
+
+  protected deleteList(): void {
+    const recommendationList = this.recommendationList();
+    if (!recommendationList || !globalThis.confirm('Удалить список рекомендаций?')) {
+      return;
+    }
+
+    this.isProcessing.set(true);
+
+    this.recommendationListApiService
+      .deleteList(recommendationList.id)
+      .pipe(
+        finalize(() => this.isProcessing.set(false)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: () => void this.router.navigateByUrl(`/${recommendationList.ownerNickname}`),
+        error: () => this.errorMessage.set('Не удалось удалить список рекомендаций.'),
+      });
   }
 }

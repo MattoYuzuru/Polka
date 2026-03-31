@@ -1,9 +1,8 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
-import { Router } from '@angular/router';
-import { debounceTime, finalize } from 'rxjs';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { debounceTime, distinctUntilChanged, finalize, map } from 'rxjs';
 import { TuiButton, TuiSurface } from '@taiga-ui/core';
 import { TuiBadge, TuiChip } from '@taiga-ui/kit';
 import { TuiCardLarge, TuiHeader } from '@taiga-ui/layout';
@@ -38,15 +37,21 @@ const LIST_DRAFT_KEY = 'polka.lists.create-draft';
 export class ListFormPageComponent {
   private readonly formBuilder = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly profileApiService = inject(ProfileApiService);
   private readonly recommendationListApiService = inject(RecommendationListApiService);
   protected readonly authSessionStore = inject(AuthSessionStore);
 
+  private editingListId: string | null = null;
+  private draftWatcherInitialized = false;
+
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly draftMessage = signal<string | null>(null);
   protected readonly isLoading = signal(true);
   protected readonly isSubmitting = signal(false);
+  protected readonly isEditMode = signal(false);
+  protected readonly currentListId = signal<string | null>(null);
   protected readonly books = signal<BookCard[]>([]);
   protected readonly selectedCount = computed(() => this.listForm.controls.bookIds.value.length);
 
@@ -58,9 +63,29 @@ export class ListFormPageComponent {
   });
 
   constructor() {
-    this.restoreDraftIfPresent();
-    this.watchDraftChanges();
-    this.loadBooks();
+    this.route.paramMap
+      .pipe(
+        map((params) => params.get('listId')),
+        distinctUntilChanged(),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((listId) => {
+        this.editingListId = listId;
+        this.currentListId.set(listId);
+        this.isEditMode.set(Boolean(listId));
+        this.isLoading.set(true);
+        this.errorMessage.set(null);
+
+        if (!listId) {
+          this.restoreDraftIfPresent();
+          this.watchDraftChanges();
+          this.loadBooks();
+
+          return;
+        }
+
+        this.loadBooks(listId);
+      });
   }
 
   protected isSelected(bookId: string): boolean {
@@ -89,19 +114,30 @@ export class ListFormPageComponent {
     this.draftMessage.set(null);
     this.isSubmitting.set(true);
 
-    this.recommendationListApiService
-      .createList(this.listForm.getRawValue())
+    const request$ = this.isEditMode() && this.editingListId
+      ? this.recommendationListApiService.updateList(this.editingListId, this.listForm.getRawValue())
+      : this.recommendationListApiService.createList(this.listForm.getRawValue());
+
+    request$
       .pipe(
         finalize(() => this.isSubmitting.set(false)),
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe({
         next: (recommendationList) => {
-          globalThis.localStorage?.removeItem(LIST_DRAFT_KEY);
+          if (!this.isEditMode()) {
+            globalThis.localStorage?.removeItem(LIST_DRAFT_KEY);
+          }
+
           void this.router.navigateByUrl(`/lists/${recommendationList.id}`);
         },
         error: (error: { error?: { message?: string } }) => {
-          this.errorMessage.set(error.error?.message ?? 'Не удалось создать список рекомендаций.');
+          this.errorMessage.set(
+            error.error?.message ??
+              (this.isEditMode()
+                ? 'Не удалось обновить список рекомендаций.'
+                : 'Не удалось создать список рекомендаций.'),
+          );
         },
       });
   }
@@ -122,12 +158,16 @@ export class ListFormPageComponent {
       isPublic: true,
       bookIds: [],
     });
-    globalThis.localStorage?.removeItem(LIST_DRAFT_KEY);
+
+    if (!this.isEditMode()) {
+      globalThis.localStorage?.removeItem(LIST_DRAFT_KEY);
+    }
+
     this.draftMessage.set('Черновик очищен.');
     this.errorMessage.set(null);
   }
 
-  private loadBooks(): void {
+  private loadBooks(listId?: string): void {
     const nickname = this.authSessionStore.user()?.nickname;
 
     if (!nickname) {
@@ -140,7 +180,6 @@ export class ListFormPageComponent {
     this.profileApiService
       .getPublicProfile(nickname)
       .pipe(
-        finalize(() => this.isLoading.set(false)),
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe({
@@ -155,9 +194,18 @@ export class ListFormPageComponent {
           if (filteredSelectedBooks.length !== this.listForm.controls.bookIds.value.length) {
             this.listForm.controls.bookIds.setValue(filteredSelectedBooks);
           }
+
+          if (listId) {
+            this.loadListForEdit(listId);
+
+            return;
+          }
+
+          this.isLoading.set(false);
         },
         error: () => {
           this.errorMessage.set('Не удалось загрузить библиотеку для составления списка.');
+          this.isLoading.set(false);
         },
       });
   }
@@ -177,10 +225,48 @@ export class ListFormPageComponent {
   }
 
   private watchDraftChanges(): void {
+    if (this.draftWatcherInitialized) {
+      return;
+    }
+
+    this.draftWatcherInitialized = true;
+
     this.listForm.valueChanges
       .pipe(debounceTime(150), takeUntilDestroyed(this.destroyRef))
       .subscribe((value) => {
-        globalThis.localStorage?.setItem(LIST_DRAFT_KEY, JSON.stringify(value));
+        if (!this.isEditMode()) {
+          globalThis.localStorage?.setItem(LIST_DRAFT_KEY, JSON.stringify(value));
+        }
       });
   }
+
+  private loadListForEdit(listId: string): void {
+    this.recommendationListApiService
+      .getList(listId)
+      .pipe(
+        finalize(() => this.isLoading.set(false)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (recommendationList) => {
+          this.listForm.reset(mapRecommendationListToFormValue(recommendationList));
+        },
+        error: (error: { error?: { message?: string } }) => {
+          this.errorMessage.set(
+            error.error?.message ?? 'Не удалось загрузить список рекомендаций для редактирования.',
+          );
+        },
+      });
+  }
+}
+
+function mapRecommendationListToFormValue(
+  recommendationList: RecommendationListDetails,
+): RecommendationListFormValue {
+  return {
+    title: recommendationList.title,
+    description: recommendationList.description,
+    isPublic: recommendationList.isPublic,
+    bookIds: recommendationList.books.map((book) => book.id),
+  };
 }

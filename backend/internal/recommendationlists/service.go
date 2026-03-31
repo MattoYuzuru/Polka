@@ -38,9 +38,18 @@ type CreateInput struct {
 	BookIDs     []string `json:"bookIds"`
 }
 
+type UpdateInput = CreateInput
+
+type UpdateVisibilityInput struct {
+	IsPublic bool `json:"isPublic"`
+}
+
 type Repository interface {
 	Create(ctx context.Context, ownerUserID string, input CreateInput) (Details, error)
 	FindByID(ctx context.Context, listID string, viewerUserID string) (Details, error)
+	Update(ctx context.Context, ownerUserID string, listID string, input UpdateInput) (Details, error)
+	SetVisibility(ctx context.Context, ownerUserID string, listID string, isPublic bool) (Details, error)
+	Delete(ctx context.Context, ownerUserID string, listID string) error
 }
 
 type Service struct {
@@ -81,6 +90,64 @@ func (service *Service) FindByID(
 	}
 
 	return service.repository.FindByID(ctx, listID, viewerUserID)
+}
+
+func (service *Service) Update(
+	ctx context.Context,
+	ownerUserID string,
+	listID string,
+	input UpdateInput,
+) (Details, error) {
+	if strings.TrimSpace(ownerUserID) == "" {
+		return Details{}, ErrUnauthorized
+	}
+
+	if strings.TrimSpace(listID) == "" {
+		return Details{}, ErrNotFound
+	}
+
+	input.Title = strings.TrimSpace(input.Title)
+	input.Description = strings.TrimSpace(input.Description)
+	input.BookIDs = uniqueBookIDs(input.BookIDs)
+
+	if input.Title == "" || len(input.BookIDs) < 2 {
+		return Details{}, ErrInvalidInput
+	}
+
+	return service.repository.Update(ctx, ownerUserID, listID, input)
+}
+
+func (service *Service) SetVisibility(
+	ctx context.Context,
+	ownerUserID string,
+	listID string,
+	isPublic bool,
+) (Details, error) {
+	if strings.TrimSpace(ownerUserID) == "" {
+		return Details{}, ErrUnauthorized
+	}
+
+	if strings.TrimSpace(listID) == "" {
+		return Details{}, ErrNotFound
+	}
+
+	return service.repository.SetVisibility(ctx, ownerUserID, listID, isPublic)
+}
+
+func (service *Service) Delete(
+	ctx context.Context,
+	ownerUserID string,
+	listID string,
+) error {
+	if strings.TrimSpace(ownerUserID) == "" {
+		return ErrUnauthorized
+	}
+
+	if strings.TrimSpace(listID) == "" {
+		return ErrNotFound
+	}
+
+	return service.repository.Delete(ctx, ownerUserID, listID)
 }
 
 func uniqueBookIDs(bookIDs []string) []string {

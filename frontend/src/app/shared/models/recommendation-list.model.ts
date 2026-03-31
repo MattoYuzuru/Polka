@@ -39,3 +39,4 @@ export interface RecommendationListFormValue {
 }
 
 export type CreateRecommendationListPayload = RecommendationListFormValue;
+export type UpdateRecommendationListPayload = RecommendationListFormValue;

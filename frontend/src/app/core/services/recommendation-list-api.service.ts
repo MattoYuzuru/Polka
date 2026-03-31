@@ -6,6 +6,7 @@ import { environment } from '../../../environments/environment';
 import {
   CreateRecommendationListPayload,
   RecommendationListDetails,
+  UpdateRecommendationListPayload,
 } from '../../shared/models/recommendation-list.model';
 
 @Injectable({ providedIn: 'root' })
@@ -21,6 +22,29 @@ export class RecommendationListApiService {
 
   getList(listId: string): Observable<RecommendationListDetails> {
     return this.http.get<RecommendationListDetails>(
+      `${environment.apiBaseUrl}/recommendation-lists/${encodeURIComponent(listId)}`,
+    );
+  }
+
+  updateList(
+    listId: string,
+    payload: UpdateRecommendationListPayload,
+  ): Observable<RecommendationListDetails> {
+    return this.http.patch<RecommendationListDetails>(
+      `${environment.apiBaseUrl}/recommendation-lists/${encodeURIComponent(listId)}`,
+      payload,
+    );
+  }
+
+  setListVisibility(listId: string, isPublic: boolean): Observable<RecommendationListDetails> {
+    return this.http.patch<RecommendationListDetails>(
+      `${environment.apiBaseUrl}/recommendation-lists/${encodeURIComponent(listId)}/visibility`,
+      { isPublic },
+    );
+  }
+
+  deleteList(listId: string): Observable<{ status: string }> {
+    return this.http.delete<{ status: string }>(
       `${environment.apiBaseUrl}/recommendation-lists/${encodeURIComponent(listId)}`,
     );
   }

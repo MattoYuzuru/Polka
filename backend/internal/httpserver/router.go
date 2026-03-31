@@ -165,6 +165,80 @@ func NewRouter(
 			httputil.WriteJSON(w, http.StatusCreated, recommendationList)
 		})
 
+		router.Patch("/recommendation-lists/{listID}", func(w http.ResponseWriter, r *http.Request) {
+			claims, ok := requireAuth(w, r, tokenManager)
+			if !ok {
+				return
+			}
+
+			var input recommendationlists.UpdateInput
+
+			if err := httputil.DecodeJSON(r, &input); err != nil {
+				httputil.WriteError(w, http.StatusBadRequest, "Некорректный JSON в теле запроса.")
+
+				return
+			}
+
+			recommendationList, err := recommendationListsService.Update(
+				r.Context(),
+				claims.Subject,
+				chi.URLParam(r, "listID"),
+				input,
+			)
+			if err != nil {
+				switch {
+				case errors.Is(err, recommendationlists.ErrInvalidInput):
+					httputil.WriteError(w, http.StatusBadRequest, "Укажите название списка и выберите минимум две свои книги.")
+				case errors.Is(err, recommendationlists.ErrNotFound):
+					httputil.WriteError(w, http.StatusNotFound, "Список рекомендаций не найден.")
+				case errors.Is(err, recommendationlists.ErrUnauthorized):
+					httputil.WriteError(w, http.StatusUnauthorized, "Требуется авторизация.")
+				default:
+					httputil.WriteError(w, http.StatusInternalServerError, "Не удалось обновить список рекомендаций.")
+				}
+
+				return
+			}
+
+			httputil.WriteJSON(w, http.StatusOK, recommendationList)
+		})
+
+		router.Patch("/recommendation-lists/{listID}/visibility", func(w http.ResponseWriter, r *http.Request) {
+			claims, ok := requireAuth(w, r, tokenManager)
+			if !ok {
+				return
+			}
+
+			var input recommendationlists.UpdateVisibilityInput
+
+			if err := httputil.DecodeJSON(r, &input); err != nil {
+				httputil.WriteError(w, http.StatusBadRequest, "Некорректный JSON в теле запроса.")
+
+				return
+			}
+
+			recommendationList, err := recommendationListsService.SetVisibility(
+				r.Context(),
+				claims.Subject,
+				chi.URLParam(r, "listID"),
+				input.IsPublic,
+			)
+			if err != nil {
+				switch {
+				case errors.Is(err, recommendationlists.ErrNotFound):
+					httputil.WriteError(w, http.StatusNotFound, "Список рекомендаций не найден.")
+				case errors.Is(err, recommendationlists.ErrUnauthorized):
+					httputil.WriteError(w, http.StatusUnauthorized, "Требуется авторизация.")
+				default:
+					httputil.WriteError(w, http.StatusInternalServerError, "Не удалось изменить публичность списка рекомендаций.")
+				}
+
+				return
+			}
+
+			httputil.WriteJSON(w, http.StatusOK, recommendationList)
+		})
+
 		router.Patch("/books/{bookID}", func(w http.ResponseWriter, r *http.Request) {
 			claims, ok := requireAuth(w, r, tokenManager)
 			if !ok {
@@ -254,6 +328,35 @@ func NewRouter(
 					httputil.WriteError(w, http.StatusUnauthorized, "Требуется авторизация.")
 				default:
 					httputil.WriteError(w, http.StatusInternalServerError, "Не удалось удалить книгу.")
+				}
+
+				return
+			}
+
+			httputil.WriteJSON(w, http.StatusOK, map[string]string{
+				"status": "deleted",
+			})
+		})
+
+		router.Delete("/recommendation-lists/{listID}", func(w http.ResponseWriter, r *http.Request) {
+			claims, ok := requireAuth(w, r, tokenManager)
+			if !ok {
+				return
+			}
+
+			err := recommendationListsService.Delete(
+				r.Context(),
+				claims.Subject,
+				chi.URLParam(r, "listID"),
+			)
+			if err != nil {
+				switch {
+				case errors.Is(err, recommendationlists.ErrNotFound):
+					httputil.WriteError(w, http.StatusNotFound, "Список рекомендаций не найден.")
+				case errors.Is(err, recommendationlists.ErrUnauthorized):
+					httputil.WriteError(w, http.StatusUnauthorized, "Требуется авторизация.")
+				default:
+					httputil.WriteError(w, http.StatusInternalServerError, "Не удалось удалить список рекомендаций.")
 				}
 
 				return

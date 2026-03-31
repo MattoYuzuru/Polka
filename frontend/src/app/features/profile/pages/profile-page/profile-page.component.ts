@@ -17,6 +17,7 @@ import { TuiCardLarge, TuiHeader } from '@taiga-ui/layout';
 
 import { BookApiService } from '../../../../core/services/book-api.service';
 import { ProfileApiService } from '../../../../core/services/profile-api.service';
+import { RecommendationListApiService } from '../../../../core/services/recommendation-list-api.service';
 import { AuthSessionStore } from '../../../../core/stores/auth-session.store';
 import { UiPreferencesStore } from '../../../../core/stores/ui-preferences.store';
 import { PublicProfile } from '../../../../shared/models/profile.model';
@@ -43,6 +44,7 @@ export class ProfilePageComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly bookApiService = inject(BookApiService);
   private readonly profileApiService = inject(ProfileApiService);
+  private readonly recommendationListApiService = inject(RecommendationListApiService);
   protected readonly authSessionStore = inject(AuthSessionStore);
   protected readonly uiPreferencesStore = inject(UiPreferencesStore);
 
@@ -51,6 +53,7 @@ export class ProfilePageComponent implements OnInit {
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly copied = signal(false);
   protected readonly processingBookId = signal<string | null>(null);
+  protected readonly processingListId = signal<string | null>(null);
 
   private readonly currentNickname = signal('');
 
@@ -145,6 +148,40 @@ export class ProfilePageComponent implements OnInit {
       .subscribe({
         next: () => this.reloadProfile(),
         error: () => this.errorMessage.set('Не удалось удалить книгу.'),
+      });
+  }
+
+  protected toggleRecommendationListVisibility(listId: string, isPublic: boolean): void {
+    this.processingListId.set(listId);
+
+    this.recommendationListApiService
+      .setListVisibility(listId, !isPublic)
+      .pipe(
+        finalize(() => this.processingListId.set(null)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: () => this.reloadProfile(),
+        error: () => this.errorMessage.set('Не удалось изменить публичность списка рекомендаций.'),
+      });
+  }
+
+  protected deleteRecommendationList(listId: string): void {
+    if (!globalThis.confirm('Удалить список рекомендаций?')) {
+      return;
+    }
+
+    this.processingListId.set(listId);
+
+    this.recommendationListApiService
+      .deleteList(listId)
+      .pipe(
+        finalize(() => this.processingListId.set(null)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: () => this.reloadProfile(),
+        error: () => this.errorMessage.set('Не удалось удалить список рекомендаций.'),
       });
   }
 
