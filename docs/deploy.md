@@ -60,6 +60,25 @@ POLKA_IMAGE_TAG=edge ./scripts/deploy/polka-bootstrap-k8s.sh
 
 Сейчас деплой на VPS не происходит автоматически после merge. После того как GitHub Actions закончит `publish`, нужно зайти по SSH и выполнить rollout-команду вручную.
 
+## Текущее состояние production
+
+- Домен `https://polka.keykomi.com` уже задеплоен в namespace `polka`.
+- На 2026-03-31 в `polka` работают `postgres`, `minio`, `backend`, `frontend`.
+- TLS сертификат для `polka.keykomi.com` выдан и находится в `Ready=True`.
+- Production smoke после rollout прошёл:
+  - `GET /api/v1/health`
+  - `POST /api/v1/auth/login`
+  - `POST /api/v1/books/cover-upload`
+  - `POST /api/v1/books`
+  - `GET /api/v1/books/:id`
+  - `DELETE /api/v1/books/:id`
+- Если после обновления секретов хранилища `backend` был поднят раньше `minio`, достаточно повторить:
+
+```bash
+echo 123456 | sudo -S k3s kubectl rollout restart deployment/backend -n polka
+echo 123456 | sudo -S k3s kubectl rollout status deployment/backend -n polka --timeout=120s
+```
+
 ## Что проверять после rollout
 ```bash
 echo 123456 | sudo -S k3s kubectl get ingress,svc,pods -n polka
