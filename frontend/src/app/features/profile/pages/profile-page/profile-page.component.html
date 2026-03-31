@@ -17,6 +17,7 @@
       tuiCardLarge
       tuiSurface
       [style.background-image]="uiPreferencesStore.profileGradientCss()"
+      data-testid="profile-hero"
     >
       <div class="profile-hero__overlay">
         <div class="profile-identity">
@@ -26,7 +27,7 @@
 
           <div>
             <p class="profile-kicker">Персональная библиотека</p>
-            <h1 tuiHeader="h1">{{ profile.user.nickname }}</h1>
+            <h1 tuiHeader="h1" data-testid="profile-nickname">{{ profile.user.nickname }}</h1>
             <p class="profile-display-name">{{ profile.user.displayName }}</p>
             <p class="profile-tagline">{{ profile.user.tagline }}</p>
           </div>
@@ -165,6 +166,7 @@
               placeholder="Название, автор или жанр"
               type="search"
               (input)="updateBookSearch(($any($event.target).value ?? '').toString())"
+              data-testid="books-search"
             />
           </label>
 
@@ -173,6 +175,7 @@
             <select
               [value]="selectedStatus()"
               (change)="updateStatusFilter(($any($event.target).value ?? '').toString())"
+              data-testid="books-status-filter"
             >
               <option value="all">Все</option>
               @for (status of bookStatuses; track status) {
@@ -186,6 +189,7 @@
             <select
               [value]="selectedSort()"
               (change)="updateSortOption(($any($event.target).value ?? '').toString())"
+              data-testid="books-sort"
             >
               <option value="top">По топу владельца</option>
               <option value="rating">По оценке</option>
@@ -204,9 +208,9 @@
           }
         </div>
 
-        <div class="books-grid">
+        <div class="books-grid" data-testid="books-grid">
           @for (book of visibleBooks(); track book.id) {
-            <article class="book-card" tuiSurface>
+            <article class="book-card" tuiSurface [attr.data-testid]="'book-card-' + book.id">
               <div
                 class="book-cover"
                 [style.background-image]="
