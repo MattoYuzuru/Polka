@@ -5,27 +5,28 @@
       <h1 tuiHeader="h3">
         {{
           isEditMode()
-            ? 'Готовим редактирование подборки.'
+            ? 'Подгружаем текущую подборку и библиотеку владельца.'
             : 'Собираем библиотеку для новой подборки.'
         }}
       </h1>
-      <p>Нужны книги владельца, включая приватные.</p>
     </section>
   } @else {
     <section class="list-form-layout">
       <form class="list-card" [formGroup]="listForm" (ngSubmit)="submit()" tuiCardLarge tuiSurface>
-        <p tuiChip>{{ isEditMode() ? 'Редактирование' : 'Новая подборка' }}</p>
-        <h1 tuiHeader="h2">
-          {{
-            isEditMode()
-              ? 'Обновление списка рекомендаций'
-              : 'Список рекомендаций с реальным выбором книг'
-          }}
-        </h1>
-        <p class="lead">
-          Подборка должна содержать минимум две книги. Порядок выбора сохраняется и становится
-          порядком карточек внутри списка.
-        </p>
+        <div class="list-card__header">
+          <p tuiChip>{{ isEditMode() ? 'Редактирование' : 'Новая подборка' }}</p>
+          <h1 tuiHeader="h2">
+            {{
+              isEditMode()
+                ? 'Обновите название, описание и состав списка рекомендаций.'
+                : 'Соберите подборку из книг своей библиотеки.'
+            }}
+          </h1>
+          <p class="lead">
+            Подборка должна содержать минимум две книги. Порядок выбора становится порядком карточек
+            внутри списка.
+          </p>
+        </div>
 
         @if (errorMessage()) {
           <div class="error-box" role="alert">
@@ -37,30 +38,36 @@
           <div class="draft-box">{{ draftMessage() }}</div>
         }
 
-        <label class="field">
-          <span>Название</span>
-          <input formControlName="title" placeholder="Например, Мягкий вход в sci-fi" type="text" />
-          @if (listForm.controls.title.touched && listForm.controls.title.invalid) {
-            <small>Введите название не короче 2 символов.</small>
-          }
-        </label>
+        <div class="form-section">
+          <label class="field">
+            <span>Название</span>
+            <input
+              formControlName="title"
+              placeholder="Например, Мягкий вход в sci-fi"
+              type="text"
+            />
+            @if (listForm.controls.title.touched && listForm.controls.title.invalid) {
+              <small>Введите название не короче 2 символов.</small>
+            }
+          </label>
 
-        <label class="field">
-          <span>Описание</span>
-          <textarea
-            formControlName="description"
-            placeholder="Чем объединены книги и кому этот список будет полезен."
-            rows="6"
-          ></textarea>
-        </label>
+          <label class="field">
+            <span>Описание</span>
+            <textarea
+              formControlName="description"
+              placeholder="Чем объединены книги и кому этот список будет полезен."
+              rows="6"
+            ></textarea>
+          </label>
 
-        <label class="checkbox-field">
-          <input formControlName="isPublic" type="checkbox" />
-          <div>
-            <strong>Показывать список гостям</strong>
-            <p>Если внутри есть приватные книги, гость увидит только публичную часть состава.</p>
-          </div>
-        </label>
+          <label class="checkbox-field">
+            <input formControlName="isPublic" type="checkbox" />
+            <div>
+              <strong>Показывать список гостям</strong>
+              <p>Приватную подборку нельзя распространять по ссылке и видеть без авторизации.</p>
+            </div>
+          </label>
+        </div>
 
         <div class="selection-summary">
           <span tuiBadge>Выбрано: {{ selectedCount() }}</span>
@@ -131,7 +138,7 @@
                       ? 'linear-gradient(145deg, ' +
                         (book.coverPalette.length
                           ? book.coverPalette.join(', ')
-                          : '#101010, #404040') +
+                          : '#111111, #5d5d5d') +
                         ')'
                       : null
                   "

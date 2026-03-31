@@ -5,52 +5,52 @@
 .login-page {
   min-height: 100dvh;
   display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(20rem, 28rem);
-  gap: 2rem;
-  padding: clamp(1.5rem, 4vw, 3rem);
+  grid-template-columns: minmax(0, 1.3fr) minmax(20rem, 28rem);
+  gap: 1rem;
+  padding: clamp(1rem, 3vw, 2rem);
   align-items: center;
 }
 
 .login-hero,
 .login-card {
   border: 1px solid var(--polka-border);
-  background: rgba(255, 255, 255, 0.82);
-  backdrop-filter: blur(14px);
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: var(--polka-shadow);
+  backdrop-filter: blur(18px);
 }
 
 .login-hero {
+  min-height: min(38rem, 72vh);
+  display: grid;
+  align-content: end;
+  gap: 1.2rem;
   padding: clamp(1.5rem, 5vw, 4rem);
 }
 
 .eyebrow {
-  margin: 0 0 1rem;
   width: fit-content;
 }
 
 .lead {
-  max-width: 40rem;
-  margin: 1.25rem 0 0;
+  max-width: 34rem;
   font-size: 1.05rem;
-  line-height: 1.65;
+  line-height: 1.7;
 }
 
-.hero-badges {
+.hero-lines {
+  display: grid;
+  gap: 0.4rem;
+  color: var(--polka-muted);
+}
+
+.hero-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
-  margin: 1.75rem 0;
-}
-
-.hero-badge {
-  background: transparent;
 }
 
 .demo-link {
   width: fit-content;
-}
-
-.demo-link--secondary {
-  margin-top: 0.75rem;
 }
 
 .login-card {
@@ -58,7 +58,6 @@
 }
 
 .login-card__meta {
-  margin: 0 0 0.5rem;
   color: var(--polka-muted);
   text-transform: uppercase;
   letter-spacing: 0.12em;
@@ -81,20 +80,14 @@
 }
 
 .field__label {
-  font-size: 0.9rem;
+  font-size: 0.82rem;
   color: var(--polka-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 .field__control {
-  min-height: 3.25rem;
-  padding: 0.85rem 1rem;
-  border: 1px solid var(--polka-border);
-  background: rgba(255, 255, 255, 0.94);
-}
-
-.field__control:focus {
-  outline: 2px solid rgba(74, 39, 255, 0.2);
-  outline-offset: 2px;
+  min-height: 3.3rem;
 }
 
 .field__error,
@@ -106,7 +99,8 @@
 .error-box {
   padding: 0.85rem 1rem;
   border: 1px solid rgba(157, 41, 22, 0.2);
-  background: rgba(255, 240, 236, 0.92);
+  border-radius: 1.1rem;
+  background: rgba(255, 240, 236, 0.86);
 }
 
 .submit-button {
@@ -120,6 +114,16 @@
   margin: 1.5rem 0 0;
   padding-top: 1rem;
   border-top: 1px solid rgba(15, 15, 16, 0.08);
+}
+
+.demo-credentials__title {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.demo-credentials__title dd {
+  color: var(--polka-muted);
+  font-family: inherit;
 }
 
 .demo-credentials div {

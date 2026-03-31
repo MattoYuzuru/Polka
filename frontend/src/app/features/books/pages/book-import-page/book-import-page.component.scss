@@ -4,7 +4,7 @@
 
 .book-import-page {
   display: grid;
-  gap: 1.5rem;
+  gap: 1rem;
   padding: clamp(1rem, 3vw, 2rem);
 }
 
@@ -12,7 +12,9 @@
 .helper-card,
 .form-card {
   border: 1px solid var(--polka-border);
-  background: rgba(255, 255, 255, 0.86);
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: var(--polka-shadow);
+  backdrop-filter: blur(18px);
 }
 
 .intro-badges,
@@ -25,14 +27,14 @@
 .import-layout {
   display: grid;
   grid-template-columns: minmax(18rem, 24rem) minmax(0, 1fr);
-  gap: 1.5rem;
+  gap: 1rem;
 }
 
 .json-example {
   overflow: auto;
   padding: 1rem;
-  border: 1px solid rgba(15, 15, 16, 0.08);
-  background: rgba(15, 15, 16, 0.04);
+  border: 1px solid rgba(13, 13, 13, 0.08);
+  background: rgba(13, 13, 13, 0.04);
   white-space: pre-wrap;
 }
 
@@ -42,10 +44,10 @@
   align-items: center;
   justify-content: center;
   min-height: 3rem;
-  padding: 0.8rem 1rem;
   border: 1px solid var(--polka-border);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.6);
   cursor: pointer;
-  background: rgba(255, 255, 255, 0.94);
 
   input {
     position: absolute;
@@ -61,36 +63,35 @@
   gap: 1rem;
 }
 
-.field__control {
-  width: 100%;
-  min-height: 3rem;
-  padding: 0.8rem 1rem;
-  border: 1px solid var(--polka-border);
-  background: rgba(255, 255, 255, 0.94);
+.field span {
+  color: var(--polka-muted);
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .field__control--textarea {
   min-height: 24rem;
-  resize: vertical;
   font-family: var(--tui-font-text, monospace);
 }
 
 .error-box,
 .success-box {
   padding: 0.85rem 1rem;
-  border: 1px solid rgba(15, 15, 16, 0.08);
+  border: 1px solid rgba(13, 13, 13, 0.08);
+  border-radius: 1.1rem;
 }
 
 .error-box {
   color: #9d2916;
   border-color: rgba(157, 41, 22, 0.2);
-  background: rgba(255, 240, 236, 0.92);
+  background: rgba(255, 240, 236, 0.86);
 }
 
 .success-box {
   color: #0f5132;
   border-color: rgba(15, 81, 50, 0.18);
-  background: rgba(232, 245, 237, 0.92);
+  background: rgba(232, 245, 237, 0.72);
 }
 
 @media (max-width: 900px) {

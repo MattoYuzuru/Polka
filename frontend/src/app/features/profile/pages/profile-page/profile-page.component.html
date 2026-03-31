@@ -1,4 +1,8 @@
 <main class="profile-page">
+  @if (isCreateMenuOpen()) {
+    <button class="page-backdrop" type="button" aria-label="Закрыть меню действий"></button>
+  }
+
   @if (isLoading()) {
     <section class="state-card" tuiCardLarge tuiSurface>
       <p tuiChip>Загрузка</p>
@@ -12,364 +16,326 @@
       <a routerLink="/login" tuiButton>Вернуться ко входу</a>
     </section>
   } @else if (profile(); as profile) {
-    <section
-      class="profile-hero"
-      tuiCardLarge
-      tuiSurface
-      [style.background-image]="uiPreferencesStore.profileGradientCss()"
-      data-testid="profile-hero"
-    >
-      <div class="profile-hero__overlay">
-        <div class="profile-identity">
-          <tui-avatar class="profile-avatar" size="xl">
-            {{ profile.user.nickname.slice(0, 2).toUpperCase() }}
-          </tui-avatar>
+    <section class="profile-hero" tuiCardLarge tuiSurface data-testid="profile-hero">
+      <div class="profile-hero__panel">
+        <div
+          class="profile-hero__actions"
+          [style.--accent-gradient]="uiPreferencesStore.profileGradientCss()"
+        >
+          @if (ownerMode()) {
+            <div class="owner-actions">
+              <button
+                class="orb-button orb-button--accent"
+                type="button"
+                aria-label="Добавить контент"
+                (click)="toggleCreateMenu($event)"
+              >
+                <span>+</span>
+              </button>
 
-          <div>
-            <p class="profile-kicker">Персональная библиотека</p>
-            <h1 tuiHeader="h1" data-testid="profile-nickname">{{ profile.user.nickname }}</h1>
-            <p class="profile-display-name">{{ profile.user.displayName }}</p>
-            <p class="profile-tagline">{{ profile.user.tagline }}</p>
-          </div>
+              @if (isCreateMenuOpen()) {
+                <div class="create-menu">
+                  <a routerLink="/books/new" tuiButton>Добавить книгу</a>
+                  <a routerLink="/lists/new" tuiButton>Добавить список рекомендаций</a>
+                </div>
+              }
+
+              <button
+                class="orb-button orb-button--accent orb-button--guest"
+                type="button"
+                [attr.aria-pressed]="isPreviewingAsGuest()"
+                [title]="
+                  isPreviewingAsGuest()
+                    ? 'Вернуться к режиму владельца'
+                    : 'Посмотреть как посетитель'
+                "
+                (click)="toggleGuestPreview()"
+              >
+                <span class="hat-icon" aria-hidden="true"></span>
+              </button>
+            </div>
+          }
         </div>
 
-        <dl class="profile-stats">
-          <div>
-            <dt>Стаж</dt>
-            <dd>{{ profile.stats.memberSinceLabel }}</dd>
-          </div>
-          <div>
-            <dt>Книг</dt>
-            <dd>{{ profile.stats.booksCount }}</dd>
-          </div>
-          <div>
-            <dt>Прочитано</dt>
-            <dd>{{ profile.stats.completedCount }}</dd>
-          </div>
-          <div>
-            <dt>Подборок</dt>
-            <dd>{{ profile.stats.recommendationListsCount }}</dd>
-          </div>
-        </dl>
+        <div class="profile-hero__content">
+          <p class="profile-kicker">Личная полка</p>
+          <h1 class="profile-title" data-testid="profile-nickname">
+            <span [style.background-image]="uiPreferencesStore.profileGradientCss()">
+              {{ profile.user.nickname }}
+            </span>
+          </h1>
 
-        <div class="profile-actions">
-          <button tuiButton type="button" (click)="copyLink()">
-            {{ copied() ? 'Ссылка скопирована' : 'Скопировать ссылку' }}
+          <p class="profile-subtitle">
+            {{ profile.user.displayName || 'Полка без псевдонима' }}
+          </p>
+
+          <p class="profile-meta">
+            На Polka с {{ profile.stats.memberSinceLabel }} · {{ profile.stats.booksCount }} книг ·
+            {{ profile.stats.completedCount }} прочитано ·
+            {{ profile.stats.recommendationListsCount }} подборок
+          </p>
+
+          @if (profile.user.tagline) {
+            <p class="profile-tagline">{{ profile.user.tagline }}</p>
+          }
+
+          @if (isPreviewingAsGuest()) {
+            <p class="preview-note">Сейчас страница показана так, как её увидит гость.</p>
+          }
+
+          <div class="profile-secondary-actions">
+            <button
+              tuiButton
+              type="button"
+              [disabled]="!canCopyActiveShelf()"
+              (click)="$event.stopPropagation(); copyActiveShelfLink()"
+            >
+              {{ copied() ? 'Ссылка скопирована' : 'Скопировать ссылку' }}
+            </button>
+
+            @if (ownerMode()) {
+              <a routerLink="/settings/profile" tuiButton>Редактировать профиль</a>
+              <a routerLink="/books/import" tuiButton>Импорт JSON</a>
+              <button tuiButton type="button" (click)="logout()">Выйти</button>
+            }
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="shelf-navigation" tuiCardLarge tuiSurface>
+      <div class="shelf-navigation__rail">
+        @for (tab of shelfTabs(); track tab.key) {
+          <button
+            class="shelf-tab"
+            type="button"
+            [class.shelf-tab--active]="activeShelf().key === tab.key"
+            [class.shelf-tab--accent]="activeShelf().key === tab.key"
+            [style.--accent-gradient]="uiPreferencesStore.profileGradientCss()"
+            (click)="selectShelf(tab.key)"
+          >
+            <span class="shelf-tab__title">{{ tab.title }}</span>
+            <span class="shelf-tab__meta">{{ tab.booksCount }}</span>
+          </button>
+        }
+      </div>
+    </section>
+
+    @if (activeShelf(); as activeShelf) {
+      <section class="shelf-headline" tuiCardLarge tuiSurface>
+        <div>
+          <p tuiChip>
+            {{ activeShelf.kind === 'library' ? 'Главная библиотека' : 'Список рекомендаций' }}
+          </p>
+          <h2 tuiHeader="h3">{{ activeShelf.title }}</h2>
+          <p class="shelf-description">{{ activeShelfDescription() }}</p>
+        </div>
+
+        <div class="shelf-headline__actions">
+          <button
+            tuiButton
+            type="button"
+            [disabled]="!canCopyActiveShelf()"
+            (click)="copyActiveShelfLink()"
+          >
+            {{ copied() ? 'Ссылка скопирована' : 'Поделиться' }}
           </button>
 
-          @if (isOwner()) {
-            <a routerLink="/settings/profile" tuiButton>Редактировать профиль</a>
-            <a routerLink="/books/import" tuiButton>Импорт JSON</a>
-            <a routerLink="/books/new" tuiButton>Добавить книгу</a>
-            <a routerLink="/lists/new" tuiButton>Добавить список</a>
-            <button tuiButton type="button" (click)="logout()">Выйти</button>
-          }
-        </div>
-      </div>
-    </section>
+          @if (activeShelf.kind === 'list' && ownerMode()) {
+            <a [routerLink]="['/lists', activeShelf.listId, 'edit']" tuiButton>Изменить список</a>
 
-    <section class="analytics-panel" tuiCardLarge tuiSurface>
-      <div class="analytics-panel__intro">
-        <div>
-          <p tuiChip>Статистика</p>
-          <h2 tuiHeader="h3">Как выглядит библиотека по цифрам</h2>
-        </div>
-        <p class="analytics-note">
-          Периоды считаются по книгам со статусом «Прочитал» и датой завершения на backend.
-        </p>
-      </div>
-
-      <div class="analytics-grid">
-        <article class="analytics-card">
-          <p class="analytics-card__label">Прочитано за 30 дней</p>
-          <p class="analytics-card__value">
-            {{ profile.analytics.readingWindows.completedLast30Days }}
-          </p>
-        </article>
-
-        <article class="analytics-card">
-          <p class="analytics-card__label">Прочитано за 365 дней</p>
-          <p class="analytics-card__value">
-            {{ profile.analytics.readingWindows.completedLast365Days }}
-          </p>
-        </article>
-
-        <article class="analytics-card">
-          <p class="analytics-card__label">Средняя оценка</p>
-          <p class="analytics-card__value">
-            {{ profile.analytics.readingWindows.averageRating || 0 }}
-          </p>
-        </article>
-
-        <article class="analytics-card">
-          <p class="analytics-card__label">Публичных / приватных книг</p>
-          <p class="analytics-card__value">
-            {{ profile.analytics.readingWindows.publicBooksCount }}
-            <span class="analytics-card__slash">/</span>
-            {{ profile.analytics.readingWindows.privateBooksCount }}
-          </p>
-        </article>
-      </div>
-
-      <div class="analytics-breakdowns">
-        <article class="analytics-breakdown">
-          <div class="analytics-breakdown__header">
-            <p tuiChip>Статусы</p>
-            <h3 tuiHeader="h5">Распределение чтения</h3>
-          </div>
-
-          @if (profile.analytics.statusBreakdown.length) {
-            <div class="breakdown-list">
-              @for (item of profile.analytics.statusBreakdown; track item.status) {
-                <div class="breakdown-row">
-                  <span>{{ item.status }}</span>
-                  <strong>{{ item.count }}</strong>
-                </div>
-              }
-            </div>
-          } @else {
-            <p class="analytics-empty">Пока нет книг для расчёта распределения по статусам.</p>
-          }
-        </article>
-
-        <article class="analytics-breakdown">
-          <div class="analytics-breakdown__header">
-            <p tuiChip>Жанры</p>
-            <h3 tuiHeader="h5">Топ направлений</h3>
-          </div>
-
-          @if (profile.analytics.genreBreakdown.length) {
-            <div class="breakdown-list">
-              @for (item of profile.analytics.genreBreakdown; track item.genre) {
-                <div class="breakdown-row">
-                  <span>{{ item.genre }}</span>
-                  <strong>{{ item.count }}</strong>
-                </div>
-              }
-            </div>
-          } @else {
-            <p class="analytics-empty">Жанровая аналитика появится после первых книг.</p>
-          }
-        </article>
-      </div>
-    </section>
-
-    <section class="profile-sections">
-      <div class="profile-section" tuiCardLarge tuiSurface>
-        <p tuiChip>Библиотека</p>
-        <h2 tuiHeader="h3">Книги</h2>
-
-        <div class="books-toolbar">
-          <label class="toolbar-field">
-            <span>Поиск</span>
-            <input
-              [value]="bookSearch()"
-              placeholder="Название, автор или жанр"
-              type="search"
-              (input)="updateBookSearch(($any($event.target).value ?? '').toString())"
-              data-testid="books-search"
-            />
-          </label>
-
-          <label class="toolbar-field">
-            <span>Статус</span>
-            <select
-              [value]="selectedStatus()"
-              (change)="updateStatusFilter(($any($event.target).value ?? '').toString())"
-              data-testid="books-status-filter"
-            >
-              <option value="all">Все</option>
-              @for (status of bookStatuses; track status) {
-                <option [value]="status">{{ status }}</option>
-              }
-            </select>
-          </label>
-
-          <label class="toolbar-field">
-            <span>Сортировка</span>
-            <select
-              [value]="selectedSort()"
-              (change)="updateSortOption(($any($event.target).value ?? '').toString())"
-              data-testid="books-sort"
-            >
-              <option value="top">По топу владельца</option>
-              <option value="rating">По оценке</option>
-              <option value="year">По году</option>
-              <option value="title">По названию</option>
-            </select>
-          </label>
-        </div>
-
-        <div class="books-toolbar books-toolbar--meta">
-          <span tuiBadge>Найдено: {{ visibleBooks().length }}</span>
-          @if (canReorderBooks()) {
-            <span tuiBadge>Можно двигать книги по топу</span>
-          } @else if (isOwner()) {
-            <span tuiBadge>Reorder доступен только без фильтров и в сортировке по топу</span>
-          }
-        </div>
-
-        <div class="books-grid" data-testid="books-grid">
-          @for (book of visibleBooks(); track book.id) {
-            <article class="book-card" tuiSurface [attr.data-testid]="'book-card-' + book.id">
-              <div
-                class="book-cover"
-                [style.background-image]="
-                  !book.coverUrl
-                    ? 'linear-gradient(145deg, ' +
-                      (book.coverPalette.length
-                        ? book.coverPalette.join(', ')
-                        : '#101010, #404040') +
-                      ')'
-                    : null
-                "
+            @if (activeList(); as activeList) {
+              <button
+                tuiButton
+                type="button"
+                [disabled]="processingListId() === activeList.id"
+                (click)="toggleRecommendationListVisibility(activeList.id, activeList.isPublic)"
               >
-                <span class="book-rank">{{ book.rankPosition }}</span>
+                {{ activeList.isPublic ? 'Сделать приватным' : 'Сделать публичным' }}
+              </button>
+
+              <button
+                tuiButton
+                type="button"
+                [disabled]="processingListId() === activeList.id"
+                (click)="deleteRecommendationList(activeList.id)"
+              >
+                Удалить список
+              </button>
+            }
+          }
+        </div>
+      </section>
+    }
+
+    <section class="books-toolbar" tuiCardLarge tuiSurface>
+      <label class="toolbar-field">
+        <span>Поиск</span>
+        <input
+          [value]="bookSearch()"
+          placeholder="Название, автор или жанр"
+          type="search"
+          data-testid="books-search"
+          (input)="updateBookSearch(($any($event.target).value ?? '').toString())"
+        />
+      </label>
+
+      <label class="toolbar-field">
+        <span>Статус</span>
+        <select
+          [value]="selectedStatus()"
+          data-testid="books-status-filter"
+          (change)="updateStatusFilter(($any($event.target).value ?? '').toString())"
+        >
+          <option value="all">Все</option>
+          @for (status of bookStatuses; track status) {
+            <option [value]="status">{{ status }}</option>
+          }
+        </select>
+      </label>
+
+      <label class="toolbar-field">
+        <span>Сортировка</span>
+        <select
+          [value]="selectedSort()"
+          data-testid="books-sort"
+          (change)="updateSortOption(($any($event.target).value ?? '').toString())"
+        >
+          <option value="top">По порядку владельца</option>
+          <option value="rating">По оценке</option>
+          <option value="year">По году</option>
+          <option value="title">По названию</option>
+        </select>
+      </label>
+    </section>
+
+    @if (isLoadingShelf()) {
+      <section class="state-card" tuiCardLarge tuiSurface>
+        <p tuiChip>Подборка</p>
+        <h2 tuiHeader="h4">Подгружаем содержимое выбранного списка.</h2>
+      </section>
+    } @else {
+      <div class="books-grid" data-testid="books-grid">
+        @for (book of visibleBooks(); track book.id) {
+          <article
+            class="book-card"
+            tuiSurface
+            [class.book-card--dragging]="draggedBookId() === book.id"
+            [attr.data-testid]="'book-card-' + book.id"
+            (dragover)="onBookDragOver($event)"
+            (drop)="onBookDrop($event, book.id)"
+          >
+            <div class="book-card__frame">
+              <span class="book-rank">{{ book.rankPosition }}</span>
+
+              @if (ownerMode()) {
+                <button
+                  class="book-handle"
+                  type="button"
+                  draggable="true"
+                  [attr.aria-label]="
+                    canReorderBooks()
+                      ? 'Двигать книгу или открыть меню действий'
+                      : 'Открыть меню действий'
+                  "
+                  (click)="toggleBookMenu($event, book.id)"
+                  (dragstart)="onBookHandleDragStart($event, book.id)"
+                  (dragend)="onBookHandleDragEnd()"
+                >
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </button>
+              }
+
+              @if (ownerMode() && activeBookMenuId() === book.id) {
+                <div class="book-menu">
+                  <a [routerLink]="['/books', book.id, 'edit']" tuiButton>Изменить</a>
+                  <button
+                    tuiButton
+                    type="button"
+                    [disabled]="processingBookId() === book.id"
+                    (click)="toggleBookVisibility(book.id, book.isPublic)"
+                  >
+                    {{ book.isPublic ? 'Сделать приватной' : 'Сделать публичной' }}
+                  </button>
+
+                  @if (book.source === 'library') {
+                    <button
+                      tuiButton
+                      type="button"
+                      [disabled]="processingBookId() === book.id"
+                      (click)="deleteBook(book.id)"
+                    >
+                      Удалить из библиотеки
+                    </button>
+                  } @else {
+                    <button
+                      tuiButton
+                      type="button"
+                      [disabled]="processingListId() !== null"
+                      (click)="removeBookFromActiveList(book.id)"
+                    >
+                      Убрать из списка
+                    </button>
+                  }
+                </div>
+              }
+
+              <a class="book-cover" [routerLink]="['/books', book.id]">
                 @if (book.coverUrl) {
                   <img [src]="book.coverUrl" [alt]="'Обложка книги ' + book.title" />
                 } @else {
-                  <span class="book-initials">
-                    {{ book.title.slice(0, 1).toUpperCase() }}
-                  </span>
-                }
-              </div>
-
-              <div class="book-card__body">
-                <h3 tuiHeader="h5">{{ book.title }}</h3>
-                <p class="book-meta">{{ book.author }} · {{ book.genre }} · {{ book.year }}</p>
-
-                <div class="book-tags">
-                  <span tuiChip>{{ book.status }}</span>
-                  @if (isOwner()) {
-                    <span tuiBadge>{{ book.isPublic ? 'Публичная' : 'Приватная' }}</span>
-                  }
-                  @if (book.rating) {
-                    <span tuiBadge>★ {{ book.rating }}</span>
-                  }
-                </div>
-
-                <p class="book-opinion">{{ book.opinionPreview }}</p>
-
-                <a
-                  [routerLink]="['/books', book.id]"
-                  tuiButton
-                  [attr.data-testid]="'book-open-' + book.id"
-                >
-                  Мнение и цитаты
-                </a>
-                @if (isOwner()) {
-                  <div class="book-owner-actions">
-                    <a
-                      [routerLink]="['/books', book.id, 'edit']"
-                      tuiButton
-                      [attr.data-testid]="'book-edit-' + book.id"
-                    >
-                      Изменить
-                    </a>
-                    <button
-                      tuiButton
-                      type="button"
-                      [disabled]="processingBookId() === book.id"
-                      (click)="toggleBookVisibility(book.id, book.isPublic)"
-                    >
-                      {{ book.isPublic ? 'Сделать приватной' : 'Сделать публичной' }}
-                    </button>
-                    <button
-                      tuiButton
-                      type="button"
-                      [disabled]="processingBookId() === book.id"
-                      [attr.data-testid]="'book-delete-' + book.id"
-                      (click)="deleteBook(book.id)"
-                    >
-                      Удалить
-                    </button>
+                  <div
+                    class="book-cover__placeholder"
+                    [style.background-image]="
+                      'linear-gradient(145deg, ' +
+                      (book.coverPalette.length
+                        ? book.coverPalette.join(', ')
+                        : '#111111, #6f6f6f') +
+                      ')'
+                    "
+                  >
+                    <span>{{ book.title.slice(0, 1).toUpperCase() }}</span>
                   </div>
-
-                  @if (canReorderBooks()) {
-                    <div class="book-owner-actions">
-                      <button
-                        tuiButton
-                        type="button"
-                        [disabled]="processingBookId() === book.id || !canMoveBookToTop(book.id)"
-                        (click)="moveBook(book.id, 'top')"
-                      >
-                        В топ
-                      </button>
-                      <button
-                        tuiButton
-                        type="button"
-                        [disabled]="processingBookId() === book.id || !canMoveBook(book.id, 'up')"
-                        (click)="moveBook(book.id, 'up')"
-                      >
-                        Выше
-                      </button>
-                      <button
-                        tuiButton
-                        type="button"
-                        [disabled]="processingBookId() === book.id || !canMoveBook(book.id, 'down')"
-                        (click)="moveBook(book.id, 'down')"
-                      >
-                        Ниже
-                      </button>
-                    </div>
-                  }
                 }
-              </div>
-            </article>
-          }
-        </div>
+              </a>
+            </div>
 
-        @if (!visibleBooks().length) {
-          <p class="books-empty">По текущим фильтрам книги не найдены.</p>
+            <div class="book-card__body">
+              <h3 tuiHeader="h5">{{ book.title }}</h3>
+              <p class="book-card__line">{{ book.author }}</p>
+              <p class="book-card__line">
+                {{ book.genre }}
+                @if (book.year) {
+                  · {{ book.year }}
+                }
+              </p>
+              <p class="book-card__line">
+                {{ book.status }}
+                @if (book.rating) {
+                  · ★ {{ book.rating }}
+                }
+              </p>
+
+              @if (book.opinionPreview) {
+                <p class="book-card__opinion">{{ book.opinionPreview }}</p>
+              }
+
+              <a class="book-card__link" [routerLink]="['/books', book.id]">Мнение</a>
+            </div>
+          </article>
         }
       </div>
 
-      <aside class="profile-section profile-section--aside" tuiCardLarge tuiSurface>
-        <p tuiChip>Подборки</p>
-        <h2 tuiHeader="h3">Рекомендательные списки</h2>
-
-        <div class="lists-stack">
-          @for (recommendationList of profile.recommendationLists; track recommendationList.id) {
-            <article class="list-card">
-              <div class="list-card__top">
-                <h3 tuiHeader="h5">{{ recommendationList.title }}</h3>
-                <span tuiBadge>
-                  {{ recommendationList.isPublic ? 'Публичный' : 'Приватный' }}
-                </span>
-              </div>
-              <p>{{ recommendationList.description }}</p>
-              <p class="list-card__meta">{{ recommendationList.booksCount }} книг(и)</p>
-              <div class="list-card__actions">
-                <a [routerLink]="['/lists', recommendationList.id]" tuiButton>Открыть</a>
-                @if (isOwner()) {
-                  <a [routerLink]="['/lists', recommendationList.id, 'edit']" tuiButton>Изменить</a>
-                  <button
-                    tuiButton
-                    type="button"
-                    [disabled]="processingListId() === recommendationList.id"
-                    (click)="
-                      toggleRecommendationListVisibility(
-                        recommendationList.id,
-                        recommendationList.isPublic
-                      )
-                    "
-                  >
-                    {{ recommendationList.isPublic ? 'Сделать приватным' : 'Сделать публичным' }}
-                  </button>
-                  <button
-                    tuiButton
-                    type="button"
-                    [disabled]="processingListId() === recommendationList.id"
-                    (click)="deleteRecommendationList(recommendationList.id)"
-                  >
-                    Удалить
-                  </button>
-                }
-              </div>
-            </article>
-          }
-        </div>
-      </aside>
-    </section>
+      @if (!visibleBooks().length) {
+        <section class="state-card" tuiCardLarge tuiSurface>
+          <p tuiChip>Пусто</p>
+          <h2 tuiHeader="h4">По текущим параметрам книги не найдены.</h2>
+        </section>
+      } @else if (hasMoreBooks()) {
+        <p class="books-lazy-note">Прокрутите ниже, чтобы догрузить следующие книги.</p>
+      }
+    }
   }
 </main>

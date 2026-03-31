@@ -2,8 +2,8 @@
 
 ## Текущий статус
 
-- Текущая ветка: `ops/prod-smoke-and-lighthouse`
-- Текущая фаза: production rollout, smoke-check и Lighthouse handoff
+- Текущая ветка: `feat/minimal-ui-redesign`
+- Текущая фаза: UI/UX redesign основного пользовательского пути
 - Последнее обновление: 2026-03-31
 
 ## Этапы
@@ -21,9 +21,9 @@
 
 ## Ближайшие шаги
 
-1. Добавить Figma ссылку в `docs/ux.md`, если это обязательный артефакт сдачи.
+1. Провести ручной визуальный smoke-pass на мобильных брейкпоинтах и длинных библиотеках.
 2. При необходимости расширить browser e2e на owner CRUD рекомендательных списков.
-3. При желании улучшить mobile performance Lighthouse выше `80`, не ломая текущий визуальный стиль.
+3. При желании вынести новые UI-паттерны в переиспользуемые shared-компоненты, если редизайн пойдёт дальше.
 
 ## Последняя проверка
 
@@ -36,6 +36,11 @@
 - `npm run test:component`
 - `npm run test:backend`
 - `npm run compose:check`
+- `npm run build:frontend` после UI redesign
+- `npm run lint:frontend` после UI redesign
+- `npm run lint:styles` после UI redesign
+- `npm run test:frontend` после UI redesign
+- `npm run test:component` после UI redesign
 - `POST https://polka.keykomi.com/api/v1/auth/login`
 - `POST https://polka.keykomi.com/api/v1/books/cover-upload`
 - `POST https://polka.keykomi.com/api/v1/books`

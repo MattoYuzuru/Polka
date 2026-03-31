@@ -5,7 +5,7 @@ import { Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { TuiButton } from '@taiga-ui/core';
 import { TuiSurface } from '@taiga-ui/core';
-import { TuiBadge, TuiChip } from '@taiga-ui/kit';
+import { TuiChip } from '@taiga-ui/kit';
 import { TuiCardLarge, TuiHeader } from '@taiga-ui/layout';
 
 import { AuthApiService } from '../../../../core/services/auth-api.service';
@@ -16,7 +16,6 @@ import { AuthSessionStore } from '../../../../core/stores/auth-session.store';
   imports: [
     ReactiveFormsModule,
     RouterLink,
-    TuiBadge,
     TuiButton,
     TuiCardLarge,
     TuiChip,

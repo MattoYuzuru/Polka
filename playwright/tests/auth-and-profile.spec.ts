@@ -20,9 +20,8 @@ test("logs in with the seeded demo account and opens the owner profile", async (
 
   await expect(page).toHaveURL(/\/mattoy$/);
   await expect(page.getByTestId("profile-nickname")).toHaveText("mattoy");
-  await expect(
-    page.getByRole("link", { name: "Добавить книгу" }),
-  ).toBeVisible();
+  await page.getByRole("button", { name: "Добавить контент" }).click();
+  await expect(page.getByRole("link", { name: "Добавить книгу" })).toBeVisible();
 });
 
 test("filters the public library by search query and status", async ({
@@ -78,16 +77,17 @@ test("owner creates, edits and deletes a book with uploaded cover", async ({
   await page.getByTestId("book-submit").click();
 
   await expect(page).toHaveURL(/\/mattoy$/);
+  await page.getByTestId("books-search").fill(createdTitle);
   const createdCard = page
     .locator("article.book-card")
     .filter({ has: page.getByRole("heading", { name: createdTitle }) });
   await expect(createdCard).toBeVisible();
   await expect(createdCard.locator("img")).toHaveCount(1);
-  await createdCard.getByRole("link", { name: "Мнение и цитаты" }).click();
+  await createdCard.getByRole("link", { name: "Мнение" }).click();
 
   await expect(page.getByRole("heading", { name: createdTitle })).toBeVisible();
   await expect(page.locator(".book-hero__cover img")).toBeVisible();
-  await page.getByTestId("book-edit-link").click();
+  await page.goto(`${page.url()}/edit`);
 
   await expect(page).toHaveURL(/\/books\/.+\/edit$/);
   await page.getByTestId("book-title-input").fill(updatedTitle);
@@ -97,8 +97,18 @@ test("owner creates, edits and deletes a book with uploaded cover", async ({
   await expect(page.getByRole("heading", { name: updatedTitle })).toBeVisible();
   await expect(page.getByText("Прочитал")).toBeVisible();
 
+  await page.goto("/mattoy");
+  await page.getByTestId("books-search").fill(updatedTitle);
+  const updatedCard = page
+    .locator("article.book-card")
+    .filter({ has: page.getByRole("heading", { name: updatedTitle }) });
+  await expect(updatedCard).toBeVisible();
+
   page.once("dialog", (dialog) => dialog.accept());
-  await page.getByTestId("book-delete-button").click();
+  await updatedCard
+    .getByRole("button", { name: /меню действий/i })
+    .click();
+  await page.getByRole("button", { name: "Удалить из библиотеки" }).click();
 
   await expect(page).toHaveURL(/\/mattoy$/);
   await expect(page.getByRole("heading", { name: updatedTitle })).toHaveCount(
