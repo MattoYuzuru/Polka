@@ -62,6 +62,13 @@ export const AuthSessionStore = signalStore(
         user: session.user,
       });
     },
+    updateUser(user: UserIdentity): void {
+      globalThis.localStorage?.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+
+      patchState(store, {
+        user,
+      });
+    },
     clear(): void {
       globalThis.localStorage?.removeItem(TOKEN_STORAGE_KEY);
       globalThis.localStorage?.removeItem(USER_STORAGE_KEY);

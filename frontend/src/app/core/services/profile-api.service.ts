@@ -3,7 +3,11 @@ import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import { PublicProfile } from '../../shared/models/profile.model';
+import {
+  EditableProfile,
+  PublicProfile,
+  UpdateProfilePayload,
+} from '../../shared/models/profile.model';
 
 @Injectable({ providedIn: 'root' })
 export class ProfileApiService {
@@ -13,5 +17,13 @@ export class ProfileApiService {
     return this.http.get<PublicProfile>(
       `${environment.apiBaseUrl}/profiles/${encodeURIComponent(nickname)}`,
     );
+  }
+
+  getEditableProfile(): Observable<EditableProfile> {
+    return this.http.get<EditableProfile>(`${environment.apiBaseUrl}/profiles/me`);
+  }
+
+  updateProfile(payload: UpdateProfilePayload): Observable<EditableProfile> {
+    return this.http.patch<EditableProfile>(`${environment.apiBaseUrl}/profiles/me`, payload);
   }
 }

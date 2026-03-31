@@ -86,6 +86,110 @@ func (repository *PostgresRepository) FindByNickname(
 	return profileView, nil
 }
 
+func (repository *PostgresRepository) GetEditableByUserID(
+	ctx context.Context,
+	userID string,
+) (EditableProfile, error) {
+	const query = `
+		SELECT
+			id::text,
+			nickname,
+			email,
+			display_name,
+			tagline,
+			gradient_stops,
+			created_at
+		FROM users
+		WHERE id = $1
+		LIMIT 1;
+	`
+
+	var editableProfile EditableProfile
+
+	err := repository.pool.QueryRow(ctx, query, userID).Scan(
+		&editableProfile.UserID,
+		&editableProfile.Nickname,
+		&editableProfile.Email,
+		&editableProfile.DisplayName,
+		&editableProfile.Tagline,
+		&editableProfile.GradientStops,
+		&editableProfile.CreatedAt,
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return EditableProfile{}, ErrNotFound
+		}
+
+		return EditableProfile{}, fmt.Errorf("get editable profile by user id: %w", err)
+	}
+
+	return editableProfile, nil
+}
+
+func (repository *PostgresRepository) UpdateByUserID(
+	ctx context.Context,
+	userID string,
+	input UpdateProfileInput,
+) (EditableProfile, error) {
+	nickname := strings.TrimSpace(input.Nickname)
+	displayName := strings.TrimSpace(input.DisplayName)
+	tagline := strings.TrimSpace(input.Tagline)
+
+	var existingNickname bool
+
+	if err := repository.pool.QueryRow(
+		ctx,
+		`SELECT EXISTS(SELECT 1 FROM users WHERE lower(nickname) = lower($1) AND id <> $2)`,
+		nickname,
+		userID,
+	).Scan(&existingNickname); err != nil {
+		return EditableProfile{}, fmt.Errorf("check conflicting nickname: %w", err)
+	}
+
+	if existingNickname {
+		return EditableProfile{}, ErrNicknameAlreadyExists
+	}
+
+	const query = `
+		UPDATE users
+		SET
+			nickname = $2,
+			display_name = $3,
+			tagline = $4,
+			updated_at = NOW()
+		WHERE id = $1
+		RETURNING
+			id::text,
+			nickname,
+			email,
+			display_name,
+			tagline,
+			gradient_stops,
+			created_at;
+	`
+
+	var editableProfile EditableProfile
+
+	err := repository.pool.QueryRow(ctx, query, userID, nickname, displayName, tagline).Scan(
+		&editableProfile.UserID,
+		&editableProfile.Nickname,
+		&editableProfile.Email,
+		&editableProfile.DisplayName,
+		&editableProfile.Tagline,
+		&editableProfile.GradientStops,
+		&editableProfile.CreatedAt,
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return EditableProfile{}, ErrNotFound
+		}
+
+		return EditableProfile{}, fmt.Errorf("update profile by user id: %w", err)
+	}
+
+	return editableProfile, nil
+}
+
 func (repository *PostgresRepository) fillStats(
 	ctx context.Context,
 	profileView *PublicProfile,

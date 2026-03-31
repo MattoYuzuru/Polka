@@ -1,10 +1,10 @@
 <main class="login-page">
   <section class="login-hero">
-    <p class="eyebrow" tuiChip>Polka / auth flow bootstrap</p>
+    <p class="eyebrow" tuiChip>Polka / auth flow</p>
     <h1 tuiHeader="h1">Каталог книг, заметок и личных рекомендаций.</h1>
     <p class="lead">
-      Первый вертикальный срез уже собран: Angular app shell, Signal Store, Go mock API,
-      login flow, guards, interceptors и публичная страница профиля.
+      В проекте уже работают login/register, JWT-сессия, owner/guest профиль и базовые
+      защищённые сценарии для владельца библиотеки.
     </p>
 
     <div class="hero-badges">
@@ -16,13 +16,17 @@
     <a class="demo-link" routerLink="/mattoy" tuiButton>
       Открыть демо-профиль без логина
     </a>
+
+    <a class="demo-link demo-link--secondary" routerLink="/register" tuiButton>
+      Создать новый аккаунт
+    </a>
   </section>
 
   <section class="login-card" tuiCardLarge tuiSurface>
     <div class="login-card__header">
       <p class="login-card__meta">Демо-учётка</p>
       <h2 tuiHeader="h3">Вход в библиотеку</h2>
-      <p>Используйте тестовые данные или замените их своими после подключения регистрации.</p>
+      <p>Используйте тестовые данные или перейдите к регистрации своего аккаунта.</p>
     </div>
 
     <form class="login-form" [formGroup]="loginForm" (ngSubmit)="submit()">

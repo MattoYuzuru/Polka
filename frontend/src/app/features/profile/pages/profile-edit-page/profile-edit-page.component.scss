@@ -1,0 +1,64 @@
+:host {
+  display: block;
+}
+
+.profile-edit-page {
+  padding: clamp(1rem, 3vw, 2rem);
+}
+
+.profile-edit-card {
+  display: grid;
+  gap: 1rem;
+  max-width: 48rem;
+  border: 1px solid var(--polka-border);
+  background: rgba(255, 255, 255, 0.86);
+}
+
+.profile-edit-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.field {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.field__control {
+  min-height: 3.25rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--polka-border);
+  background: rgba(255, 255, 255, 0.94);
+}
+
+.field__control--textarea {
+  min-height: 8rem;
+  resize: vertical;
+}
+
+.error-box,
+.success-box,
+.muted {
+  font-size: 0.95rem;
+}
+
+.error-box {
+  padding: 0.85rem 1rem;
+  color: #9d2916;
+  border: 1px solid rgba(157, 41, 22, 0.2);
+  background: rgba(255, 240, 236, 0.92);
+}
+
+.success-box {
+  color: #245e32;
+}
+
+.muted {
+  color: var(--polka-muted);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}

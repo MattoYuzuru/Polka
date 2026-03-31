@@ -2,7 +2,7 @@
   display: block;
 }
 
-.login-page {
+.register-page {
   min-height: 100dvh;
   display: grid;
   grid-template-columns: minmax(0, 1.15fr) minmax(20rem, 28rem);
@@ -11,14 +11,14 @@
   align-items: center;
 }
 
-.login-hero,
-.login-card {
+.register-hero,
+.register-card {
   border: 1px solid var(--polka-border);
   background: rgba(255, 255, 255, 0.82);
   backdrop-filter: blur(14px);
 }
 
-.login-hero {
+.register-hero {
   padding: clamp(1.5rem, 5vw, 4rem);
 }
 
@@ -49,15 +49,11 @@
   width: fit-content;
 }
 
-.demo-link--secondary {
-  margin-top: 0.75rem;
-}
-
-.login-card {
+.register-card {
   padding: 1.5rem;
 }
 
-.login-card__meta {
+.register-card__meta {
   margin: 0 0 0.5rem;
   color: var(--polka-muted);
   text-transform: uppercase;
@@ -65,11 +61,7 @@
   font-size: 0.75rem;
 }
 
-.login-card__header p:last-child {
-  margin-bottom: 0;
-}
-
-.login-form {
+.register-form {
   display: grid;
   gap: 1rem;
   margin-top: 1.5rem;
@@ -114,31 +106,8 @@
   justify-content: center;
 }
 
-.demo-credentials {
-  display: grid;
-  gap: 0.75rem;
-  margin: 1.5rem 0 0;
-  padding-top: 1rem;
-  border-top: 1px solid rgba(15, 15, 16, 0.08);
-}
-
-.demo-credentials div {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.demo-credentials dt {
-  color: var(--polka-muted);
-}
-
-.demo-credentials dd {
-  margin: 0;
-  font-family: 'SFMono-Regular', 'Cascadia Mono', 'Liberation Mono', monospace;
-}
-
 @media (max-width: 960px) {
-  .login-page {
+  .register-page {
     grid-template-columns: 1fr;
   }
 }
