@@ -1,142 +1,316 @@
 <main class="book-details-page">
+  @if (isCoverModalOpen()) {
+    <button
+      class="cover-modal"
+      type="button"
+      aria-label="Закрыть полноэкранную обложку"
+      (click)="closeCoverModal()"
+    >
+      <img [src]="displayedCoverUrl()" [alt]="'Обложка книги ' + (book()?.title ?? '')" />
+    </button>
+  }
+
   @if (isLoading()) {
-    <section class="details-card" tuiCardLarge tuiSurface>
-      <p tuiChip>Загрузка</p>
-      <h1 tuiHeader="h3">Получаем данные книги {{ bookId() }}</h1>
-      <p>Запрос уже ушёл в API.</p>
+    <section class="details-state">
+      <p class="details-state__eyebrow">Загрузка</p>
+      <h1>Поднимаем профиль книги.</h1>
+      <p>Сейчас подтягиваются обложка, метаданные и заметки владельца.</p>
     </section>
   } @else if (errorMessage()) {
-    <section class="details-card" tuiCardLarge tuiSurface>
-      <p tuiChip>Ошибка</p>
-      <h1 tuiHeader="h3">{{ errorMessage() }}</h1>
-      <a routerLink="/login" tuiButton>Ко входу</a>
+    <section class="details-state">
+      <p class="details-state__eyebrow">Ошибка</p>
+      <h1>{{ errorMessage() }}</h1>
+      <a [routerLink]="backLink()" class="ghost-action">Вернуться к библиотеке</a>
     </section>
   } @else if (book(); as book) {
-    <section class="book-hero" tuiCardLarge tuiSurface>
-      <div
-        class="book-hero__cover"
-        [style.background-image]="
-          !book.coverUrl
-            ? 'linear-gradient(145deg, ' +
-              (book.coverPalette.length ? book.coverPalette.join(', ') : '#111111, #5d5d5d') +
-              ')'
-            : null
-        "
-      >
-        @if (book.coverUrl) {
-          <img [src]="book.coverUrl" [alt]="'Обложка книги ' + book.title" />
-        } @else {
-          <span>{{ book.title.slice(0, 1).toUpperCase() }}</span>
-        }
-      </div>
+    <section class="book-shell" [style.--book-accent]="accentGradientCss()">
+      <article class="book-pane book-pane--meta">
+        <div class="book-pane__topline">
+          <a class="inline-nav" [routerLink]="backLink()" aria-label="Назад к библиотеке">
+            <span aria-hidden="true">←</span>
+          </a>
 
-      <div class="book-hero__content">
-        <div class="book-hero__headline">
-          <p tuiChip>Профиль книги</p>
-          <h1 tuiHeader="h2">{{ book.title }}</h1>
-          <p class="book-author">{{ book.author }}</p>
-        </div>
-
-        <p class="book-description">{{ book.description || 'Описание пока не добавлено.' }}</p>
-
-        <div class="book-meta-grid">
-          <div class="book-meta-grid__item">
-            <span>Жанр</span>
-            <strong>{{ book.genre }}</strong>
-          </div>
-          <div class="book-meta-grid__item">
-            <span>Год</span>
-            <strong>{{ book.year }}</strong>
-          </div>
-          <div class="book-meta-grid__item">
-            <span>Издательство</span>
-            <strong>{{ book.publisher }}</strong>
-          </div>
-          <div class="book-meta-grid__item">
-            <span>Статус</span>
-            <strong>{{ book.status }}</strong>
-          </div>
-          <div class="book-meta-grid__item">
-            <span>Возраст</span>
-            <strong>{{ book.ageRating }}</strong>
-          </div>
-          <div class="book-meta-grid__item">
-            <span>Оценка</span>
-            <strong>{{ book.rating || '—' }}</strong>
-          </div>
-        </div>
-
-        <div class="book-pills">
-          <span tuiBadge>{{ book.isPublic ? 'Публичная' : 'Приватная' }}</span>
-          <span tuiBadge>{{ book.createdAt | date: 'longDate' : undefined : 'ru-RU' }}</span>
-        </div>
-
-        <div class="actions">
-          <a [routerLink]="backLink()" tuiButton>Назад к библиотеке</a>
           @if (canEdit()) {
-            <a [routerLink]="['/books', book.id, 'edit']" tuiButton data-testid="book-edit-link">
-              Редактировать
-            </a>
             <button
-              tuiButton
+              class="orb-action"
               type="button"
-              [disabled]="isProcessing()"
-              (click)="toggleVisibility()"
+              [attr.aria-pressed]="isEditMode()"
+              [attr.aria-label]="
+                isEditMode() ? 'Закрыть редактирование книги' : 'Редактировать книгу'
+              "
+              [title]="isEditMode() ? 'Закрыть редактирование' : 'Редактировать книгу'"
+              (click)="isEditMode() ? cancelEdit() : enterEditMode()"
             >
-              {{ book.isPublic ? 'Сделать приватной' : 'Сделать публичной' }}
-            </button>
-            <button
-              tuiButton
-              type="button"
-              [disabled]="isProcessing()"
-              data-testid="book-delete-button"
-              (click)="deleteBook()"
-            >
-              Удалить
+              <svg aria-hidden="true" viewBox="0 0 24 24">
+                <path
+                  d="M15.15 3.86a2.04 2.04 0 0 1 2.9 0l1.09 1.09a2.04 2.04 0 0 1 0 2.89L9.1 17.89 4 19l1.11-5.1L15.15 3.86Zm-8.52 10.7 2.8 2.8"
+                />
+              </svg>
             </button>
           }
         </div>
-      </div>
-    </section>
 
-    <section class="details-layout">
-      <article class="details-panel" tuiCardLarge tuiSurface>
-        <p tuiChip>Мнение</p>
-        <h2 tuiHeader="h3">Что думает владелец</h2>
-
-        @if (book.opinions.length) {
-          <div class="entries-stack">
-            @for (opinion of book.opinions; track opinion.id) {
-              <article class="entry-card">
-                <p>{{ opinion.content }}</p>
-                <p class="entry-date">
-                  {{ opinion.createdAt | date: 'longDate' : undefined : 'ru-RU' }}
-                </p>
-              </article>
+        <div class="book-cover-stack">
+          <button
+            class="book-cover"
+            type="button"
+            [disabled]="!displayedCoverUrl()"
+            [style.background-image]="
+              !displayedCoverUrl()
+                ? 'linear-gradient(145deg, ' + displayedCoverPalette().join(', ') + ')'
+                : null
+            "
+            (click)="openCoverModal()"
+          >
+            @if (displayedCoverUrl()) {
+              <img [src]="displayedCoverUrl()" [alt]="'Обложка книги ' + book.title" />
+            } @else {
+              <span>{{ book.title.slice(0, 1).toUpperCase() }}</span>
             }
+          </button>
+
+          @if (isEditMode()) {
+            <div class="cover-editor">
+              <label class="ghost-action ghost-action--file">
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/gif,image/webp"
+                  (change)="uploadCover($event)"
+                />
+                <span>{{ isUploadingCover() ? 'Загружаем обложку...' : 'Обновить обложку' }}</span>
+              </label>
+
+              @if (hasCover()) {
+                <button class="ghost-action" type="button" (click)="removeCover()">
+                  Убрать обложку
+                </button>
+              }
+            </div>
+          }
+        </div>
+
+        @if (!isEditMode()) {
+          <div class="book-meta">
+            <div class="book-meta__headline">
+              <h1>{{ book.title }}</h1>
+              <p class="book-meta__author">{{ book.author }}</p>
+              <p class="book-meta__description">
+                {{
+                  book.description ||
+                    'Описание ещё не добавлено, но место для него уже подготовлено.'
+                }}
+              </p>
+            </div>
+
+            <dl class="book-facts">
+              <div>
+                <dt>Жанр</dt>
+                <dd>{{ book.genre }}</dd>
+              </div>
+              <div>
+                <dt>Год</dt>
+                <dd>{{ book.year }}</dd>
+              </div>
+              <div>
+                <dt>Издательство</dt>
+                <dd>{{ book.publisher }}</dd>
+              </div>
+              <div>
+                <dt>Возраст</dt>
+                <dd>{{ book.ageRating }}</dd>
+              </div>
+            </dl>
+
+            <div class="book-meta__footer">
+              <div class="status-pill">
+                <span>Статус</span>
+                <strong>{{ book.status }}</strong>
+              </div>
+
+              <div class="rating-pill" [class.rating-pill--accent]="(book.rating ?? 0) >= 8">
+                <span>Оценка</span>
+                <strong>{{ book.rating ?? '—' }}</strong>
+              </div>
+
+              <div class="status-pill">
+                <span>Видимость</span>
+                <strong>{{ book.isPublic ? 'Публичная' : 'Приватная' }}</strong>
+              </div>
+            </div>
           </div>
         } @else {
-          <p class="empty-state">Развёрнутое мнение пока не добавлено.</p>
+          <form class="book-edit-form" [formGroup]="bookForm">
+            <label class="field field--centered">
+              <span>Название</span>
+              <input formControlName="title" type="text" />
+            </label>
+
+            <label class="field field--centered">
+              <span>Автор</span>
+              <input formControlName="author" type="text" />
+            </label>
+
+            <label class="field field--wide">
+              <span>Описание</span>
+              <textarea formControlName="description"></textarea>
+            </label>
+
+            <div class="field-grid">
+              <label class="field">
+                <span>Жанр</span>
+                <input formControlName="genre" type="text" />
+              </label>
+
+              <label class="field">
+                <span>Год</span>
+                <input formControlName="year" type="number" />
+              </label>
+            </div>
+
+            <div class="field-grid">
+              <label class="field">
+                <span>Издательство</span>
+                <input formControlName="publisher" type="text" />
+              </label>
+
+              <label class="field">
+                <span>Возраст</span>
+                <input formControlName="ageRating" type="text" />
+              </label>
+            </div>
+
+            <div class="field-grid">
+              <label class="field">
+                <span>Статус</span>
+                <select formControlName="status">
+                  @for (status of statusOptions; track status) {
+                    <option [value]="status">{{ status }}</option>
+                  }
+                </select>
+              </label>
+
+              <label class="field">
+                <span>Оценка</span>
+                <input formControlName="rating" type="number" min="0" max="10" />
+              </label>
+            </div>
+
+            <div class="edit-actions">
+              <button
+                class="ghost-action ghost-action--accent"
+                type="button"
+                (click)="submitEdit()"
+              >
+                Сохранить
+              </button>
+              <button class="ghost-action" type="button" (click)="toggleDraftVisibility()">
+                {{
+                  bookForm.controls.isPublic.value
+                    ? 'Сделать приватной после сохранения'
+                    : 'Сделать публичной после сохранения'
+                }}
+              </button>
+              <button class="ghost-action" type="button" (click)="cancelEdit()">Отмена</button>
+              <button
+                class="ghost-action ghost-action--danger"
+                type="button"
+                (click)="deleteBook()"
+              >
+                Удалить книгу
+              </button>
+            </div>
+          </form>
         }
       </article>
 
-      <article class="details-panel details-panel--quotes" tuiCardLarge tuiSurface>
-        <p tuiChip>Цитаты</p>
-        <h2 tuiHeader="h3">Сохранённые фрагменты</h2>
+      <article class="book-pane book-pane--stream">
+        <div class="stream-toggle">
+          <button
+            class="stream-toggle__thumb"
+            type="button"
+            [class.stream-toggle__thumb--right]="activeTab() === 'opinions'"
+            aria-hidden="true"
+            tabindex="-1"
+          ></button>
 
-        @if (book.quotes.length) {
-          <div class="entries-stack">
-            @for (quote of book.quotes; track quote.id) {
-              <blockquote class="entry-card entry-card--quote">
-                <p>{{ quote.content }}</p>
-                <footer class="entry-date">
-                  {{ quote.createdAt | date: 'longDate' : undefined : 'ru-RU' }}
-                </footer>
-              </blockquote>
-            }
+          <button
+            class="stream-toggle__button"
+            type="button"
+            [class.stream-toggle__button--active]="activeTab() === 'quotes'"
+            (click)="selectTab('quotes')"
+          >
+            Цитаты
+          </button>
+          <button
+            class="stream-toggle__button"
+            type="button"
+            [class.stream-toggle__button--active]="activeTab() === 'opinions'"
+            (click)="selectTab('opinions')"
+          >
+            Мнения
+          </button>
+        </div>
+
+        @if (!isEditMode()) {
+          <div class="details-stream">
+            <div
+              #entryViewport
+              class="details-stream__viewport"
+              (wheel)="onEntryWheel($event, entryViewport)"
+            >
+              @if (!currentEntries().length) {
+                <div class="details-stream__empty">
+                  В разделе пока пусто. Здесь появятся
+                  {{ activeTab() === 'quotes' ? 'цитаты' : 'мнения' }} владельца.
+                </div>
+              } @else if (!isImmersed()) {
+                <button
+                  class="details-stream__veil"
+                  type="button"
+                  (click)="unlockEntry(entryViewport)"
+                >
+                  <div class="details-stream__blur" aria-hidden="true">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                  </div>
+                  <p>Нажмите для погружения</p>
+                </button>
+              } @else {
+                <article [class]="currentEntryContentClass()">
+                  {{ renderedEntryText() }}
+                </article>
+              }
+            </div>
+
+            <div class="details-stream__nav">
+              <span class="details-stream__nav-number">{{ currentIndexLabel() }}</span>
+              <span class="details-stream__nav-arrow" [style.transform]="arrowTransform()">
+                ↓
+              </span>
+              <span
+                class="details-stream__nav-number details-stream__nav-number--next"
+                [class.details-stream__nav-number--accent]="navigationAccent()"
+                [style.transform]="'scale(' + upcomingNumberScale() + ')'"
+              >
+                {{ visibleArrowDirection() === 'up' ? previousIndexLabel() : nextIndexLabel() }}
+              </span>
+            </div>
           </div>
         } @else {
-          <p class="empty-state">Цитаты ещё не добавлены.</p>
+          <div class="stream-editor">
+            <label class="field field--wide">
+              <span>{{ activeTab() === 'quotes' ? 'Цитата' : 'Мнение' }}</span>
+              <textarea
+                [formControlName]="activeTab() === 'quotes' ? 'quote' : 'opinion'"
+              ></textarea>
+            </label>
+
+            <p class="stream-editor__note">
+              Пустое поле сохранится как удалённая запись. Сама книга останется на полке.
+            </p>
+          </div>
         }
       </article>
     </section>
