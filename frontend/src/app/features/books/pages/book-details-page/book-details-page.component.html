@@ -40,7 +40,13 @@
         <div class="actions">
           <a [routerLink]="backLink()" tuiButton>Назад к библиотеке</a>
           @if (book.viewerCanEdit) {
-            <a routerLink="/books/new" tuiButton>Добавить ещё книгу</a>
+            <a [routerLink]="['/books', book.id, 'edit']" tuiButton>Редактировать</a>
+            <button tuiButton type="button" [disabled]="isProcessing()" (click)="toggleVisibility()">
+              {{ book.isPublic ? 'Сделать приватной' : 'Сделать публичной' }}
+            </button>
+            <button tuiButton type="button" [disabled]="isProcessing()" (click)="deleteBook()">
+              Удалить
+            </button>
           }
         </div>
       </div>

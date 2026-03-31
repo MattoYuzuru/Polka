@@ -19,10 +19,26 @@ export interface BookCard {
   publisher: string;
   ageRating: string;
   genre: string;
+  isPublic: boolean;
   status: BookStatus;
   rating: number | null;
   opinionPreview: string;
   coverPalette: string[];
+}
+
+export interface BookFormValue {
+  title: string;
+  author: string;
+  description: string;
+  year: number;
+  publisher: string;
+  ageRating: string;
+  genre: string;
+  isPublic: boolean;
+  status: BookStatus;
+  rating: number | null;
+  opinion: string;
+  quote: string;
 }
 
 export interface BookQuote {
@@ -73,3 +89,5 @@ export interface CreateBookPayload {
   opinion: string;
   quote: string;
 }
+
+export type UpdateBookPayload = CreateBookPayload;

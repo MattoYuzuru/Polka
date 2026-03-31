@@ -8,8 +8,8 @@ import {
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, RouterLink } from '@angular/router';
-import { catchError, distinctUntilChanged, EMPTY, map, switchMap, tap } from 'rxjs';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { catchError, distinctUntilChanged, EMPTY, finalize, map, switchMap, tap } from 'rxjs';
 import { TuiButton } from '@taiga-ui/core';
 import { TuiSurface } from '@taiga-ui/core';
 import { TuiBadge, TuiChip } from '@taiga-ui/kit';
@@ -27,12 +27,14 @@ import { BookDetails } from '../../../../shared/models/book.model';
 })
 export class BookDetailsPageComponent {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly bookApiService = inject(BookApiService);
 
   protected readonly book = signal<BookDetails | null>(null);
   protected readonly isLoading = signal(true);
   protected readonly errorMessage = signal<string | null>(null);
+  protected readonly isProcessing = signal(false);
   protected readonly backLink = computed(() => `/${this.book()?.ownerNickname ?? 'login'}`);
 
   protected readonly bookId = toSignal(
@@ -74,5 +76,45 @@ export class BookDetailsPageComponent {
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe();
+  }
+
+  protected toggleVisibility(): void {
+    const book = this.book();
+    if (!book) {
+      return;
+    }
+
+    this.isProcessing.set(true);
+
+    this.bookApiService
+      .setBookVisibility(book.id, !book.isPublic)
+      .pipe(
+        finalize(() => this.isProcessing.set(false)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (updatedBook) => this.book.set(updatedBook),
+        error: () => this.errorMessage.set('Не удалось изменить публичность книги.'),
+      });
+  }
+
+  protected deleteBook(): void {
+    const book = this.book();
+    if (!book || !globalThis.confirm('Удалить книгу?')) {
+      return;
+    }
+
+    this.isProcessing.set(true);
+
+    this.bookApiService
+      .deleteBook(book.id)
+      .pipe(
+        finalize(() => this.isProcessing.set(false)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: () => void this.router.navigateByUrl(`/${book.ownerNickname}`),
+        error: () => this.errorMessage.set('Не удалось удалить книгу.'),
+      });
   }
 }

@@ -31,6 +31,7 @@ type Book struct {
 	Publisher      string   `json:"publisher"`
 	AgeRating      string   `json:"ageRating"`
 	Genre          string   `json:"genre"`
+	IsPublic       bool     `json:"isPublic"`
 	Status         string   `json:"status"`
 	Rating         *int     `json:"rating"`
 	OpinionPreview string   `json:"opinionPreview"`

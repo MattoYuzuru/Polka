@@ -26,6 +26,14 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'books/:bookId/edit',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/books/pages/book-form-page/book-form-page.component').then(
+        (module) => module.BookFormPageComponent,
+      ),
+  },
+  {
     path: 'books/:bookId',
     loadComponent: () =>
       import('./features/books/pages/book-details-page/book-details-page.component').then(

@@ -54,9 +54,18 @@ type CreateBookInput struct {
 	Quote       string `json:"quote"`
 }
 
+type UpdateBookInput = CreateBookInput
+
+type UpdateVisibilityInput struct {
+	IsPublic bool `json:"isPublic"`
+}
+
 type Repository interface {
 	Create(ctx context.Context, ownerUserID string, input CreateBookInput) (BookDetails, error)
 	FindByID(ctx context.Context, bookID string, viewerUserID string) (BookDetails, error)
+	Update(ctx context.Context, ownerUserID string, bookID string, input UpdateBookInput) (BookDetails, error)
+	SetVisibility(ctx context.Context, ownerUserID string, bookID string, isPublic bool) (BookDetails, error)
+	Delete(ctx context.Context, ownerUserID string, bookID string) error
 }
 
 type Service struct {
@@ -109,4 +118,74 @@ func (service *Service) FindByID(
 	}
 
 	return service.repository.FindByID(ctx, bookID, viewerUserID)
+}
+
+func (service *Service) Update(
+	ctx context.Context,
+	ownerUserID string,
+	bookID string,
+	input UpdateBookInput,
+) (BookDetails, error) {
+	if strings.TrimSpace(ownerUserID) == "" {
+		return BookDetails{}, ErrUnauthorized
+	}
+
+	if strings.TrimSpace(bookID) == "" {
+		return BookDetails{}, ErrNotFound
+	}
+
+	if strings.TrimSpace(input.Title) == "" ||
+		strings.TrimSpace(input.Author) == "" ||
+		strings.TrimSpace(input.Genre) == "" ||
+		strings.TrimSpace(input.Status) == "" ||
+		input.Year < 0 {
+		return BookDetails{}, ErrInvalidInput
+	}
+
+	if input.Rating != nil && (*input.Rating < 0 || *input.Rating > 10) {
+		return BookDetails{}, ErrInvalidInput
+	}
+
+	if strings.TrimSpace(input.Publisher) == "" {
+		input.Publisher = "Не указано"
+	}
+
+	if strings.TrimSpace(input.AgeRating) == "" {
+		input.AgeRating = "16+"
+	}
+
+	return service.repository.Update(ctx, ownerUserID, bookID, input)
+}
+
+func (service *Service) SetVisibility(
+	ctx context.Context,
+	ownerUserID string,
+	bookID string,
+	isPublic bool,
+) (BookDetails, error) {
+	if strings.TrimSpace(ownerUserID) == "" {
+		return BookDetails{}, ErrUnauthorized
+	}
+
+	if strings.TrimSpace(bookID) == "" {
+		return BookDetails{}, ErrNotFound
+	}
+
+	return service.repository.SetVisibility(ctx, ownerUserID, bookID, isPublic)
+}
+
+func (service *Service) Delete(
+	ctx context.Context,
+	ownerUserID string,
+	bookID string,
+) error {
+	if strings.TrimSpace(ownerUserID) == "" {
+		return ErrUnauthorized
+	}
+
+	if strings.TrimSpace(bookID) == "" {
+		return ErrNotFound
+	}
+
+	return service.repository.Delete(ctx, ownerUserID, bookID)
 }
