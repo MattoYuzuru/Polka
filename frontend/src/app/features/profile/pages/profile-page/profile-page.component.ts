@@ -191,6 +191,12 @@ export class ProfilePageComponent implements OnInit {
     return activeShelf.kind === 'library' || activeShelf.isPublic;
   });
 
+  protected readonly profileMemberSinceLabel = computed(() => {
+    const rawLabel = this.profile()?.stats.memberSinceLabel ?? '';
+
+    return rawLabel.replace(/^с\s+/i, '');
+  });
+
   protected readonly normalizedBooks = computed<ShelfBook[]>(() => {
     const profile = this.profile();
     const activeShelf = this.activeShelf();
