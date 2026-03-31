@@ -56,7 +56,9 @@
             type="button"
             [disabled]="!displayedCoverUrl()"
             [style.background-image]="
-              !displayedCoverUrl() ? 'linear-gradient(145deg, ' + displayedCoverPalette().join(', ') + ')' : null
+              !displayedCoverUrl()
+                ? 'linear-gradient(145deg, ' + displayedCoverPalette().join(', ') + ')'
+                : null
             "
             (click)="openCoverModal()"
           >
@@ -93,7 +95,10 @@
               <h1>{{ book.title }}</h1>
               <p class="book-meta__author">{{ book.author }}</p>
               <p class="book-meta__description">
-                {{ book.description || 'Описание ещё не добавлено, но место для него уже подготовлено.' }}
+                {{
+                  book.description ||
+                    'Описание ещё не добавлено, но место для него уже подготовлено.'
+                }}
               </p>
             </div>
 
@@ -191,7 +196,11 @@
             </div>
 
             <div class="edit-actions">
-              <button class="ghost-action ghost-action--accent" type="button" (click)="submitEdit()">
+              <button
+                class="ghost-action ghost-action--accent"
+                type="button"
+                (click)="submitEdit()"
+              >
                 Сохранить
               </button>
               <button class="ghost-action" type="button" (click)="toggleDraftVisibility()">
@@ -202,7 +211,11 @@
                 }}
               </button>
               <button class="ghost-action" type="button" (click)="cancelEdit()">Отмена</button>
-              <button class="ghost-action ghost-action--danger" type="button" (click)="deleteBook()">
+              <button
+                class="ghost-action ghost-action--danger"
+                type="button"
+                (click)="deleteBook()"
+              >
                 Удалить книгу
               </button>
             </div>
@@ -247,7 +260,8 @@
             >
               @if (!currentEntries().length) {
                 <div class="details-stream__empty">
-                  В разделе пока пусто. Здесь появятся {{ activeTab() === 'quotes' ? 'цитаты' : 'мнения' }} владельца.
+                  В разделе пока пусто. Здесь появятся
+                  {{ activeTab() === 'quotes' ? 'цитаты' : 'мнения' }} владельца.
                 </div>
               } @else if (!isImmersed()) {
                 <button
@@ -272,10 +286,7 @@
 
             <div class="details-stream__nav">
               <span class="details-stream__nav-number">{{ currentIndexLabel() }}</span>
-              <span
-                class="details-stream__nav-arrow"
-                [style.transform]="arrowTransform()"
-              >
+              <span class="details-stream__nav-arrow" [style.transform]="arrowTransform()">
                 ↓
               </span>
               <span
@@ -283,9 +294,7 @@
                 [class.details-stream__nav-number--accent]="navigationAccent()"
                 [style.transform]="'scale(' + upcomingNumberScale() + ')'"
               >
-                {{
-                  visibleArrowDirection() === 'up' ? previousIndexLabel() : nextIndexLabel()
-                }}
+                {{ visibleArrowDirection() === 'up' ? previousIndexLabel() : nextIndexLabel() }}
               </span>
             </div>
           </div>

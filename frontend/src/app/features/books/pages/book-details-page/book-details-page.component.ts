@@ -95,7 +95,9 @@ export class BookDetailsPageComponent {
     this.hasCover() ? this.coverPreviewUrl() : null,
   );
   protected readonly displayedCoverPalette = computed(() =>
-    this.coverPreviewPalette().length ? this.coverPreviewPalette() : ['#101010', '#8f5aff', '#ff7a51'],
+    this.coverPreviewPalette().length
+      ? this.coverPreviewPalette()
+      : ['#101010', '#8f5aff', '#ff7a51'],
   );
   protected readonly currentEntries = computed<BookEntry[]>(() => {
     const book = this.book();
@@ -148,11 +150,11 @@ export class BookDetailsPageComponent {
 
     return `${rotation} scaleY(${this.navigationStretch()})`;
   });
-  protected readonly navigationStretch = computed(() =>
-    1 + Math.min(Math.abs(this.navigationProgress()) / NAVIGATION_THRESHOLD, 1) * 1.55,
+  protected readonly navigationStretch = computed(
+    () => 1 + Math.min(Math.abs(this.navigationProgress()) / NAVIGATION_THRESHOLD, 1) * 1.55,
   );
-  protected readonly upcomingNumberScale = computed(() =>
-    1 + Math.min(Math.abs(this.navigationProgress()) / NAVIGATION_THRESHOLD, 1) * 0.32,
+  protected readonly upcomingNumberScale = computed(
+    () => 1 + Math.min(Math.abs(this.navigationProgress()) / NAVIGATION_THRESHOLD, 1) * 0.32,
   );
   protected readonly navigationAccent = computed(() => {
     if (!this.currentEntries().length) {
