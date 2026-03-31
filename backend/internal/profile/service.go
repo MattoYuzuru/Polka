@@ -1,8 +1,8 @@
 package profile
 
 import (
+	"context"
 	"errors"
-	"strings"
 	"time"
 )
 
@@ -53,101 +53,24 @@ type PublicProfile struct {
 	RecommendationLists []RecommendationList `json:"recommendationLists"`
 }
 
-type Service struct{}
-
-func NewService() *Service {
-	return &Service{}
+type Repository interface {
+	FindByNickname(ctx context.Context, nickname string, viewerUserID string) (PublicProfile, error)
 }
 
-func (service *Service) ByNickname(nickname string) (PublicProfile, error) {
-	if strings.TrimSpace(strings.ToLower(nickname)) != "mattoy" {
-		return PublicProfile{}, ErrNotFound
+type Service struct {
+	repository Repository
+}
+
+func NewService(repository Repository) *Service {
+	return &Service{
+		repository: repository,
 	}
+}
 
-	rating10 := 10
-	rating9 := 9
-	rating8 := 8
-
-	return PublicProfile{
-		User: User{
-			Nickname:  "mattoy",
-			Display:   "Matto Yuzuru",
-			Tagline:   "Собираю библиотеку как личную книжную газету: с топами, заметками и спокойной типографикой.",
-			CreatedAt: time.Date(2024, time.September, 14, 9, 0, 0, 0, time.UTC),
-		},
-		Stats: Stats{
-			MemberSinceLabel:         "с сентября 2024",
-			BooksCount:               24,
-			CompletedCount:           12,
-			RecommendationListsCount: 3,
-		},
-		GradientStops: []string{"#101010", "#3563ff", "#ff7a51"},
-		Books: []Book{
-			{
-				ID:             "book-451",
-				Title:          "451° по Фаренгейту",
-				Author:         "Рэй Брэдбери",
-				Description:    "Антиутопия о памяти, чтении и цене удобного мира.",
-				Year:           1953,
-				Publisher:      "Ballantine Books",
-				AgeRating:      "16+",
-				Genre:          "Антиутопия",
-				Status:         "Прочитал",
-				Rating:         &rating10,
-				OpinionPreview: "Перечитываю ради темпа, огня и тревоги за культурную амнезию.",
-				CoverPalette:   []string{"#0f0f12", "#d94f3d", "#f9be54"},
-			},
-			{
-				ID:             "book-dune",
-				Title:          "Дюна",
-				Author:         "Фрэнк Герберт",
-				Description:    "Политика, экология и мессианские конструкции на уровне эпоса.",
-				Year:           1965,
-				Publisher:      "Chilton Books",
-				AgeRating:      "16+",
-				Genre:          "Научная фантастика",
-				Status:         "Читаю",
-				Rating:         &rating9,
-				OpinionPreview: "Держу высоко в сетке за масштаб мира и плотность деталей.",
-				CoverPalette:   []string{"#26120c", "#b56d3f", "#f0d0a1"},
-			},
-			{
-				ID:             "book-sea",
-				Title:          "Море спокойствия",
-				Author:         "Эмили Сент-Джон Мандел",
-				Description:    "Тихая научная фантастика о времени, памяти и повторяемости сюжетов.",
-				Year:           2022,
-				Publisher:      "Knopf",
-				AgeRating:      "16+",
-				Genre:          "Фантастика",
-				Status:         "Хочу",
-				Rating:         &rating8,
-				OpinionPreview: "В списке на ближайшее чтение ради лёгкости формы и интеллектуального хода.",
-				CoverPalette:   []string{"#111827", "#2854a6", "#b6d7ff"},
-			},
-		},
-		RecommendationLists: []RecommendationList{
-			{
-				ID:          "list-newspaper-core",
-				Title:       "Книги, которые ощущаются как архив",
-				Description: "Подборка книг с сильным чувством документа, следа и голоса эпохи.",
-				BooksCount:  5,
-				IsPublic:    true,
-			},
-			{
-				ID:          "list-sf-entry",
-				Title:       "Мягкий вход в sci-fi",
-				Description: "Для тех, кто хочет начать фантастику не с энциклопедии, а с настроения.",
-				BooksCount:  4,
-				IsPublic:    true,
-			},
-			{
-				ID:          "list-private-top",
-				Title:       "Личный пересбор топа",
-				Description: "Черновой приватный список для перестановки любимых книг.",
-				BooksCount:  7,
-				IsPublic:    false,
-			},
-		},
-	}, nil
+func (service *Service) ByNickname(
+	ctx context.Context,
+	nickname string,
+	viewerUserID string,
+) (PublicProfile, error) {
+	return service.repository.FindByNickname(ctx, nickname, viewerUserID)
 }

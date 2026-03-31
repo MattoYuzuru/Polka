@@ -8,13 +8,19 @@ import (
 type Config struct {
 	AppEnv         string
 	Port           string
+	DatabaseURL    string
+	JWTSecret      string
+	AutoMigrate    bool
 	AllowedOrigins []string
 }
 
 func Load() Config {
 	return Config{
-		AppEnv: os.Getenv("APP_ENV"),
-		Port:   envOrDefault("PORT", "8080"),
+		AppEnv:      envOrDefault("APP_ENV", "development"),
+		Port:        envOrDefault("PORT", "8080"),
+		DatabaseURL: envOrDefault("DATABASE_URL", "postgres://polka:polka@localhost:5432/polka?sslmode=disable"),
+		JWTSecret:   envOrDefault("JWT_SECRET", "polka-dev-secret"),
+		AutoMigrate: envBoolOrDefault("AUTO_MIGRATE", true),
 		AllowedOrigins: splitCSV(
 			envOrDefault(
 				"ALLOWED_ORIGINS",
@@ -30,6 +36,15 @@ func envOrDefault(key, fallback string) string {
 	}
 
 	return fallback
+}
+
+func envBoolOrDefault(key string, fallback bool) bool {
+	value := strings.TrimSpace(os.Getenv(key))
+	if value == "" {
+		return fallback
+	}
+
+	return strings.EqualFold(value, "true") || value == "1"
 }
 
 func splitCSV(value string) []string {
