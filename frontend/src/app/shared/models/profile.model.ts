@@ -8,6 +8,30 @@ export interface ProfileStats {
   recommendationListsCount: number;
 }
 
+export interface ReadingWindows {
+  completedLast30Days: number;
+  completedLast365Days: number;
+  averageRating: number;
+  publicBooksCount: number;
+  privateBooksCount: number;
+}
+
+export interface StatusBreakdownItem {
+  status: string;
+  count: number;
+}
+
+export interface GenreBreakdownItem {
+  genre: string;
+  count: number;
+}
+
+export interface ProfileAnalytics {
+  readingWindows: ReadingWindows;
+  statusBreakdown: StatusBreakdownItem[];
+  genreBreakdown: GenreBreakdownItem[];
+}
+
 export interface PublicProfile {
   user: {
     nickname: string;
@@ -16,6 +40,7 @@ export interface PublicProfile {
     createdAt: string;
   };
   stats: ProfileStats;
+  analytics: ProfileAnalytics;
   gradientStops: string[];
   books: BookCard[];
   recommendationLists: RecommendationListCard[];

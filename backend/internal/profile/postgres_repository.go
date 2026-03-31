@@ -70,6 +70,10 @@ func (repository *PostgresRepository) FindByNickname(
 		return PublicProfile{}, err
 	}
 
+	if err := repository.fillAnalytics(ctx, &profileView, userID, includePrivate); err != nil {
+		return PublicProfile{}, err
+	}
+
 	books, err := repository.loadBooks(ctx, userID, includePrivate)
 	if err != nil {
 		return PublicProfile{}, err
@@ -357,6 +361,142 @@ func (repository *PostgresRepository) loadRecommendationLists(
 	}
 
 	return recommendationLists, nil
+}
+
+func (repository *PostgresRepository) fillAnalytics(
+	ctx context.Context,
+	profileView *PublicProfile,
+	userID string,
+	includePrivate bool,
+) error {
+	const readingWindowsQuery = `
+		SELECT
+			COUNT(*) FILTER (
+				WHERE ($2 OR is_public)
+				  AND status = 'Прочитал'
+				  AND finished_at >= NOW() - INTERVAL '30 days'
+			) AS completed_last_30_days,
+			COUNT(*) FILTER (
+				WHERE ($2 OR is_public)
+				  AND status = 'Прочитал'
+				  AND finished_at >= NOW() - INTERVAL '365 days'
+			) AS completed_last_365_days,
+			COALESCE(ROUND(AVG(rating) FILTER (WHERE ($2 OR is_public) AND rating IS NOT NULL), 1), 0)::float8 AS average_rating,
+			COUNT(*) FILTER (WHERE is_public) AS public_books_count,
+			COUNT(*) FILTER (WHERE $2 AND NOT is_public) AS private_books_count
+		FROM books
+		WHERE user_id = $1;
+	`
+
+	if err := repository.pool.QueryRow(ctx, readingWindowsQuery, userID, includePrivate).Scan(
+		&profileView.Analytics.ReadingWindows.CompletedLast30Days,
+		&profileView.Analytics.ReadingWindows.CompletedLast365Days,
+		&profileView.Analytics.ReadingWindows.AverageRating,
+		&profileView.Analytics.ReadingWindows.PublicBooksCount,
+		&profileView.Analytics.ReadingWindows.PrivateBooksCount,
+	); err != nil {
+		return fmt.Errorf("load reading windows analytics: %w", err)
+	}
+
+	statusBreakdown, err := repository.loadStatusBreakdown(ctx, userID, includePrivate)
+	if err != nil {
+		return err
+	}
+
+	genreBreakdown, err := repository.loadGenreBreakdown(ctx, userID, includePrivate)
+	if err != nil {
+		return err
+	}
+
+	profileView.Analytics.StatusBreakdown = statusBreakdown
+	profileView.Analytics.GenreBreakdown = genreBreakdown
+
+	return nil
+}
+
+func (repository *PostgresRepository) loadStatusBreakdown(
+	ctx context.Context,
+	userID string,
+	includePrivate bool,
+) ([]StatusBreakdownItem, error) {
+	rows, err := repository.pool.Query(
+		ctx,
+		`
+			SELECT status, COUNT(*) AS books_count
+			FROM books
+			WHERE user_id = $1
+			  AND ($2 OR is_public)
+			GROUP BY status
+			ORDER BY books_count DESC, status ASC;
+		`,
+		userID,
+		includePrivate,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("query status breakdown: %w", err)
+	}
+	defer rows.Close()
+
+	statusBreakdown := make([]StatusBreakdownItem, 0)
+
+	for rows.Next() {
+		var item StatusBreakdownItem
+
+		if err := rows.Scan(&item.Status, &item.Count); err != nil {
+			return nil, fmt.Errorf("scan status breakdown row: %w", err)
+		}
+
+		statusBreakdown = append(statusBreakdown, item)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate status breakdown rows: %w", err)
+	}
+
+	return statusBreakdown, nil
+}
+
+func (repository *PostgresRepository) loadGenreBreakdown(
+	ctx context.Context,
+	userID string,
+	includePrivate bool,
+) ([]GenreBreakdownItem, error) {
+	rows, err := repository.pool.Query(
+		ctx,
+		`
+			SELECT genre, COUNT(*) AS books_count
+			FROM books
+			WHERE user_id = $1
+			  AND ($2 OR is_public)
+			GROUP BY genre
+			ORDER BY books_count DESC, genre ASC
+			LIMIT 4;
+		`,
+		userID,
+		includePrivate,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("query genre breakdown: %w", err)
+	}
+	defer rows.Close()
+
+	genreBreakdown := make([]GenreBreakdownItem, 0)
+
+	for rows.Next() {
+		var item GenreBreakdownItem
+
+		if err := rows.Scan(&item.Genre, &item.Count); err != nil {
+			return nil, fmt.Errorf("scan genre breakdown row: %w", err)
+		}
+
+		genreBreakdown = append(genreBreakdown, item)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate genre breakdown rows: %w", err)
+	}
+
+	return genreBreakdown, nil
 }
 
 func formatMemberSince(createdAt time.Time) string {

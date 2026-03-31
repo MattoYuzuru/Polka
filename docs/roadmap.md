@@ -1,8 +1,8 @@
 # Roadmap
 
 ## Текущий статус
-- Текущая ветка: `feat/library-reorder-and-filters`
-- Текущая фаза: reorder/top mechanics для книг и клиентские фильтры/сортировка библиотеки
+- Текущая ветка: `feat/reading-stats-and-profile-analytics`
+- Текущая фаза: finished-at tracking для completed books и analytics block на профиле
 - Последнее обновление: 2026-03-31
 
 ## Этапы
@@ -14,24 +14,24 @@
 | 3. Auth и app shell | completed | JWT login/register, token storage, guards, interceptors, profile edit, owner/guest profile visibility | frontend + backend auth modules |
 | 4. Books domain | in progress | create/get/update/delete книг, edit mode, публичность, цитаты, мнения, reorder/top order | books feature |
 | 5. Recommendation lists | in progress | create/get/update/delete списков, edit mode, публичность, owner/guest visibility | recommendation-lists feature |
-| 6. Public profile и статистика | in progress | owner/guest режимы, фильтры, сортировка, метрики | profile feature |
+| 6. Public profile и статистика | in progress | owner/guest режимы, фильтры, сортировка, метрики, reading analytics | profile feature |
 | 7. QA и delivery | pending | unit tests, component tests, CI/CD, GHCR, deploy docs, Lighthouse | `.github/`, `docs/`, `README.md` |
 
 ## Ближайшие шаги
-1. Добавить вычисляемую статистику чтения за период и отдельный stats-block на профиле.
-2. Настроить ESLint, Stylelint, Jest, Playwright component tests и GitHub Actions.
-3. Подготовить публикацию контейнеров в GHCR и production compose для VPS.
-4. Добавить Lighthouse-замеры, production polish и README с deploy flow.
+1. Настроить ESLint, Stylelint, Jest, Playwright component tests и GitHub Actions.
+2. Подготовить публикацию контейнеров в GHCR и production compose для VPS.
+3. Добавить Lighthouse-замеры, production polish и README с deploy flow.
+4. Добить e2e/component сценарии под login, CRUD и фильтрацию.
 
 ## Последняя проверка
 - `npm run test:backend`
 - `npm run build:frontend`
 - `npm run test:frontend`
 - `docker compose up -d --build postgres backend`
-- `PATCH /api/v1/books/order`
-- `GET /api/v1/profiles/mattoy` до reorder
-- `GET /api/v1/profiles/mattoy` после reorder
-- `PATCH /api/v1/books/order` для возврата исходного порядка
+- `POST /api/v1/books` со статусом `Прочитал`
+- `GET /api/v1/profiles/mattoy` до completed create
+- `GET /api/v1/profiles/mattoy` после completed create
+- `DELETE /api/v1/books/:id` для возврата исходной analytics-картины
 
 ## Принципы итераций
 - Один вертикальный срез на одну небольшую ветку.
