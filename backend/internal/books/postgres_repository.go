@@ -243,15 +243,18 @@ func (repository *PostgresRepository) Update(
 			is_public = $10,
 			status = $11,
 			rating = $12,
-			opinion_preview = $13,
+			opinion_preview = CASE
+				WHEN $13 THEN $14
+				ELSE opinion_preview
+			END,
 			cover_object_key = CASE
-				WHEN $14 THEN NULL
-				WHEN NULLIF($15, '') IS NOT NULL THEN $15
+				WHEN $15 THEN NULL
+				WHEN NULLIF($16, '') IS NOT NULL THEN $16
 				ELSE cover_object_key
 			END,
 			cover_palette = CASE
-				WHEN $14 THEN ARRAY[]::TEXT[]
-				WHEN NULLIF($15, '') IS NOT NULL THEN $16
+				WHEN $15 THEN ARRAY[]::TEXT[]
+				WHEN NULLIF($16, '') IS NOT NULL THEN $17
 				ELSE cover_palette
 			END,
 			finished_at = CASE
@@ -264,6 +267,11 @@ func (repository *PostgresRepository) Update(
 	`
 
 	var updatedID string
+	updateOpinionPreview := input.Opinion != nil
+	opinionPreview := ""
+	if input.Opinion != nil {
+		opinionPreview = buildOpinionPreview(strings.TrimSpace(*input.Opinion))
+	}
 
 	if err := tx.QueryRow(
 		ctx,
@@ -280,7 +288,8 @@ func (repository *PostgresRepository) Update(
 		input.IsPublic,
 		strings.TrimSpace(input.Status),
 		input.Rating,
-		buildOpinionPreview(input.Opinion),
+		updateOpinionPreview,
+		opinionPreview,
 		input.RemoveCover,
 		strings.TrimSpace(input.CoverObjectKey),
 		input.CoverPalette,
@@ -292,38 +301,289 @@ func (repository *PostgresRepository) Update(
 		return BookDetails{}, fmt.Errorf("update book: %w", err)
 	}
 
-	if _, err := tx.Exec(ctx, `DELETE FROM quotes WHERE book_id::text = $1`, updatedID); err != nil {
-		return BookDetails{}, fmt.Errorf("delete old quotes: %w", err)
-	}
+	if input.Quote != nil {
+		if _, err := tx.Exec(ctx, `DELETE FROM quotes WHERE book_id::text = $1`, updatedID); err != nil {
+			return BookDetails{}, fmt.Errorf("delete old quotes: %w", err)
+		}
 
-	if _, err := tx.Exec(ctx, `DELETE FROM opinions WHERE book_id::text = $1`, updatedID); err != nil {
-		return BookDetails{}, fmt.Errorf("delete old opinions: %w", err)
-	}
-
-	if quote := strings.TrimSpace(input.Quote); quote != "" {
-		if _, err := tx.Exec(
-			ctx,
-			`INSERT INTO quotes (id, book_id, content) VALUES (gen_random_uuid(), $1, $2)`,
-			updatedID,
-			quote,
-		); err != nil {
-			return BookDetails{}, fmt.Errorf("insert updated quote: %w", err)
+		if quote := strings.TrimSpace(*input.Quote); quote != "" {
+			if _, err := tx.Exec(
+				ctx,
+				`INSERT INTO quotes (id, book_id, content) VALUES (gen_random_uuid(), $1, $2)`,
+				updatedID,
+				quote,
+			); err != nil {
+				return BookDetails{}, fmt.Errorf("insert updated quote: %w", err)
+			}
 		}
 	}
 
-	if opinion := strings.TrimSpace(input.Opinion); opinion != "" {
-		if _, err := tx.Exec(
-			ctx,
-			`INSERT INTO opinions (id, book_id, content) VALUES (gen_random_uuid(), $1, $2)`,
-			updatedID,
-			opinion,
-		); err != nil {
-			return BookDetails{}, fmt.Errorf("insert updated opinion: %w", err)
+	if input.Opinion != nil {
+		if _, err := tx.Exec(ctx, `DELETE FROM opinions WHERE book_id::text = $1`, updatedID); err != nil {
+			return BookDetails{}, fmt.Errorf("delete old opinions: %w", err)
+		}
+
+		if opinion := strings.TrimSpace(*input.Opinion); opinion != "" {
+			if _, err := tx.Exec(
+				ctx,
+				`INSERT INTO opinions (id, book_id, content) VALUES (gen_random_uuid(), $1, $2)`,
+				updatedID,
+				opinion,
+			); err != nil {
+				return BookDetails{}, fmt.Errorf("insert updated opinion: %w", err)
+			}
 		}
 	}
 
 	if err := tx.Commit(ctx); err != nil {
 		return BookDetails{}, fmt.Errorf("commit update book transaction: %w", err)
+	}
+
+	return repository.FindByID(ctx, updatedID, ownerUserID)
+}
+
+func (repository *PostgresRepository) CreateQuote(
+	ctx context.Context,
+	ownerUserID string,
+	bookID string,
+	content string,
+) (BookDetails, error) {
+	var updatedID string
+
+	err := repository.pool.QueryRow(
+		ctx,
+		`
+			INSERT INTO quotes (id, book_id, content)
+			SELECT gen_random_uuid(), b.id, $3
+			FROM books b
+			WHERE b.id::text = $1
+			  AND b.user_id::text = $2
+			RETURNING book_id::text;
+		`,
+		bookID,
+		ownerUserID,
+		content,
+	).Scan(&updatedID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return BookDetails{}, ErrNotFound
+		}
+
+		return BookDetails{}, fmt.Errorf("create quote: %w", err)
+	}
+
+	return repository.FindByID(ctx, updatedID, ownerUserID)
+}
+
+func (repository *PostgresRepository) UpdateQuote(
+	ctx context.Context,
+	ownerUserID string,
+	bookID string,
+	quoteID string,
+	content string,
+) (BookDetails, error) {
+	var updatedID string
+
+	err := repository.pool.QueryRow(
+		ctx,
+		`
+			UPDATE quotes q
+			SET content = $4
+			FROM books b
+			WHERE q.id::text = $2
+			  AND q.book_id = b.id
+			  AND b.id::text = $1
+			  AND b.user_id::text = $3
+			RETURNING b.id::text;
+		`,
+		bookID,
+		quoteID,
+		ownerUserID,
+		content,
+	).Scan(&updatedID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return BookDetails{}, ErrNotFound
+		}
+
+		return BookDetails{}, fmt.Errorf("update quote: %w", err)
+	}
+
+	return repository.FindByID(ctx, updatedID, ownerUserID)
+}
+
+func (repository *PostgresRepository) DeleteQuote(
+	ctx context.Context,
+	ownerUserID string,
+	bookID string,
+	quoteID string,
+) (BookDetails, error) {
+	var updatedID string
+
+	err := repository.pool.QueryRow(
+		ctx,
+		`
+			DELETE FROM quotes q
+			USING books b
+			WHERE q.id::text = $2
+			  AND q.book_id = b.id
+			  AND b.id::text = $1
+			  AND b.user_id::text = $3
+			RETURNING b.id::text;
+		`,
+		bookID,
+		quoteID,
+		ownerUserID,
+	).Scan(&updatedID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return BookDetails{}, ErrNotFound
+		}
+
+		return BookDetails{}, fmt.Errorf("delete quote: %w", err)
+	}
+
+	return repository.FindByID(ctx, updatedID, ownerUserID)
+}
+
+func (repository *PostgresRepository) CreateOpinion(
+	ctx context.Context,
+	ownerUserID string,
+	bookID string,
+	content string,
+) (BookDetails, error) {
+	tx, err := repository.pool.Begin(ctx)
+	if err != nil {
+		return BookDetails{}, fmt.Errorf("begin create opinion transaction: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	var updatedID string
+
+	if err := tx.QueryRow(
+		ctx,
+		`
+			INSERT INTO opinions (id, book_id, content)
+			SELECT gen_random_uuid(), b.id, $3
+			FROM books b
+			WHERE b.id::text = $1
+			  AND b.user_id::text = $2
+			RETURNING book_id::text;
+		`,
+		bookID,
+		ownerUserID,
+		content,
+	).Scan(&updatedID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return BookDetails{}, ErrNotFound
+		}
+
+		return BookDetails{}, fmt.Errorf("create opinion: %w", err)
+	}
+
+	if err := repository.syncOpinionPreviewTx(ctx, tx, updatedID); err != nil {
+		return BookDetails{}, err
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return BookDetails{}, fmt.Errorf("commit create opinion transaction: %w", err)
+	}
+
+	return repository.FindByID(ctx, updatedID, ownerUserID)
+}
+
+func (repository *PostgresRepository) UpdateOpinion(
+	ctx context.Context,
+	ownerUserID string,
+	bookID string,
+	opinionID string,
+	content string,
+) (BookDetails, error) {
+	tx, err := repository.pool.Begin(ctx)
+	if err != nil {
+		return BookDetails{}, fmt.Errorf("begin update opinion transaction: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	var updatedID string
+
+	if err := tx.QueryRow(
+		ctx,
+		`
+			UPDATE opinions o
+			SET content = $4
+			FROM books b
+			WHERE o.id::text = $2
+			  AND o.book_id = b.id
+			  AND b.id::text = $1
+			  AND b.user_id::text = $3
+			RETURNING b.id::text;
+		`,
+		bookID,
+		opinionID,
+		ownerUserID,
+		content,
+	).Scan(&updatedID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return BookDetails{}, ErrNotFound
+		}
+
+		return BookDetails{}, fmt.Errorf("update opinion: %w", err)
+	}
+
+	if err := repository.syncOpinionPreviewTx(ctx, tx, updatedID); err != nil {
+		return BookDetails{}, err
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return BookDetails{}, fmt.Errorf("commit update opinion transaction: %w", err)
+	}
+
+	return repository.FindByID(ctx, updatedID, ownerUserID)
+}
+
+func (repository *PostgresRepository) DeleteOpinion(
+	ctx context.Context,
+	ownerUserID string,
+	bookID string,
+	opinionID string,
+) (BookDetails, error) {
+	tx, err := repository.pool.Begin(ctx)
+	if err != nil {
+		return BookDetails{}, fmt.Errorf("begin delete opinion transaction: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	var updatedID string
+
+	if err := tx.QueryRow(
+		ctx,
+		`
+			DELETE FROM opinions o
+			USING books b
+			WHERE o.id::text = $2
+			  AND o.book_id = b.id
+			  AND b.id::text = $1
+			  AND b.user_id::text = $3
+			RETURNING b.id::text;
+		`,
+		bookID,
+		opinionID,
+		ownerUserID,
+	).Scan(&updatedID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return BookDetails{}, ErrNotFound
+		}
+
+		return BookDetails{}, fmt.Errorf("delete opinion: %w", err)
+	}
+
+	if err := repository.syncOpinionPreviewTx(ctx, tx, updatedID); err != nil {
+		return BookDetails{}, err
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return BookDetails{}, fmt.Errorf("commit delete opinion transaction: %w", err)
 	}
 
 	return repository.FindByID(ctx, updatedID, ownerUserID)
@@ -577,6 +837,41 @@ func (repository *PostgresRepository) loadOpinions(ctx context.Context, bookID s
 	}
 
 	return opinions, nil
+}
+
+func (repository *PostgresRepository) syncOpinionPreviewTx(
+	ctx context.Context,
+	tx pgx.Tx,
+	bookID string,
+) error {
+	var latestOpinion string
+
+	if err := tx.QueryRow(
+		ctx,
+		`
+			SELECT COALESCE((
+				SELECT content
+				FROM opinions
+				WHERE book_id::text = $1
+				ORDER BY created_at DESC
+				LIMIT 1
+			), '');
+		`,
+		bookID,
+	).Scan(&latestOpinion); err != nil {
+		return fmt.Errorf("load latest opinion for preview: %w", err)
+	}
+
+	if _, err := tx.Exec(
+		ctx,
+		`UPDATE books SET opinion_preview = $2 WHERE id::text = $1`,
+		bookID,
+		buildOpinionPreview(latestOpinion),
+	); err != nil {
+		return fmt.Errorf("sync opinion preview: %w", err)
+	}
+
+	return nil
 }
 
 func buildOpinionPreview(opinion string) string {

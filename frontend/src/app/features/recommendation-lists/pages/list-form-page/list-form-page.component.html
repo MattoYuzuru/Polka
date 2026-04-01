@@ -1,4 +1,4 @@
-<main class="list-form-page">
+<main class="list-form-page" [style.--accent-gradient]="accentGradientCss()">
   @if (isLoading()) {
     <section class="state-card" tuiCardLarge tuiSurface>
       <p tuiChip>Загрузка</p>
@@ -62,7 +62,8 @@
 
           <label class="checkbox-field">
             <input formControlName="isPublic" type="checkbox" />
-            <div>
+            <span class="checkbox-field__mark" aria-hidden="true"></span>
+            <div class="checkbox-field__content">
               <strong>Показывать список гостям</strong>
               <p>Приватную подборку нельзя распространять по ссылке и видеть без авторизации.</p>
             </div>
@@ -79,7 +80,12 @@
         }
 
         <div class="actions">
-          <button [disabled]="isSubmitting()" tuiButton type="submit">
+          <button
+            class="form-action form-action--accent"
+            [disabled]="isSubmitting()"
+            tuiButton
+            type="submit"
+          >
             {{
               isSubmitting()
                 ? isEditMode()
@@ -91,18 +97,30 @@
             }}
           </button>
           @if (!isEditMode()) {
-            <button tuiButton type="button" (click)="saveDraftLocally()">Сохранить черновик</button>
+            <button class="form-action" tuiButton type="button" (click)="saveDraftLocally()">
+              Сохранить черновик
+            </button>
           }
-          <button tuiButton type="button" (click)="resetDraft()">Очистить</button>
+          <button class="form-action" tuiButton type="button" (click)="resetDraft()">
+            Очистить
+          </button>
           <a
             [routerLink]="
               isEditMode() && currentListId()
                 ? ['/lists', currentListId()]
                 : ['/', authSessionStore.user()?.nickname ?? 'login']
             "
+            class="form-action"
             tuiButton
           >
             {{ isEditMode() ? 'К списку' : 'Вернуться в профиль' }}
+          </a>
+          <a
+            [routerLink]="['/', authSessionStore.user()?.nickname ?? 'login']"
+            class="form-action"
+            tuiButton
+          >
+            На главную
           </a>
         </div>
       </form>
@@ -119,7 +137,7 @@
         @if (!books().length) {
           <div class="empty-state">
             <p>Сначала добавьте хотя бы две книги в библиотеку.</p>
-            <a routerLink="/books/new" tuiButton>Добавить книгу</a>
+            <a routerLink="/books/new" class="form-action" tuiButton>Добавить книгу</a>
           </div>
         } @else {
           <div class="books-grid">
@@ -131,6 +149,10 @@
                 type="button"
                 (click)="toggleBook(book.id)"
               >
+                @if (selectionOrder(book.id); as order) {
+                  <span class="book-option__order">{{ order }}</span>
+                }
+
                 <div
                   class="book-option__cover"
                   [style.background-image]="
@@ -152,11 +174,21 @@
 
                 <div class="book-option__body">
                   <div class="book-option__header">
-                    <h3 tuiHeader="h5">{{ book.title }}</h3>
-                    <span tuiBadge>{{ isSelected(book.id) ? 'В списке' : 'Выбрать' }}</span>
-                  </div>
+                    <div>
+                      <h3 tuiHeader="h5">{{ book.title }}</h3>
+                      <p class="book-meta">
+                        {{ book.author }} · {{ book.genre }} · {{ book.year }}
+                      </p>
+                    </div>
 
-                  <p class="book-meta">{{ book.author }} · {{ book.genre }} · {{ book.year }}</p>
+                    <span class="book-option__state">
+                      {{
+                        isSelected(book.id)
+                          ? 'Выбрана #' + selectionOrder(book.id)
+                          : 'Нажмите, чтобы выбрать'
+                      }}
+                    </span>
+                  </div>
 
                   <div class="book-tags">
                     <span tuiBadge>{{ book.status }}</span>

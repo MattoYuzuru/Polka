@@ -109,6 +109,23 @@ a[tuiButton][aria-disabled='true'] {
   cursor: not-allowed;
 }
 
+.orb-button svg {
+  position: relative;
+  z-index: 1;
+}
+
+.mask-icon {
+  width: 1.84rem;
+  height: 1.84rem;
+  color: #fff;
+  fill: none;
+  stroke: currentcolor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.7;
+  filter: drop-shadow(0 0 0.35rem rgba(255, 255, 255, 0.16));
+}
+
 [tuiBadge],
 [tuiChip] {
   display: inline-flex;
@@ -141,6 +158,81 @@ textarea {
 textarea {
   min-height: 8rem;
   resize: vertical;
+}
+
+.stream-editor__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.9rem 1rem;
+}
+
+.stream-editor__header h2 {
+  max-width: 26rem;
+  font-size: clamp(1.1rem, 2.4vw, 1.45rem);
+  line-height: 1.35;
+}
+
+.stream-editor__eyebrow {
+  color: var(--polka-muted);
+  font-size: 0.76rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.stream-editor__error {
+  padding: 0.85rem 1rem;
+  color: #9d2916;
+  border: 1px solid rgba(157, 41, 22, 0.18);
+  border-radius: 1rem;
+  background: rgba(255, 241, 237, 0.92);
+}
+
+.stream-editor__list {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.stream-entry-card {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem 1rem 1.05rem;
+  border: 1px solid rgba(13, 13, 13, 0.1);
+  border-radius: 1.15rem;
+  background: rgba(255, 255, 255, 0.54);
+}
+
+.stream-entry-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.stream-entry-card__index {
+  font-family: var(--polka-display-font);
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.stream-entry-card__meta {
+  margin-top: 0.18rem;
+  color: var(--polka-muted);
+  font-size: 0.76rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.stream-entry-card textarea,
+.stream-editor textarea {
+  min-height: min(12rem, 24vh);
+}
+
+.stream-entry-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
 }
 
 input::placeholder,

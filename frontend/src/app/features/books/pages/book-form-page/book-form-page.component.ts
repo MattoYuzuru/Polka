@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -9,6 +16,7 @@ import { TuiCardLarge, TuiHeader } from '@taiga-ui/layout';
 
 import { BookApiService } from '../../../../core/services/book-api.service';
 import { AuthSessionStore } from '../../../../core/stores/auth-session.store';
+import { UiPreferencesStore } from '../../../../core/stores/ui-preferences.store';
 import { BOOK_STATUS_OPTIONS } from '../../../../shared/data/book-form.constants';
 import {
   type BookDetails,
@@ -41,6 +49,7 @@ export class BookFormPageComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly bookApiService = inject(BookApiService);
   protected readonly authSessionStore = inject(AuthSessionStore);
+  protected readonly uiPreferencesStore = inject(UiPreferencesStore);
 
   private editingBookId: string | null = null;
   private activeCoverObjectUrl: string | null = null;
@@ -62,6 +71,12 @@ export class BookFormPageComponent {
   protected readonly hasCover = signal(false);
   protected readonly uploadedCoverKey = signal<string | null>(null);
   protected readonly removeCoverOnSubmit = signal(false);
+  protected readonly isCoverDropActive = signal(false);
+  protected readonly accentGradientCss = computed(() =>
+    this.coverPreviewPalette().length
+      ? `linear-gradient(135deg, ${this.coverPreviewPalette().join(', ')})`
+      : this.uiPreferencesStore.profileGradientCss(),
+  );
 
   protected readonly bookForm = this.formBuilder.nonNullable.group({
     title: ['', [Validators.required, Validators.minLength(2)]],
@@ -175,38 +190,49 @@ export class BookFormPageComponent {
       return;
     }
 
-    this.errorMessage.set(null);
-    this.isUploadingCover.set(true);
-    this.setLocalPreviewUrl(URL.createObjectURL(file));
+    this.uploadCoverFile(file, input);
+  }
 
-    this.bookApiService
-      .uploadCover(file)
-      .pipe(
-        finalize(() => {
-          this.isUploadingCover.set(false);
-          if (input) {
-            input.value = '';
-          }
-        }),
-        takeUntilDestroyed(this.destroyRef),
-      )
-      .subscribe({
-        next: (uploadedCover) => {
-          this.uploadedCoverKey.set(uploadedCover.coverObjectKey);
-          this.coverPreviewPalette.set(uploadedCover.coverPalette);
-          this.hasCover.set(true);
-          this.removeCoverOnSubmit.set(false);
-          this.draftMessage.set('Обложка загружена и будет сохранена вместе с книгой.');
-        },
-        error: (error: { error?: { message?: string } }) => {
-          this.errorMessage.set(error.error?.message ?? 'Не удалось загрузить обложку.');
-          this.restoreCoverPreviewAfterUploadError();
-        },
-      });
+  protected onCoverDragOver(event: DragEvent): void {
+    event.preventDefault();
+    this.isCoverDropActive.set(true);
+  }
+
+  protected onCoverDragLeave(event: DragEvent): void {
+    const nextTarget = event.relatedTarget;
+    if (
+      nextTarget instanceof Node &&
+      (event.currentTarget as HTMLElement | null)?.contains(nextTarget)
+    ) {
+      return;
+    }
+
+    this.isCoverDropActive.set(false);
+  }
+
+  protected onCoverDrop(event: DragEvent): void {
+    event.preventDefault();
+    this.isCoverDropActive.set(false);
+
+    const file = this.extractImageFile(event.dataTransfer?.files);
+    if (file) {
+      this.uploadCoverFile(file);
+    }
+  }
+
+  protected onCoverPaste(event: ClipboardEvent): void {
+    const file = this.extractImageFile(event.clipboardData?.files);
+    if (!file) {
+      return;
+    }
+
+    event.preventDefault();
+    this.uploadCoverFile(file);
   }
 
   protected removeCover(): void {
     this.errorMessage.set(null);
+    this.isCoverDropActive.set(false);
     this.uploadedCoverKey.set(null);
     this.removeCoverOnSubmit.set(this.isEditMode() && this.hasInitialCover);
     this.clearPreviewUrlOnly();
@@ -307,6 +333,7 @@ export class BookFormPageComponent {
   private clearCoverState(): void {
     this.uploadedCoverKey.set(null);
     this.removeCoverOnSubmit.set(false);
+    this.isCoverDropActive.set(false);
     this.setLocalPreviewUrl(null);
     this.coverPreviewUrl.set(null);
     this.coverPreviewPalette.set([]);
@@ -344,6 +371,46 @@ export class BookFormPageComponent {
     }
 
     this.coverPreviewUrl.set(null);
+  }
+
+  private uploadCoverFile(file: File, input?: HTMLInputElement | null): void {
+    this.errorMessage.set(null);
+    this.isUploadingCover.set(true);
+    this.isCoverDropActive.set(false);
+    this.setLocalPreviewUrl(URL.createObjectURL(file));
+
+    this.bookApiService
+      .uploadCover(file)
+      .pipe(
+        finalize(() => {
+          this.isUploadingCover.set(false);
+          if (input) {
+            input.value = '';
+          }
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (uploadedCover) => {
+          this.uploadedCoverKey.set(uploadedCover.coverObjectKey);
+          this.coverPreviewPalette.set(uploadedCover.coverPalette);
+          this.hasCover.set(true);
+          this.removeCoverOnSubmit.set(false);
+          this.draftMessage.set('Обложка загружена и будет сохранена вместе с книгой.');
+        },
+        error: (error: { error?: { message?: string } }) => {
+          this.errorMessage.set(error.error?.message ?? 'Не удалось загрузить обложку.');
+          this.restoreCoverPreviewAfterUploadError();
+        },
+      });
+  }
+
+  private extractImageFile(files: FileList | null | undefined): File | null {
+    if (!files?.length) {
+      return null;
+    }
+
+    return Array.from(files).find((file) => file.type.startsWith('image/')) ?? null;
   }
 }
 

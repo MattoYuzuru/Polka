@@ -1,4 +1,4 @@
-<main class="book-form-page">
+<main class="book-form-page" [style.--accent-gradient]="accentGradientCss()">
   <section class="page-intro" tuiCardLarge tuiSurface>
     <p tuiChip>{{ isEditMode() ? 'Редактирование книги' : 'Новая книга' }}</p>
     <h1 tuiHeader="h2">
@@ -8,11 +8,11 @@
           : 'Добавьте книгу в библиотеку и сохраните всё, что уже хотите о ней сказать.'
       }}
     </h1>
-    <p>
+    <p class="page-intro__lead">
       @if (isEditMode()) {
-        Здесь же можно сменить публичность, описание, мнение и цитату.
+        Спокойный режим правки: одна обложка, одна колонка фактов и отдельный поток заметок.
       } @else {
-        Черновик сохраняется локально, поэтому после `F5` текст и поля не потеряются.
+        Черновик сохраняется локально, поэтому после `F5` поля и текст не потеряются.
       }
     </p>
   </section>
@@ -28,13 +28,13 @@
         <div class="cover-dropzone__header">
           <p tuiBadge>Обложка</p>
           <p class="muted">
-            Загрузите изображение перетаскиванием или кликом. Палитра обложки используется для
-            акцентного градиента профиля.
+            Дайте блоку больше воздуха: обложка сразу задаёт акцент и подсказывает будущий градиент.
           </p>
         </div>
 
-        <div
+        <label
           class="cover-dropzone__placeholder"
+          [class.cover-dropzone__placeholder--active]="isCoverDropActive()"
           [style.background-image]="
             !coverPreviewUrl()
               ? 'linear-gradient(145deg, ' +
@@ -44,18 +44,13 @@
                 ')'
               : null
           "
+          tabindex="0"
+          data-testid="book-cover-upload-label"
+          (dragover)="onCoverDragOver($event)"
+          (dragleave)="onCoverDragLeave($event)"
+          (drop)="onCoverDrop($event)"
+          (paste)="onCoverPaste($event)"
         >
-          @if (coverPreviewUrl()) {
-            <img
-              [src]="coverPreviewUrl()"
-              [alt]="'Обложка книги ' + (bookForm.controls.title.value || 'без названия')"
-            />
-          } @else {
-            <span>{{ bookForm.controls.title.value.slice(0, 1).toUpperCase() || 'P' }}</span>
-          }
-        </div>
-
-        <label class="cover-upload-control" data-testid="book-cover-upload-label">
           <input
             class="cover-upload-control__input"
             type="file"
@@ -63,15 +58,43 @@
             data-testid="book-cover-input"
             (change)="uploadCover($event)"
           />
-          <span>{{ isUploadingCover() ? 'Загружаем обложку...' : 'Выбрать обложку' }}</span>
+
+          @if (coverPreviewUrl()) {
+            <img
+              [src]="coverPreviewUrl()"
+              [alt]="'Обложка книги ' + (bookForm.controls.title.value || 'без названия')"
+            />
+          } @else {
+            <div class="cover-dropzone__prompt">
+              <strong>
+                {{
+                  isUploadingCover()
+                    ? 'Загружаем обложку...'
+                    : 'Вставьте, переместите или нажмите сюда'
+                }}
+              </strong>
+              <p>
+                Поддерживаются jpg, png, gif и webp. После выбора блок сразу заменится самой
+                обложкой.
+              </p>
+            </div>
+          }
         </label>
 
         <div class="cover-actions">
           @if (!isEditMode()) {
-            <button tuiButton type="button" (click)="saveDraftLocally()">Сохранить черновик</button>
+            <button class="form-action" tuiButton type="button" (click)="saveDraftLocally()">
+              Сохранить черновик
+            </button>
           }
           @if (hasCover()) {
-            <button tuiButton type="button" data-testid="book-cover-remove" (click)="removeCover()">
+            <button
+              class="form-action"
+              tuiButton
+              type="button"
+              data-testid="book-cover-remove"
+              (click)="removeCover()"
+            >
               Удалить обложку
             </button>
           }
@@ -153,7 +176,11 @@
 
             <label class="checkbox-field">
               <input formControlName="isPublic" type="checkbox" />
-              <span>Показывать книгу в публичной библиотеке</span>
+              <span class="checkbox-field__mark" aria-hidden="true"></span>
+              <div class="checkbox-field__content">
+                <strong>Показывать книгу в публичной библиотеке</strong>
+                <p>Книга появится у гостей на основной полке и в публичных подборках.</p>
+              </div>
             </label>
           </div>
 
@@ -197,7 +224,13 @@
           }
 
           <div class="actions">
-            <button tuiButton type="submit" [disabled]="isSubmitting()" data-testid="book-submit">
+            <button
+              class="form-action form-action--accent"
+              tuiButton
+              type="submit"
+              [disabled]="isSubmitting()"
+              data-testid="book-submit"
+            >
               {{
                 isSubmitting()
                   ? isEditMode()
@@ -208,9 +241,11 @@
                     : 'Добавить книгу'
               }}
             </button>
-            <button tuiButton type="button" (click)="resetDraft()">Очистить</button>
+            <button class="form-action" tuiButton type="button" (click)="resetDraft()">
+              Очистить
+            </button>
             @if (authSessionStore.user(); as user) {
-              <a [routerLink]="['/', user.nickname]" tuiButton>К профилю</a>
+              <a [routerLink]="['/', user.nickname]" class="form-action" tuiButton>К профилю</a>
             }
           </div>
         </form>

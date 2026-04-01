@@ -17,6 +17,7 @@ import { TuiCardLarge, TuiHeader } from '@taiga-ui/layout';
 import { ProfileApiService } from '../../../../core/services/profile-api.service';
 import { RecommendationListApiService } from '../../../../core/services/recommendation-list-api.service';
 import { AuthSessionStore } from '../../../../core/stores/auth-session.store';
+import { UiPreferencesStore } from '../../../../core/stores/ui-preferences.store';
 import { type BookCard } from '../../../../shared/models/book.model';
 import {
   type RecommendationListDetails,
@@ -49,6 +50,7 @@ export class ListFormPageComponent {
   private readonly profileApiService = inject(ProfileApiService);
   private readonly recommendationListApiService = inject(RecommendationListApiService);
   protected readonly authSessionStore = inject(AuthSessionStore);
+  protected readonly uiPreferencesStore = inject(UiPreferencesStore);
 
   private editingListId: string | null = null;
   private draftWatcherInitialized = false;
@@ -61,6 +63,9 @@ export class ListFormPageComponent {
   protected readonly currentListId = signal<string | null>(null);
   protected readonly books = signal<BookCard[]>([]);
   protected readonly selectedCount = computed(() => this.listForm.controls.bookIds.value.length);
+  protected readonly accentGradientCss = computed(() =>
+    this.uiPreferencesStore.profileGradientCss(),
+  );
 
   protected readonly listForm = this.formBuilder.nonNullable.group({
     title: ['', [Validators.required, Validators.minLength(2)]],
@@ -108,6 +113,12 @@ export class ListFormPageComponent {
     this.listForm.controls.bookIds.setValue(nextSelected);
     this.listForm.controls.bookIds.markAsDirty();
     this.listForm.controls.bookIds.updateValueAndValidity();
+  }
+
+  protected selectionOrder(bookId: string): number | null {
+    const index = this.listForm.controls.bookIds.value.indexOf(bookId);
+
+    return index === -1 ? null : index + 1;
   }
 
   protected submit(): void {

@@ -284,7 +284,7 @@
               }
             </div>
 
-            <div class="details-stream__nav">
+            <div class="details-stream__nav" [style.--nav-gap.px]="navigationGap()">
               <span class="details-stream__nav-number">{{ currentIndexLabel() }}</span>
               <span class="details-stream__nav-arrow" [style.transform]="arrowTransform()">
                 ↓
@@ -300,16 +300,101 @@
           </div>
         } @else {
           <div class="stream-editor">
+            <div class="stream-editor__header">
+              <div>
+                <p class="stream-editor__eyebrow">
+                  {{ activeTab() === 'quotes' ? 'Цитаты' : 'Мнения' }}
+                </p>
+                <h2>
+                  {{
+                    activeTab() === 'quotes'
+                      ? 'Добавляйте и переписывайте цитаты по одной.'
+                      : 'Сохраняйте мнения отдельно, чтобы не терять черновики метаданных.'
+                  }}
+                </h2>
+              </div>
+
+              <button
+                class="ghost-action ghost-action--accent"
+                type="button"
+                [disabled]="isCreatingEntry()"
+                (click)="createEntry()"
+              >
+                {{
+                  isCreatingEntry()
+                    ? 'Сохраняем...'
+                    : activeTab() === 'quotes'
+                      ? 'Добавить цитату'
+                      : 'Добавить мнение'
+                }}
+              </button>
+            </div>
+
+            @if (noteErrorMessage()) {
+              <p class="stream-editor__error">{{ noteErrorMessage() }}</p>
+            }
+
             <label class="field field--wide">
-              <span>{{ activeTab() === 'quotes' ? 'Цитата' : 'Мнение' }}</span>
+              <span>
+                {{ activeTab() === 'quotes' ? 'Новая цитата' : 'Новое мнение' }}
+              </span>
               <textarea
-                [formControlName]="activeTab() === 'quotes' ? 'quote' : 'opinion'"
+                [value]="newEntryDraft()"
+                (input)="updateNewEntryDraft(($any($event.target).value ?? '').toString())"
               ></textarea>
             </label>
 
             <p class="stream-editor__note">
-              Пустое поле сохранится как удалённая запись. Сама книга останется на полке.
+              Первое по свежести мнение остаётся превью книги на странице профиля.
             </p>
+
+            @if (currentEntries().length) {
+              <div class="stream-editor__list">
+                @for (entry of currentEntries(); track entry.id; let index = $index) {
+                  <article class="stream-entry-card">
+                    <div class="stream-entry-card__header">
+                      <div>
+                        <p class="stream-entry-card__index">{{ index + 1 }}</p>
+                        <p class="stream-entry-card__meta">
+                          {{ activeTab() === 'quotes' ? 'Отдельная цитата' : 'Отдельное мнение' }}
+                        </p>
+                      </div>
+                    </div>
+
+                    <textarea
+                      [value]="entryDraft(entry.id)"
+                      (input)="
+                        updateEntryDraft(entry.id, ($any($event.target).value ?? '').toString())
+                      "
+                    ></textarea>
+
+                    <div class="stream-entry-card__actions">
+                      <button
+                        class="ghost-action ghost-action--accent"
+                        type="button"
+                        [disabled]="isEntryMutating(entry.id)"
+                        (click)="saveEntry(entry.id)"
+                      >
+                        {{ isEntryMutating(entry.id) ? 'Сохраняем...' : 'Сохранить' }}
+                      </button>
+                      <button
+                        class="ghost-action ghost-action--danger"
+                        type="button"
+                        [disabled]="isEntryMutating(entry.id)"
+                        (click)="deleteEntry(entry.id)"
+                      >
+                        Удалить
+                      </button>
+                    </div>
+                  </article>
+                }
+              </div>
+            } @else {
+              <div class="details-stream__empty">
+                Пока здесь нет ни одной записи. Добавьте первую
+                {{ activeTab() === 'quotes' ? 'цитату' : 'мысль о книге' }}.
+              </div>
+            }
           </div>
         }
       </article>

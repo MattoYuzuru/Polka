@@ -63,7 +63,27 @@ type CreateBookInput struct {
 	RemoveCover    bool     `json:"removeCover"`
 }
 
-type UpdateBookInput = CreateBookInput
+type UpdateBookInput struct {
+	Title          string   `json:"title"`
+	Author         string   `json:"author"`
+	Description    string   `json:"description"`
+	Year           int      `json:"year"`
+	Publisher      string   `json:"publisher"`
+	AgeRating      string   `json:"ageRating"`
+	Genre          string   `json:"genre"`
+	IsPublic       bool     `json:"isPublic"`
+	Status         string   `json:"status"`
+	Rating         *int     `json:"rating"`
+	Opinion        *string  `json:"opinion"`
+	Quote          *string  `json:"quote"`
+	CoverPalette   []string `json:"coverPalette"`
+	CoverObjectKey string   `json:"coverObjectKey"`
+	RemoveCover    bool     `json:"removeCover"`
+}
+
+type BookEntryInput struct {
+	Content string `json:"content"`
+}
 
 type UpdateVisibilityInput struct {
 	IsPublic bool `json:"isPublic"`
@@ -89,6 +109,12 @@ type Repository interface {
 	FindOwnedCoverObjectKey(ctx context.Context, ownerUserID string, bookID string) (string, error)
 	Update(ctx context.Context, ownerUserID string, bookID string, input UpdateBookInput) (BookDetails, error)
 	SetVisibility(ctx context.Context, ownerUserID string, bookID string, isPublic bool) (BookDetails, error)
+	CreateQuote(ctx context.Context, ownerUserID string, bookID string, content string) (BookDetails, error)
+	UpdateQuote(ctx context.Context, ownerUserID string, bookID string, quoteID string, content string) (BookDetails, error)
+	DeleteQuote(ctx context.Context, ownerUserID string, bookID string, quoteID string) (BookDetails, error)
+	CreateOpinion(ctx context.Context, ownerUserID string, bookID string, content string) (BookDetails, error)
+	UpdateOpinion(ctx context.Context, ownerUserID string, bookID string, opinionID string, content string) (BookDetails, error)
+	DeleteOpinion(ctx context.Context, ownerUserID string, bookID string, opinionID string) (BookDetails, error)
 	Delete(ctx context.Context, ownerUserID string, bookID string) error
 	Reorder(ctx context.Context, ownerUserID string, input ReorderBooksInput) error
 }
@@ -223,6 +249,130 @@ func (service *Service) Update(
 	}
 
 	return service.decorateBook(book), nil
+}
+
+func (service *Service) CreateQuote(
+	ctx context.Context,
+	ownerUserID string,
+	bookID string,
+	input BookEntryInput,
+) (BookDetails, error) {
+	validatedOwnerID, validatedBookID, validatedContent, err := validateOwnedBookEntryInput(
+		ownerUserID,
+		bookID,
+		input.Content,
+	)
+	if err != nil {
+		return BookDetails{}, err
+	}
+
+	return service.repository.CreateQuote(ctx, validatedOwnerID, validatedBookID, validatedContent)
+}
+
+func (service *Service) UpdateQuote(
+	ctx context.Context,
+	ownerUserID string,
+	bookID string,
+	quoteID string,
+	input BookEntryInput,
+) (BookDetails, error) {
+	validatedOwnerID, validatedBookID, validatedEntryID, validatedContent, err := validateBookEntryMutation(
+		ownerUserID,
+		bookID,
+		quoteID,
+		input.Content,
+	)
+	if err != nil {
+		return BookDetails{}, err
+	}
+
+	return service.repository.UpdateQuote(
+		ctx,
+		validatedOwnerID,
+		validatedBookID,
+		validatedEntryID,
+		validatedContent,
+	)
+}
+
+func (service *Service) DeleteQuote(
+	ctx context.Context,
+	ownerUserID string,
+	bookID string,
+	quoteID string,
+) (BookDetails, error) {
+	validatedOwnerID, validatedBookID, validatedEntryID, err := validateBookEntryDelete(
+		ownerUserID,
+		bookID,
+		quoteID,
+	)
+	if err != nil {
+		return BookDetails{}, err
+	}
+
+	return service.repository.DeleteQuote(ctx, validatedOwnerID, validatedBookID, validatedEntryID)
+}
+
+func (service *Service) CreateOpinion(
+	ctx context.Context,
+	ownerUserID string,
+	bookID string,
+	input BookEntryInput,
+) (BookDetails, error) {
+	validatedOwnerID, validatedBookID, validatedContent, err := validateOwnedBookEntryInput(
+		ownerUserID,
+		bookID,
+		input.Content,
+	)
+	if err != nil {
+		return BookDetails{}, err
+	}
+
+	return service.repository.CreateOpinion(ctx, validatedOwnerID, validatedBookID, validatedContent)
+}
+
+func (service *Service) UpdateOpinion(
+	ctx context.Context,
+	ownerUserID string,
+	bookID string,
+	opinionID string,
+	input BookEntryInput,
+) (BookDetails, error) {
+	validatedOwnerID, validatedBookID, validatedEntryID, validatedContent, err := validateBookEntryMutation(
+		ownerUserID,
+		bookID,
+		opinionID,
+		input.Content,
+	)
+	if err != nil {
+		return BookDetails{}, err
+	}
+
+	return service.repository.UpdateOpinion(
+		ctx,
+		validatedOwnerID,
+		validatedBookID,
+		validatedEntryID,
+		validatedContent,
+	)
+}
+
+func (service *Service) DeleteOpinion(
+	ctx context.Context,
+	ownerUserID string,
+	bookID string,
+	opinionID string,
+) (BookDetails, error) {
+	validatedOwnerID, validatedBookID, validatedEntryID, err := validateBookEntryDelete(
+		ownerUserID,
+		bookID,
+		opinionID,
+	)
+	if err != nil {
+		return BookDetails{}, err
+	}
+
+	return service.repository.DeleteOpinion(ctx, validatedOwnerID, validatedBookID, validatedEntryID)
 }
 
 func (service *Service) SetVisibility(
@@ -433,4 +583,73 @@ func normalizeCoverPalette(colors []string) []string {
 	}
 
 	return normalized
+}
+
+func validateOwnedBookEntryInput(
+	ownerUserID string,
+	bookID string,
+	content string,
+) (string, string, string, error) {
+	trimmedOwnerID := strings.TrimSpace(ownerUserID)
+	if trimmedOwnerID == "" {
+		return "", "", "", ErrUnauthorized
+	}
+
+	trimmedBookID := strings.TrimSpace(bookID)
+	if trimmedBookID == "" {
+		return "", "", "", ErrNotFound
+	}
+
+	trimmedContent := strings.TrimSpace(content)
+	if trimmedContent == "" {
+		return "", "", "", ErrInvalidInput
+	}
+
+	return trimmedOwnerID, trimmedBookID, trimmedContent, nil
+}
+
+func validateBookEntryMutation(
+	ownerUserID string,
+	bookID string,
+	entryID string,
+	content string,
+) (string, string, string, string, error) {
+	trimmedOwnerID, trimmedBookID, trimmedContent, err := validateOwnedBookEntryInput(
+		ownerUserID,
+		bookID,
+		content,
+	)
+	if err != nil {
+		return "", "", "", "", err
+	}
+
+	trimmedEntryID := strings.TrimSpace(entryID)
+	if trimmedEntryID == "" {
+		return "", "", "", "", ErrNotFound
+	}
+
+	return trimmedOwnerID, trimmedBookID, trimmedEntryID, trimmedContent, nil
+}
+
+func validateBookEntryDelete(
+	ownerUserID string,
+	bookID string,
+	entryID string,
+) (string, string, string, error) {
+	trimmedOwnerID := strings.TrimSpace(ownerUserID)
+	if trimmedOwnerID == "" {
+		return "", "", "", ErrUnauthorized
+	}
+
+	trimmedBookID := strings.TrimSpace(bookID)
+	if trimmedBookID == "" {
+		return "", "", "", ErrNotFound
+	}
+
+	trimmedEntryID := strings.TrimSpace(entryID)
+	if trimmedEntryID == "" {
+		return "", "", "", ErrNotFound
+	}
+
+	return trimmedOwnerID, trimmedBookID, trimmedEntryID, nil
 }
