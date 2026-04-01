@@ -47,8 +47,13 @@
 
 .book-pane--meta {
   border-right: 1px solid rgba(13, 13, 13, 0.12);
-  overflow: hidden;
-  scrollbar-width: none;
+  overflow: hidden auto;
+  direction: rtl;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(13, 13, 13, 0.24) transparent;
+  scroll-behavior: smooth;
+  overscroll-behavior: contain;
 }
 
 .book-pane--stream {
@@ -56,7 +61,27 @@
   overflow: hidden;
 }
 
-.book-pane--meta::-webkit-scrollbar,
+.book-pane--meta > * {
+  direction: ltr;
+}
+
+.book-pane--meta::-webkit-scrollbar {
+  width: 0.28rem;
+}
+
+.book-pane--meta::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.book-pane--meta::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(13, 13, 13, 0.22);
+}
+
+.book-pane--meta::-webkit-scrollbar-thumb:hover {
+  background: rgba(13, 13, 13, 0.34);
+}
+
 .stream-editor::-webkit-scrollbar {
   display: none;
 }
@@ -444,6 +469,9 @@
     border-right: 0;
     border-bottom: 1px solid rgba(13, 13, 13, 0.12);
     overflow: visible;
+    direction: ltr;
+    scrollbar-gutter: auto;
+    scrollbar-width: none;
   }
 
   .book-pane--stream {

@@ -336,7 +336,11 @@
                 </div>
               }
 
-              <a class="book-cover" [routerLink]="['/books', book.id]">
+              <a
+                class="book-cover"
+                [class.book-cover--filled]="book.coverUrl"
+                [routerLink]="['/books', book.id]"
+              >
                 @if (book.coverUrl) {
                   <img [src]="book.coverUrl" [alt]="'Обложка книги ' + book.title" />
                 } @else {
