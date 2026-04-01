@@ -2,8 +2,8 @@
 
 ## Текущий статус
 
-- Текущая ветка: `fix/final-main-and-book-scroll-pass`
-- Текущая фаза: финальный polish-pass главной полки, зоны загрузки книги и левой meta-колонки страницы книги
+- Текущая ветка: `fix/auth-import-and-icons-pass`
+- Текущая фаза: финальный polish-pass auth/footer навигации, страницы импорта книг и favicon/icon pack
 - Последнее обновление: 2026-04-01
 
 ## Этапы
@@ -71,6 +71,11 @@
 - `npm run test:frontend` после final main/book scroll pass
 - `npm run test:component` после final main/book scroll pass
 - `npm run build:frontend` после final main/book scroll pass
+- `npm run lint` после auth/import/icon pass
+- `npm run format:check` после auth/import/icon pass
+- `npm run test:frontend` после auth/import/icon pass
+- `npm run test:component` после auth/import/icon pass
+- `npm run build:frontend` после auth/import/icon pass
 
 ## Принципы итераций
 
