@@ -35,15 +35,6 @@
         <label
           class="cover-dropzone__placeholder"
           [class.cover-dropzone__placeholder--active]="isCoverDropActive()"
-          [style.background-image]="
-            !coverPreviewUrl()
-              ? 'linear-gradient(145deg, ' +
-                (coverPreviewPalette().length
-                  ? coverPreviewPalette().join(', ')
-                  : '#111111, #5d5d5d') +
-                ')'
-              : null
-          "
           tabindex="0"
           data-testid="book-cover-upload-label"
           (dragover)="onCoverDragOver($event)"

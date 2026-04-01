@@ -435,25 +435,22 @@
 }
 
 .book-cover {
-  display: block;
-  color: inherit;
-}
-
-.book-cover img,
-.book-cover__placeholder {
-  width: 100%;
-  aspect-ratio: 0.72;
-  display: block;
-  border-radius: 0.45rem;
+  display: grid;
+  place-items: center;
 }
 
 .book-cover img {
-  object-fit: cover;
+  max-width: 90%;
+  max-height: clamp(15rem, 30vw, 18.6rem);
+  border-radius: 0.45rem;
 }
 
 .book-cover__placeholder {
+  width: 100%;
+  aspect-ratio: 0.72;
   display: grid;
   place-items: center;
+  border-radius: 0.45rem;
 }
 
 .book-cover__placeholder span {

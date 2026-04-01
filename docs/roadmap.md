@@ -2,8 +2,8 @@
 
 ## Текущий статус
 
-- Текущая ветка: `fix/library-export-auth-and-scroll-polish`
-- Текущая фаза: polish-pass экспорта полки, сессионного библиотечного градиента, scroll-механики страницы книги и минималистичного auth/settings UI
+- Текущая ветка: `fix/final-main-and-book-scroll-pass`
+- Текущая фаза: финальный polish-pass главной полки, зоны загрузки книги и левой meta-колонки страницы книги
 - Последнее обновление: 2026-04-01
 
 ## Этапы
@@ -66,6 +66,11 @@
 - `npm run build:frontend` после export/auth/scroll polish
 - `npm run compose:check` после export/auth/scroll polish
 - `npm run test:component` после export/auth/scroll polish
+- `npm run lint` после final main/book scroll pass
+- `npm run format:check` после final main/book scroll pass
+- `npm run test:frontend` после final main/book scroll pass
+- `npm run test:component` после final main/book scroll pass
+- `npm run build:frontend` после final main/book scroll pass
 
 ## Принципы итераций
 
