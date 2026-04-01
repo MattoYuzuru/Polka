@@ -58,9 +58,21 @@
         >
           {{ isSubmitting() ? 'Входим...' : 'Войти' }}
         </button>
-
-        <a class="auth-action" routerLink="/register" tuiButton>Регистрация</a>
       </div>
     </form>
+
+    <footer class="auth-footer">
+      <a
+        class="auth-footer__link auth-footer__link--current"
+        routerLink="/login"
+        aria-current="page"
+      >
+        Вход
+      </a>
+      <span class="auth-footer__divider" aria-hidden="true">/</span>
+      <a class="auth-footer__link auth-footer__link--accent" routerLink="/register">
+        Создать свою полку
+      </a>
+    </footer>
   </section>
 </main>

@@ -1,11 +1,11 @@
 <main class="book-import-page">
   <section class="intro-card" tuiCardLarge tuiSurface>
     <p tuiChip>Импорт</p>
-    <h1 tuiHeader="h2">Импорт книг из JSON</h1>
-    <p>
+    <h1 tuiHeader="h2">Перенесите библиотеку из JSON в один проход.</h1>
+    <p class="intro-card__lead">
       Эта страница принимает либо массив книг, либо объект формата
       <code>{{ importShapeHint }}</code>
-      и импортирует записи в библиотеку владельца через backend.
+      и записывает книги прямо во владельческую библиотеку через backend.
     </p>
     <div class="intro-badges">
       <span tuiBadge>JSON file</span>
@@ -16,7 +16,13 @@
 
   <section class="import-layout">
     <article class="helper-card" tuiCardLarge tuiSurface>
-      <p tuiBadge>Формат</p>
+      <div class="helper-card__header">
+        <p tuiBadge>Формат</p>
+        <p class="helper-card__note">
+          Поддерживается один объект, массив книг или контейнер `items`.
+        </p>
+      </div>
+
       <pre class="json-example">{{ exampleJson }}</pre>
 
       <label class="file-input">
@@ -26,6 +32,11 @@
     </article>
 
     <article class="form-card" tuiCardLarge tuiSurface>
+      <div class="form-card__header">
+        <p tuiBadge>Payload</p>
+        <p class="form-card__note">Вставьте готовый JSON и проверьте структуру перед отправкой.</p>
+      </div>
+
       <form class="import-form" [formGroup]="importForm" (ngSubmit)="submit()">
         <label class="field">
           <span>JSON payload</span>
@@ -47,6 +58,7 @@
 
         <div class="actions">
           <button
+            class="form-action form-action--accent"
             tuiButton
             type="submit"
             [disabled]="isSubmitting()"
@@ -55,7 +67,7 @@
             {{ isSubmitting() ? 'Импортируем...' : 'Импортировать книги' }}
           </button>
           @if (authSessionStore.user(); as user) {
-            <a [routerLink]="['/', user.nickname]" tuiButton>К профилю</a>
+            <a [routerLink]="['/', user.nickname]" class="form-action" tuiButton>К профилю</a>
           }
         </div>
       </form>
