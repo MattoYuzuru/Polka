@@ -53,6 +53,7 @@
         <div class="book-cover-stack">
           <button
             class="book-cover"
+            [class.book-cover--filled]="displayedCoverUrl()"
             type="button"
             [disabled]="!displayedCoverUrl()"
             [style.background-image]="
@@ -103,21 +104,26 @@
             </div>
 
             <dl class="book-facts">
-              <div>
-                <dt>Жанр</dt>
-                <dd>{{ book.genre }}</dd>
+              <div class="book-facts__row">
+                <div class="book-facts__item">
+                  <dt>Жанр</dt>
+                  <dd>{{ book.genre }}</dd>
+                </div>
+                <div class="book-facts__item">
+                  <dt>Издательство</dt>
+                  <dd>{{ book.publisher }}</dd>
+                </div>
               </div>
-              <div>
-                <dt>Год</dt>
-                <dd>{{ book.year }}</dd>
-              </div>
-              <div>
-                <dt>Издательство</dt>
-                <dd>{{ book.publisher }}</dd>
-              </div>
-              <div>
-                <dt>Возраст</dt>
-                <dd>{{ book.ageRating }}</dd>
+
+              <div class="book-facts__row">
+                <div class="book-facts__item">
+                  <dt>Год</dt>
+                  <dd>{{ book.year }}</dd>
+                </div>
+                <div class="book-facts__item">
+                  <dt>Возраст</dt>
+                  <dd>{{ book.ageRating }}</dd>
+                </div>
               </div>
             </dl>
 
@@ -285,7 +291,7 @@
             </div>
 
             <div class="details-stream__nav" [style.--nav-gap.px]="navigationGap()">
-              <span class="details-stream__nav-number">{{ currentIndexLabel() }}</span>
+              <span class="details-stream__nav-number">{{ leadingIndexLabel() }}</span>
               <span class="details-stream__nav-arrow" [style.transform]="arrowTransform()">
                 ↓
               </span>
@@ -294,7 +300,7 @@
                 [class.details-stream__nav-number--accent]="navigationAccent()"
                 [style.transform]="'scale(' + upcomingNumberScale() + ')'"
               >
-                {{ visibleArrowDirection() === 'up' ? previousIndexLabel() : nextIndexLabel() }}
+                {{ trailingIndexLabel() }}
               </span>
             </div>
           </div>

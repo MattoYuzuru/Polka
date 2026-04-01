@@ -13,7 +13,7 @@
 .page-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 14;
+  z-index: 60;
   border: 0;
   background: rgba(13, 13, 13, 0.12);
 }
@@ -116,7 +116,7 @@
   position: absolute;
   top: clamp(0.2rem, 2vw, 0.8rem);
   right: clamp(0.2rem, 2vw, 0.8rem);
-  z-index: 24;
+  z-index: 90;
 }
 
 .owner-actions {
@@ -128,35 +128,32 @@
 
 .floating-menu {
   position: absolute;
-  right: 0;
-  z-index: 26;
+  z-index: 100;
   min-width: 18.5rem;
   display: grid;
-  gap: 0.15rem;
   padding: 0.8rem 0.9rem;
   border: 1px solid rgba(13, 13, 13, 0.08);
   border-radius: 1.1rem;
   background: rgba(255, 255, 255, 0.92);
   box-shadow: 0 28px 48px rgba(13, 13, 13, 0.08);
   backdrop-filter: blur(22px);
-  pointer-events: auto;
 }
 
 .create-menu {
-  top: calc(100% + 0.75rem);
+  position: fixed;
+  top: calc(clamp(1rem, 3vw, 2rem) + clamp(0.2rem, 2vw, 0.8rem) + 4.45rem);
+  right: calc(clamp(1rem, 3vw, 2rem) + clamp(0.2rem, 2vw, 0.8rem));
+  z-index: 120;
 }
 
 .floating-menu__action {
   width: 100%;
   display: flex;
   align-items: center;
-  justify-content: flex-start;
   padding: 0.5rem 0;
   border: 0;
   background: transparent;
   color: var(--polka-ink);
-  text-align: left;
-  cursor: pointer;
 }
 
 .floating-menu__text {
@@ -523,7 +520,7 @@
   }
 
   .create-menu {
-    top: calc(100% + 0.6rem);
+    top: calc(clamp(1rem, 3vw, 2rem) + 4.95rem);
     right: 0;
     left: auto;
     min-width: min(18rem, calc(100vw - 2rem));

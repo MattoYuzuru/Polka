@@ -26,7 +26,10 @@ type BookContentTab = 'quotes' | 'opinions';
 type BookEntry = BookQuote | BookOpinion;
 type BookEntryDraftMap = Record<string, string>;
 
-const NAVIGATION_THRESHOLD = 280;
+const NAVIGATION_THRESHOLD = 360;
+const NAVIGATION_PROGRESS_MULTIPLIER = 0.68;
+const NAVIGATION_COOLDOWN_MS = 280;
+const NAVIGATION_RESET_MS = 220;
 const TYPEWRITER_INTERVAL_MS = 14;
 
 @Component({
@@ -47,6 +50,7 @@ export class BookDetailsPageComponent {
   private activeCoverObjectUrl: string | null = null;
   private typewriterTimer: number | null = null;
   private wheelResetTimer: number | null = null;
+  private navigationCooldownUntil = 0;
 
   protected readonly book = signal<BookDetails | null>(null);
   protected readonly isLoading = signal(true);
@@ -131,6 +135,22 @@ export class BookDetailsPageComponent {
   protected readonly previousIndexLabel = computed(() =>
     this.currentEntries().length ? Math.max(1, this.activeEntryIndex()) : 0,
   );
+  protected readonly leadingIndexLabel = computed(() => {
+    if (this.navigationProgress() < 0 && this.hasPreviousEntry()) {
+      return this.previousIndexLabel();
+    }
+
+    return this.currentIndexLabel();
+  });
+  protected readonly trailingIndexLabel = computed(() => {
+    if (this.navigationProgress() < 0 && this.hasPreviousEntry()) {
+      return this.currentIndexLabel();
+    }
+
+    return this.visibleArrowDirection() === 'up'
+      ? this.previousIndexLabel()
+      : this.nextIndexLabel();
+  });
   protected readonly hasNextEntry = computed(
     () => this.activeEntryIndex() < this.currentEntries().length - 1,
   );
@@ -157,15 +177,15 @@ export class BookDetailsPageComponent {
     return `${rotation} scaleY(${this.navigationStretch()})`;
   });
   protected readonly navigationStretch = computed(
-    () => 1 + Math.min(Math.abs(this.navigationProgress()) / NAVIGATION_THRESHOLD, 1) * 1.55,
+    () => 1 + Math.min(Math.abs(this.navigationProgress()) / NAVIGATION_THRESHOLD, 1) * 1.46,
   );
   protected readonly upcomingNumberScale = computed(
     () => 1 + Math.min(Math.abs(this.navigationProgress()) / NAVIGATION_THRESHOLD, 1) * 0.32,
   );
   protected readonly navigationGap = computed(() => {
-    const arrowHeight = 32;
+    const arrowHeight = 40;
 
-    return 4 + ((this.navigationStretch() - 1) * arrowHeight) / 2;
+    return 8 + ((this.navigationStretch() - 1) * arrowHeight) / 2;
   });
   protected readonly navigationAccent = computed(() => {
     if (!this.currentEntries().length) {
@@ -256,9 +276,14 @@ export class BookDetailsPageComponent {
       return;
     }
 
+    if (event.deltaY === 0) {
+      return;
+    }
+
     const wantsNext = event.deltaY > 0;
     const atBottom = viewport.scrollTop + viewport.clientHeight >= viewport.scrollHeight - 2;
     const atTop = viewport.scrollTop <= 1;
+    const now = Date.now();
 
     if ((wantsNext && !atBottom) || (!wantsNext && !atTop)) {
       return;
@@ -266,10 +291,19 @@ export class BookDetailsPageComponent {
 
     event.preventDefault();
 
+    if (now < this.navigationCooldownUntil) {
+      return;
+    }
+
     const direction = wantsNext ? 1 : -1;
     const canMove = direction > 0 ? this.hasNextEntry() : this.hasPreviousEntry();
+    const currentProgress = this.navigationProgress();
+    const currentDirection = Math.sign(currentProgress);
+    const directionChanged = currentDirection !== 0 && currentDirection !== direction;
+    const startingProgress = directionChanged ? 0 : currentProgress;
+    const weightedDelta = Math.max(Math.abs(event.deltaY) - 4, 0) * direction;
     const nextProgress = clamp(
-      this.navigationProgress() + event.deltaY * 0.75,
+      startingProgress + weightedDelta * NAVIGATION_PROGRESS_MULTIPLIER,
       -NAVIGATION_THRESHOLD,
       NAVIGATION_THRESHOLD,
     );
@@ -283,6 +317,7 @@ export class BookDetailsPageComponent {
 
     if (Math.abs(nextProgress) >= NAVIGATION_THRESHOLD) {
       this.changeEntry(direction, viewport);
+      this.navigationCooldownUntil = now + NAVIGATION_COOLDOWN_MS;
     }
   }
 
@@ -694,7 +729,7 @@ export class BookDetailsPageComponent {
     this.wheelResetTimer = window.setTimeout(() => {
       this.navigationProgress.set(0);
       this.wheelResetTimer = null;
-    }, 180);
+    }, NAVIGATION_RESET_MS);
   }
 
   private clearTypewriterTimer(): void {
@@ -722,6 +757,7 @@ export class BookDetailsPageComponent {
     this.renderedEntryText.set('');
     this.isEditMode.set(false);
     this.isCoverModalOpen.set(false);
+    this.navigationCooldownUntil = 0;
     this.noteErrorMessage.set(null);
   }
 

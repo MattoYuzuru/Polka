@@ -63,7 +63,6 @@ func (repository *PostgresRepository) FindByNickname(
 	}
 
 	includePrivate := viewerUserID != "" && viewerUserID == userID
-	profileView.GradientStops = gradientStops
 	profileView.Stats.MemberSinceLabel = formatMemberSince(profileView.User.CreatedAt)
 
 	if err := repository.fillStats(ctx, &profileView, userID, includePrivate); err != nil {
@@ -86,6 +85,7 @@ func (repository *PostgresRepository) FindByNickname(
 
 	profileView.Books = books
 	profileView.RecommendationLists = recommendationLists
+	profileView.GradientStops = buildProfileGradient(books, gradientStops)
 
 	return profileView, nil
 }

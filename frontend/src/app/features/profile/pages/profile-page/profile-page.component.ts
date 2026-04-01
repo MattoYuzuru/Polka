@@ -55,6 +55,7 @@ interface ShelfTab {
 interface ShelfBook {
   id: string;
   rankPosition: number;
+  displayRankPosition: number;
   title: string;
   author: string;
   genre: string;
@@ -98,6 +99,7 @@ export class ProfilePageComponent implements OnInit {
   protected readonly copied = signal(false);
   protected readonly processingBookId = signal<string | null>(null);
   protected readonly processingListId = signal<string | null>(null);
+  protected readonly isExportingShelf = signal(false);
   protected readonly bookSearch = signal('');
   protected readonly selectedStatus = signal<'all' | BookStatus>('all');
   protected readonly selectedSort = signal<BookSortOption>('top');
@@ -207,9 +209,10 @@ export class ProfilePageComponent implements OnInit {
     if (activeShelf.kind === 'library') {
       return profile.books
         .filter((book) => this.ownerMode() || book.isPublic)
-        .map((book) => ({
+        .map((book, index) => ({
           id: book.id,
           rankPosition: book.rankPosition,
+          displayRankPosition: this.ownerMode() ? book.rankPosition : index + 1,
           title: book.title,
           author: book.author,
           genre: book.genre,
@@ -234,6 +237,7 @@ export class ProfilePageComponent implements OnInit {
       .map((book, index) => ({
         id: book.id,
         rankPosition: index + 1,
+        displayRankPosition: index + 1,
         title: book.title,
         author: book.author,
         genre: book.genre,
@@ -322,7 +326,10 @@ export class ProfilePageComponent implements OnInit {
           return this.profileApiService.getPublicProfile(nickname).pipe(
             tap((profile) => {
               this.profile.set(profile);
-              this.uiPreferencesStore.syncProfileGradient(profile.gradientStops);
+              this.uiPreferencesStore.syncProfileGradient(
+                profile.user.nickname,
+                profile.gradientStops,
+              );
               this.normalizeActiveShelfSelection();
               this.isLoading.set(false);
             }),
@@ -366,6 +373,36 @@ export class ProfilePageComponent implements OnInit {
       this.copied.set(true);
       globalThis.setTimeout(() => this.copied.set(false), 1800);
     });
+  }
+
+  protected downloadShelfArchive(): void {
+    const profile = this.profile();
+    if (!profile || this.activeShelf()?.kind !== 'library' || this.isExportingShelf()) {
+      return;
+    }
+
+    this.isExportingShelf.set(true);
+    this.errorMessage.set(null);
+
+    this.profileApiService
+      .downloadShelfArchive(profile.user.nickname)
+      .pipe(
+        finalize(() => this.isExportingShelf.set(false)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (archive) => {
+          const objectUrl = URL.createObjectURL(archive);
+          const anchor = document.createElement('a');
+          anchor.href = objectUrl;
+          anchor.download = `${profile.user.nickname}-shelf.zip`;
+          document.body.append(anchor);
+          anchor.click();
+          anchor.remove();
+          URL.revokeObjectURL(objectUrl);
+        },
+        error: () => this.errorMessage.set('Не удалось сохранить архив полки.'),
+      });
   }
 
   protected updateBookSearch(query: string): void {
@@ -623,6 +660,7 @@ export class ProfilePageComponent implements OnInit {
 
   protected logout(): void {
     this.authSessionStore.clear();
+    this.uiPreferencesStore.clearProfileGradientSession();
     void this.router.navigateByUrl('/login');
   }
 
@@ -701,7 +739,7 @@ export class ProfilePageComponent implements OnInit {
       .subscribe({
         next: (profile) => {
           this.profile.set(profile);
-          this.uiPreferencesStore.syncProfileGradient(profile.gradientStops);
+          this.uiPreferencesStore.syncProfileGradient(profile.user.nickname, profile.gradientStops);
           this.normalizeActiveShelfSelection();
         },
         error: () => this.errorMessage.set('Не удалось обновить профиль после изменения контента.'),

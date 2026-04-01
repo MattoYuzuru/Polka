@@ -1,11 +1,13 @@
-<main class="profile-edit-page">
+<main class="profile-edit-page" [style.--accent-gradient]="uiPreferencesStore.profileGradientCss()">
   <section class="profile-edit-card" tuiCardLarge tuiSurface>
-    <p tuiChip>Настройки профиля</p>
-    <h1 tuiHeader="h2">Редактирование публичной страницы</h1>
-    <p>
-      Изменения сразу влияют на адрес страницы, заголовок профиля и описание, которое видят
-      посетители.
-    </p>
+    <div class="profile-edit-card__header">
+      <p tuiChip>Настройки профиля</p>
+      <h1 tuiHeader="h2">Редактирование публичной страницы</h1>
+      <p>
+        Изменения сразу влияют на адрес страницы, заголовок профиля и описание, которое видят
+        посетители.
+      </p>
+    </div>
 
     @if (isLoading()) {
       <p class="muted">Загружаем текущие данные пользователя...</p>
@@ -38,11 +40,18 @@
         }
 
         <div class="actions">
-          <button tuiButton type="submit" [disabled]="isSubmitting()">
+          <button
+            class="profile-action profile-action--accent"
+            tuiButton
+            type="submit"
+            [disabled]="isSubmitting()"
+          >
             {{ isSubmitting() ? 'Сохраняем...' : 'Сохранить профиль' }}
           </button>
           @if (authSessionStore.user(); as user) {
-            <a [routerLink]="['/', user.nickname]" tuiButton>Вернуться в профиль</a>
+            <a [routerLink]="['/', user.nickname]" class="profile-action" tuiButton>
+              Вернуться в профиль
+            </a>
           }
         </div>
       </form>

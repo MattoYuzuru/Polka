@@ -26,4 +26,13 @@ export class ProfileApiService {
   updateProfile(payload: UpdateProfilePayload): Observable<EditableProfile> {
     return this.http.patch<EditableProfile>(`${environment.apiBaseUrl}/profiles/me`, payload);
   }
+
+  downloadShelfArchive(nickname: string): Observable<Blob> {
+    return this.http.get(
+      `${environment.apiBaseUrl}/profiles/${encodeURIComponent(nickname)}/export`,
+      {
+        responseType: 'blob',
+      },
+    );
+  }
 }

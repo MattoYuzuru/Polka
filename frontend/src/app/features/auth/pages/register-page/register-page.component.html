@@ -1,25 +1,21 @@
 <main class="register-page">
-  <section class="register-hero">
+  <section class="register-hero" tuiCardLarge tuiSurface>
     <p class="eyebrow" tuiChip>Polka / регистрация</p>
-    <h1 tuiHeader="h1">Создайте полку, которая сразу станет вашей публичной страницей.</h1>
+    <h1 tuiHeader="h1">Создайте полку, которая сразу станет вашим адресом.</h1>
     <p class="lead">
-      После регистрации пользователь автоматически входит в систему, получает свой адрес профиля и
-      может сразу перейти к добавлению книг и подборок.
+      После регистрации вы сразу попадаете в свой профиль и можете начать собирать библиотеку без
+      дополнительной настройки.
     </p>
-
-    <div class="hero-lines">
-      <p>Лаконичный интерфейс, прозрачные поверхности и акцентные градиенты.</p>
-      <p>Никнейм сразу становится заголовком и ссылкой на библиотеку.</p>
-    </div>
-
-    <a class="demo-link" routerLink="/login" tuiButton>Уже есть аккаунт? Войти</a>
+    <p class="hero-note">
+      Никнейм становится ссылкой, а визуальный акцент дальше собирается из книг.
+    </p>
   </section>
 
   <section class="register-card" tuiCardLarge tuiSurface>
     <div class="register-card__header">
       <p class="register-card__meta">Регистрация</p>
       <h2 tuiHeader="h3">Новый аккаунт</h2>
-      <p>Никнейм сразу становится адресом вашей публичной страницы.</p>
+      <p>Укажите базовые данные и сразу получите свою публичную страницу.</p>
     </div>
 
     <form class="register-form" [formGroup]="registerForm" (ngSubmit)="submit()">
@@ -53,9 +49,18 @@
         </div>
       }
 
-      <button class="submit-button" tuiButton type="submit" [disabled]="isSubmitting()">
-        {{ isSubmitting() ? 'Создаём...' : 'Создать аккаунт' }}
-      </button>
+      <div class="register-actions">
+        <button
+          class="submit-button auth-action auth-action--accent"
+          tuiButton
+          type="submit"
+          [disabled]="isSubmitting()"
+        >
+          {{ isSubmitting() ? 'Создаём...' : 'Создать аккаунт' }}
+        </button>
+
+        <a class="auth-action" routerLink="/login" tuiButton>Уже есть аккаунт</a>
+      </div>
     </form>
   </section>
 </main>
