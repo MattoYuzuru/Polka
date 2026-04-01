@@ -108,6 +108,18 @@
   gap: 0.7rem;
 }
 
+.auth-switch {
+  color: var(--polka-muted);
+  text-align: center;
+  line-height: 1.6;
+}
+
+.auth-switch a {
+  color: var(--polka-ink);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(13, 13, 13, 0.22);
+}
+
 .auth-action {
   width: 100%;
   justify-content: center;

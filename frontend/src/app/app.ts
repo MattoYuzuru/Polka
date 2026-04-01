@@ -22,9 +22,15 @@ export class App {
   protected readonly showFooter = computed(
     () => !/^\/books\/(?!new$)(?!import$)[^/]+$/.test(this.currentUrl()),
   );
-  protected readonly showGuestFooterLinks = computed(
-    () => !this.authSessionStore.isAuthenticated(),
-  );
+  protected readonly showGuestFooterLinks = computed(() => {
+    const currentUrl = this.currentUrl();
+
+    return (
+      !this.authSessionStore.isAuthenticated() &&
+      /^\/[^/]+$/.test(currentUrl) &&
+      !/^\/(?:login|register)$/.test(currentUrl)
+    );
+  });
 
   constructor() {
     this.authSessionStore.bootstrap();
