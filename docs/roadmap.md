@@ -2,8 +2,8 @@
 
 ## Текущий статус
 
-- Текущая ветка: `fix/minimal-ui-book-list-pass`
-- Текущая фаза: минималистичный UI-pass профиля, страницы книги и форм создания книги/подборки с отдельным CRUD для цитат и мнений
+- Текущая ветка: `fix/library-export-auth-and-scroll-polish`
+- Текущая фаза: polish-pass экспорта полки, сессионного библиотечного градиента, scroll-механики страницы книги и минималистичного auth/settings UI
 - Последнее обновление: 2026-04-01
 
 ## Этапы
@@ -21,9 +21,9 @@
 
 ## Ближайшие шаги
 
-1. Провести ручной визуальный smoke-pass профиля, страницы книги и обеих form-страниц на мобильных брейкпоинтах.
-2. Решить, выносить ли минималистичные `form-action`, checkbox и card-selection паттерны в shared-слой.
-3. Отдельно зафиксировать серверный алгоритм сессионного градиента по палитрам обложек, если он должен вычисляться автоматически, а не храниться как preset.
+1. Провести ручной smoke-pass профиля и страницы книги на мобильных брейкпоинтах после новой scroll/navigation логики.
+2. Решить, выносить ли минималистичные `auth-action`, `profile-action` и `form-action` паттерны в shared-слой.
+3. При необходимости добавить отдельные e2e-сценарии на скачивание `zip`-экспорта полки и гостевой режим с приватными книгами.
 
 ## Последняя проверка
 
@@ -59,6 +59,13 @@
 - `npm run build:frontend` после minimal UI/book/list pass
 - `npm run compose:check` после minimal UI/book/list pass
 - `npm run test:component` после minimal UI/book/list pass
+- `npm run lint` после export/auth/scroll polish
+- `npm run format:check` после export/auth/scroll polish
+- `npm run test:frontend` после export/auth/scroll polish
+- `npm run test:backend` после export/auth/scroll polish
+- `npm run build:frontend` после export/auth/scroll polish
+- `npm run compose:check` после export/auth/scroll polish
+- `npm run test:component` после export/auth/scroll polish
 
 ## Принципы итераций
 

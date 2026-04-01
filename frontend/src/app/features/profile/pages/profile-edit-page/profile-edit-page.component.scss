@@ -3,17 +3,32 @@
 }
 
 .profile-edit-page {
+  min-height: calc(100dvh - 2rem);
+  display: grid;
+  place-items: center;
   padding: clamp(1rem, 3vw, 2rem);
 }
 
 .profile-edit-card {
   display: grid;
-  gap: 1rem;
-  max-width: 48rem;
-  border: 1px solid var(--polka-border);
-  background: rgba(255, 255, 255, 0.7);
-  box-shadow: var(--polka-shadow);
-  backdrop-filter: blur(18px);
+  gap: 1.15rem;
+  width: min(100%, 42rem);
+  border: 1px solid rgba(13, 13, 13, 0.12);
+  border-radius: 1.35rem !important;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.profile-edit-card__header {
+  display: grid;
+  gap: 0.55rem;
+  text-align: center;
+}
+
+.profile-edit-card__header p:last-child {
+  color: var(--polka-muted);
+  line-height: 1.68;
 }
 
 .profile-edit-form {
@@ -35,6 +50,12 @@
 
 .field__control--textarea {
   min-height: 9rem;
+}
+
+.profile-edit-form input,
+.profile-edit-form textarea {
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.98);
 }
 
 .error-box,
@@ -66,5 +87,29 @@
 .actions {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 0.75rem;
+}
+
+.profile-action {
+  border: 1px solid var(--polka-border-strong) !important;
+  background: transparent !important;
+  color: var(--polka-ink) !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+
+.profile-action:hover {
+  background: rgba(13, 13, 13, 0.04) !important;
+}
+
+.profile-action--accent {
+  border-color: transparent !important;
+  background: var(--accent-gradient) !important;
+  color: #fff !important;
+}
+
+.profile-action--accent:hover {
+  background: var(--accent-gradient) !important;
+  opacity: 0.96;
 }

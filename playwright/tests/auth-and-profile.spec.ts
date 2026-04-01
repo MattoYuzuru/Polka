@@ -16,12 +16,18 @@ test("logs in with the seeded demo account and opens the owner profile", async (
   page,
 }) => {
   await page.goto("/login");
+  await page.getByTestId("login-email").fill("reader@polka.local");
+  await page.getByTestId("login-password").fill("Reader1234");
   await page.getByTestId("login-submit").click();
 
   await expect(page).toHaveURL(/\/mattoy$/);
   await expect(page.getByTestId("profile-nickname")).toHaveText("mattoy");
   await page.getByRole("button", { name: "Добавить контент" }).click();
-  await expect(page.getByRole("link", { name: "Добавить книгу" })).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Добавить книгу" }),
+  ).toBeVisible();
+  await page.getByRole("link", { name: "Добавить книгу" }).click();
+  await expect(page).toHaveURL(/\/books\/new$/);
 });
 
 test("filters the public library by search query and status", async ({
@@ -51,6 +57,8 @@ test("owner creates, edits and deletes a book with uploaded cover", async ({
   const updatedTitle = `${createdTitle} updated`;
 
   await page.goto("/login");
+  await page.getByTestId("login-email").fill("reader@polka.local");
+  await page.getByTestId("login-password").fill("Reader1234");
   await page.getByTestId("login-submit").click();
   await expect(page).toHaveURL(/\/mattoy$/);
 
@@ -89,7 +97,9 @@ test("owner creates, edits and deletes a book with uploaded cover", async ({
   await expect(page.locator(".book-pane--meta .book-cover img")).toBeVisible();
   await page.getByRole("button", { name: "Редактировать книгу" }).click();
   await page.locator('input[formControlName="title"]').fill(updatedTitle);
-  await page.locator('select[formControlName="status"]').selectOption("Прочитал");
+  await page
+    .locator('select[formControlName="status"]')
+    .selectOption("Прочитал");
   await page.getByRole("button", { name: "Сохранить" }).click();
 
   await expect(page.getByRole("heading", { name: updatedTitle })).toBeVisible();
@@ -103,9 +113,7 @@ test("owner creates, edits and deletes a book with uploaded cover", async ({
   await expect(updatedCard).toBeVisible();
 
   page.once("dialog", (dialog) => dialog.accept());
-  await updatedCard
-    .getByRole("button", { name: /меню действий/i })
-    .click();
+  await updatedCard.getByRole("button", { name: /меню действий/i }).click();
   await page.getByRole("button", { name: "Удалить из библиотеки" }).click();
 
   await expect(page).toHaveURL(/\/mattoy$/);

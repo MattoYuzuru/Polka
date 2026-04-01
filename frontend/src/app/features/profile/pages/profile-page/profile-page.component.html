@@ -6,6 +6,22 @@
       aria-label="Закрыть меню действий"
       (click)="closeCreateMenu()"
     ></button>
+
+    <div
+      class="floating-menu create-menu"
+      [style.--accent-gradient]="uiPreferencesStore.profileGradientCss()"
+    >
+      <a routerLink="/books/new" class="floating-menu__action" (click)="closeCreateMenu()">
+        <span class="floating-menu__text" data-gradient-text="Добавить книгу">
+          Добавить книгу
+        </span>
+      </a>
+      <a routerLink="/lists/new" class="floating-menu__action" (click)="closeCreateMenu()">
+        <span class="floating-menu__text" data-gradient-text="Добавить список рекомендаций">
+          Добавить список рекомендаций
+        </span>
+      </a>
+    </div>
   }
 
   @if (isLoading()) {
@@ -37,35 +53,6 @@
               >
                 <span>+</span>
               </button>
-
-              @if (isCreateMenuOpen()) {
-                <div
-                  class="floating-menu create-menu"
-                  [style.--accent-gradient]="uiPreferencesStore.profileGradientCss()"
-                >
-                  <a
-                    routerLink="/books/new"
-                    class="floating-menu__action"
-                    (click)="closeCreateMenu()"
-                  >
-                    <span class="floating-menu__text" data-gradient-text="Добавить книгу">
-                      Добавить книгу
-                    </span>
-                  </a>
-                  <a
-                    routerLink="/lists/new"
-                    class="floating-menu__action"
-                    (click)="closeCreateMenu()"
-                  >
-                    <span
-                      class="floating-menu__text"
-                      data-gradient-text="Добавить список рекомендаций"
-                    >
-                      Добавить список рекомендаций
-                    </span>
-                  </a>
-                </div>
-              }
 
               <button
                 class="orb-button orb-button--accent orb-button--guest"
@@ -179,6 +166,17 @@
             {{ copied() ? 'Ссылка скопирована' : 'Поделиться' }}
           </button>
 
+          @if (activeShelf.kind === 'library') {
+            <button
+              tuiButton
+              type="button"
+              [disabled]="isExportingShelf()"
+              (click)="downloadShelfArchive()"
+            >
+              {{ isExportingShelf() ? 'Готовим архив...' : 'Сохранить полку' }}
+            </button>
+          }
+
           @if (activeShelf.kind === 'list' && ownerMode()) {
             <a [routerLink]="['/lists', activeShelf.listId, 'edit']" tuiButton>Изменить список</a>
 
@@ -264,7 +262,7 @@
             (drop)="onBookDrop($event, book.id)"
           >
             <div class="book-card__frame">
-              <span class="book-rank">{{ book.rankPosition }}</span>
+              <span class="book-rank">{{ book.displayRankPosition }}</span>
 
               @if (ownerMode()) {
                 <button

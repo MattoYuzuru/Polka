@@ -746,6 +746,91 @@ func NewRouter(
 			httputil.WriteJSON(w, http.StatusOK, editableProfile)
 		})
 
+		router.Get("/profiles/{nickname}/export", func(w http.ResponseWriter, r *http.Request) {
+			viewerUserID := extractViewerUserID(r, tokenManager)
+			profileView, err := profileService.ByNickname(
+				r.Context(),
+				chi.URLParam(r, "nickname"),
+				viewerUserID,
+			)
+			if err != nil {
+				if errors.Is(err, profile.ErrNotFound) {
+					httputil.WriteError(w, http.StatusNotFound, "Профиль не найден.")
+
+					return
+				}
+
+				httputil.WriteError(w, http.StatusInternalServerError, "Не удалось подготовить экспорт полки.")
+
+				return
+			}
+
+			exportItems := make([]shelfArchiveBook, 0, len(profileView.Books))
+			for _, shelfBook := range profileView.Books {
+				bookDetails, err := booksService.FindByID(r.Context(), shelfBook.ID, viewerUserID)
+				if err != nil {
+					if errors.Is(err, books.ErrNotFound) {
+						continue
+					}
+
+					httputil.WriteError(w, http.StatusInternalServerError, "Не удалось собрать книги для экспорта.")
+
+					return
+				}
+
+				exportItem := shelfArchiveBook{
+					Details: bookDetails,
+				}
+
+				if strings.TrimSpace(bookDetails.CoverURL) != "" {
+					coverObject, coverErr := booksService.OpenCover(r.Context(), bookDetails.ID)
+					switch {
+					case coverErr == nil:
+						coverBytes, readErr := io.ReadAll(coverObject.Body)
+						coverObject.Body.Close()
+						if readErr != nil {
+							httputil.WriteError(w, http.StatusInternalServerError, "Не удалось прочитать обложку для экспорта.")
+
+							return
+						}
+
+						exportItem.CoverBytes = coverBytes
+						exportItem.CoverContentType = coverObject.ContentType
+					case errors.Is(coverErr, books.ErrNotFound),
+						errors.Is(coverErr, media.ErrObjectNotFound),
+						errors.Is(coverErr, media.ErrStorageDisabled):
+					default:
+						httputil.WriteError(w, http.StatusInternalServerError, "Не удалось подготовить обложку для экспорта.")
+
+						return
+					}
+				}
+
+				exportItems = append(exportItems, exportItem)
+			}
+
+			archiveBytes, err := buildShelfArchive(exportItems)
+			if err != nil {
+				httputil.WriteError(w, http.StatusInternalServerError, "Не удалось собрать zip-архив полки.")
+
+				return
+			}
+
+			fileName := sanitizeArchiveName(profileView.User.Nickname)
+			if fileName == "" {
+				fileName = "polka-shelf"
+			}
+
+			w.Header().Set("Content-Type", "application/zip")
+			w.Header().Set(
+				"Content-Disposition",
+				`attachment; filename="`+fileName+`-shelf.zip"`,
+			)
+			w.Header().Set("Cache-Control", "no-store")
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write(archiveBytes)
+		})
+
 		router.Get("/profiles/{nickname}", func(w http.ResponseWriter, r *http.Request) {
 			profileView, err := profileService.ByNickname(
 				r.Context(),

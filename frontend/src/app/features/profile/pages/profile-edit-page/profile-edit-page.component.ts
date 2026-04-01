@@ -10,6 +10,7 @@ import { TuiCardLarge, TuiHeader } from '@taiga-ui/layout';
 
 import { ProfileApiService } from '../../../../core/services/profile-api.service';
 import { AuthSessionStore } from '../../../../core/stores/auth-session.store';
+import { UiPreferencesStore } from '../../../../core/stores/ui-preferences.store';
 
 @Component({
   selector: 'app-profile-edit-page',
@@ -32,6 +33,7 @@ export class ProfileEditPageComponent {
   private readonly router = inject(Router);
   private readonly profileApiService = inject(ProfileApiService);
   protected readonly authSessionStore = inject(AuthSessionStore);
+  protected readonly uiPreferencesStore = inject(UiPreferencesStore);
 
   protected readonly isLoading = signal(true);
   protected readonly isSubmitting = signal(false);

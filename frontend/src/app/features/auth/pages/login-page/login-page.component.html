@@ -1,30 +1,18 @@
 <main class="login-page">
-  <section class="login-hero">
+  <section class="login-hero" tuiCardLarge tuiSurface>
     <p class="eyebrow" tuiChip>Polka / вход</p>
-    <h1 tuiHeader="h1">Пространство для личной библиотеки, заметок и рекомендаций.</h1>
+    <h1 tuiHeader="h1">Личная библиотека без визуального шума.</h1>
     <p class="lead">
-      Владелец попадает сразу на свою публичную полку, где может добавлять книги, собирать списки
-      рекомендаций и смотреть профиль глазами гостя.
+      Вход открывает приватную рабочую полку, заметки к книгам и публичный профиль по одному адресу.
     </p>
-
-    <div class="hero-lines">
-      <p>Белый фон, тонкие чёрные линии, акцентные градиенты из палитры обложек.</p>
-      <p>Ни одного лишнего блока между человеком и его книгами.</p>
-    </div>
-
-    <div class="hero-actions">
-      <a class="demo-link" routerLink="/mattoy" tuiButton>Открыть демо-профиль</a>
-      <a class="demo-link demo-link--secondary" routerLink="/register" tuiButton>
-        Создать аккаунт
-      </a>
-    </div>
+    <p class="hero-note">Чёрно-белая основа, тонкие бордеры и акцент из палитры ваших обложек.</p>
   </section>
 
   <section class="login-card" tuiCardLarge tuiSurface>
     <div class="login-card__header">
       <p class="login-card__meta">Вход</p>
-      <h2 tuiHeader="h3">Вход в библиотеку</h2>
-      <p>Используйте демо-учётку или войдите в собственный профиль.</p>
+      <h2 tuiHeader="h3">Войти в Polka</h2>
+      <p>Введите почту и пароль, чтобы вернуться к своей библиотеке.</p>
     </div>
 
     <form class="login-form" [formGroup]="loginForm" (ngSubmit)="submit()" data-testid="login-form">
@@ -60,30 +48,19 @@
         </div>
       }
 
-      <button
-        class="submit-button"
-        tuiButton
-        type="submit"
-        [disabled]="isSubmitting()"
-        data-testid="login-submit"
-      >
-        {{ isSubmitting() ? 'Входим...' : 'Войти' }}
-      </button>
-    </form>
+      <div class="login-actions">
+        <button
+          class="submit-button auth-action auth-action--accent"
+          tuiButton
+          type="submit"
+          [disabled]="isSubmitting()"
+          data-testid="login-submit"
+        >
+          {{ isSubmitting() ? 'Входим...' : 'Войти' }}
+        </button>
 
-    <dl class="demo-credentials">
-      <div class="demo-credentials__title">
-        <dt>Демо-учётка</dt>
-        <dd>Быстрый вход без подготовки данных</dd>
+        <a class="auth-action" routerLink="/register" tuiButton>Регистрация</a>
       </div>
-      <div>
-        <dt>Почта</dt>
-        <dd>`reader@polka.local`</dd>
-      </div>
-      <div>
-        <dt>Пароль</dt>
-        <dd>`Reader1234`</dd>
-      </div>
-    </dl>
+    </form>
   </section>
 </main>

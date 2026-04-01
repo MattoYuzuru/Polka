@@ -10,6 +10,7 @@ import { TuiCardLarge, TuiHeader } from '@taiga-ui/layout';
 
 import { AuthApiService } from '../../../../core/services/auth-api.service';
 import { AuthSessionStore } from '../../../../core/stores/auth-session.store';
+import { UiPreferencesStore } from '../../../../core/stores/ui-preferences.store';
 
 @Component({
   selector: 'app-login-page',
@@ -32,13 +33,14 @@ export class LoginPageComponent {
   private readonly router = inject(Router);
   private readonly authApiService = inject(AuthApiService);
   private readonly authSessionStore = inject(AuthSessionStore);
+  private readonly uiPreferencesStore = inject(UiPreferencesStore);
 
   protected readonly isSubmitting = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
 
   protected readonly loginForm = this.formBuilder.nonNullable.group({
-    email: ['reader@polka.local', [Validators.required, Validators.email]],
-    password: ['Reader1234', [Validators.required, Validators.minLength(8)]],
+    email: ['', [Validators.required, Validators.email]],
+    password: ['', [Validators.required, Validators.minLength(8)]],
   });
 
   protected submit(): void {
@@ -60,6 +62,7 @@ export class LoginPageComponent {
       .subscribe({
         next: (session) => {
           this.authSessionStore.setSession(session);
+          this.uiPreferencesStore.clearProfileGradientSession();
           void this.router.navigateByUrl(`/${session.user.nickname}`);
         },
         error: (error: { error?: { message?: string } }) => {
