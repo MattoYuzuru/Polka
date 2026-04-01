@@ -1,7 +1,7 @@
 # Polka
 
 <p align="center">
-  <img src="docs/assets/polka-readme-logo.png" alt="Polka logo" width="240">
+  <img src="docs/assets/polka-readme-logo.png" alt="Polka logo" width="180">
 </p>
 
 Polka это full-stack приложение для личной библиотеки с публичным профилем, списками рекомендаций, цитатами и мнениями о книгах.
