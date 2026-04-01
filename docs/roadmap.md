@@ -2,8 +2,8 @@
 
 ## Текущий статус
 
-- Текущая ветка: `fix/auth-import-and-icons-pass`
-- Текущая фаза: финальный polish-pass auth/footer навигации, страницы импорта книг и favicon/icon pack
+- Текущая ветка: `fix/site-footer-auth-links`
+- Текущая фаза: корректировка глобального site-footer для auth-ссылок и откат встроенного footer на странице логина
 - Последнее обновление: 2026-04-01
 
 ## Этапы
@@ -76,6 +76,11 @@
 - `npm run test:frontend` после auth/import/icon pass
 - `npm run test:component` после auth/import/icon pass
 - `npm run build:frontend` после auth/import/icon pass
+- `npm run lint` после site-footer auth pass
+- `npm run format:check` после site-footer auth pass
+- `npm run test:frontend` после site-footer auth pass
+- `npm run test:component` после site-footer auth pass
+- `npm run build:frontend` после site-footer auth pass
 
 ## Принципы итераций
 

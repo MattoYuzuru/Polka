@@ -1,6 +1,6 @@
 import { DestroyRef, Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
+import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { TuiRoot } from '@taiga-ui/core';
 import { filter } from 'rxjs';
 
@@ -9,7 +9,7 @@ import { UiPreferencesStore } from './core/stores/ui-preferences.store';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, TuiRoot],
+  imports: [RouterLink, RouterOutlet, TuiRoot],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
@@ -21,6 +21,9 @@ export class App {
   protected readonly currentUrl = signal(this.router.url);
   protected readonly showFooter = computed(
     () => !/^\/books\/(?!new$)(?!import$)[^/]+$/.test(this.currentUrl()),
+  );
+  protected readonly showGuestFooterLinks = computed(
+    () => !this.authSessionStore.isAuthenticated(),
   );
 
   constructor() {

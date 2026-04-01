@@ -11,11 +11,35 @@
           <p>Личная библиотека, заметки и публичные книжные подборки.</p>
         </div>
 
-        <div class="site-footer__links">
-          <p>Создатель: MattoYuzuru</p>
-          <a href="https://github.com/MattoYuzuru/Polka" rel="noreferrer" target="_blank">
-            GitHub repository
-          </a>
+        <div class="site-footer__actions">
+          @if (showGuestFooterLinks()) {
+            <nav class="site-footer__auth" aria-label="Авторизация">
+              <a
+                class="site-footer__auth-link"
+                [class.site-footer__auth-link--current]="currentUrl() === '/login'"
+                routerLink="/login"
+                [attr.aria-current]="currentUrl() === '/login' ? 'page' : null"
+              >
+                Вход
+              </a>
+              <span class="site-footer__auth-divider" aria-hidden="true">/</span>
+              <a
+                class="site-footer__auth-link site-footer__auth-link--accent"
+                [class.site-footer__auth-link--current]="currentUrl() === '/register'"
+                routerLink="/register"
+                [attr.aria-current]="currentUrl() === '/register' ? 'page' : null"
+              >
+                Создать свою полку
+              </a>
+            </nav>
+          }
+
+          <div class="site-footer__links">
+            <p>Создатель: MattoYuzuru</p>
+            <a href="https://github.com/MattoYuzuru/Polka" rel="noreferrer" target="_blank">
+              GitHub repository
+            </a>
+          </div>
         </div>
       </footer>
     }

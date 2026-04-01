@@ -108,44 +108,6 @@
   gap: 0.7rem;
 }
 
-.auth-footer {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.65rem;
-  padding-top: 0.2rem;
-  border-top: 1px solid rgba(13, 13, 13, 0.08);
-}
-
-.auth-footer__link,
-.auth-footer__divider {
-  font-size: 0.96rem;
-}
-
-.auth-footer__link {
-  color: var(--polka-muted);
-  text-decoration: none;
-  transition: color 180ms ease;
-}
-
-.auth-footer__link:hover,
-.auth-footer__link:focus-visible,
-.auth-footer__link--current {
-  color: var(--polka-ink);
-}
-
-.auth-footer__link--accent {
-  font-family: var(--polka-display-font);
-  color: transparent;
-  background: linear-gradient(135deg, #101010, #4f5bff, #ff7a51);
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.auth-footer__divider {
-  color: rgba(13, 13, 13, 0.22);
-}
-
 .auth-action {
   width: 100%;
   justify-content: center;

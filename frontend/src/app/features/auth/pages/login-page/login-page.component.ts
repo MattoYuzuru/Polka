@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
 import { TuiButton } from '@taiga-ui/core';
 import { TuiSurface } from '@taiga-ui/core';
@@ -14,15 +14,7 @@ import { UiPreferencesStore } from '../../../../core/stores/ui-preferences.store
 
 @Component({
   selector: 'app-login-page',
-  imports: [
-    ReactiveFormsModule,
-    RouterLink,
-    TuiButton,
-    TuiCardLarge,
-    TuiChip,
-    TuiHeader,
-    TuiSurface,
-  ],
+  imports: [ReactiveFormsModule, TuiButton, TuiCardLarge, TuiChip, TuiHeader, TuiSurface],
   templateUrl: './login-page.component.html',
   styleUrl: './login-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
