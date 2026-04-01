@@ -2,8 +2,8 @@
 
 ## Текущий статус
 
-- Текущая ветка: `fix/site-footer-auth-links`
-- Текущая фаза: корректировка глобального site-footer для auth-ссылок и откат встроенного footer на странице логина
+- Текущая ветка: `fix/footer-home-and-auth-switch`
+- Текущая фаза: уточнение auth-ссылок: footer только на публичной главной странице и текстовые switch-блоки внутри login/register
 - Последнее обновление: 2026-04-01
 
 ## Этапы
@@ -81,6 +81,11 @@
 - `npm run test:frontend` после site-footer auth pass
 - `npm run test:component` после site-footer auth pass
 - `npm run build:frontend` после site-footer auth pass
+- `npm run lint` после footer home/auth switch pass
+- `npm run format:check` после footer home/auth switch pass
+- `npm run test:frontend` после footer home/auth switch pass
+- `npm run test:component` после footer home/auth switch pass
+- `npm run build:frontend` после footer home/auth switch pass
 
 ## Принципы итераций
 

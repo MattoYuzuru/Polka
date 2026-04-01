@@ -14,20 +14,11 @@
         <div class="site-footer__actions">
           @if (showGuestFooterLinks()) {
             <nav class="site-footer__auth" aria-label="Авторизация">
-              <a
-                class="site-footer__auth-link"
-                [class.site-footer__auth-link--current]="currentUrl() === '/login'"
-                routerLink="/login"
-                [attr.aria-current]="currentUrl() === '/login' ? 'page' : null"
-              >
-                Вход
-              </a>
+              <a class="site-footer__auth-link" routerLink="/login">Вход</a>
               <span class="site-footer__auth-divider" aria-hidden="true">/</span>
               <a
                 class="site-footer__auth-link site-footer__auth-link--accent"
-                [class.site-footer__auth-link--current]="currentUrl() === '/register'"
                 routerLink="/register"
-                [attr.aria-current]="currentUrl() === '/register' ? 'page' : null"
               >
                 Создать свою полку
               </a>
