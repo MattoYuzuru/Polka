@@ -2,9 +2,9 @@
 
 ## Текущий статус
 
-- Текущая ветка: `fix/profile-and-book-ui-pass-2`
-- Текущая фаза: второй UI/UX polish-pass профиля и полная переработка страницы книги
-- Последнее обновление: 2026-03-31
+- Текущая ветка: `fix/minimal-ui-book-list-pass`
+- Текущая фаза: минималистичный UI-pass профиля, страницы книги и форм создания книги/подборки с отдельным CRUD для цитат и мнений
+- Последнее обновление: 2026-04-01
 
 ## Этапы
 
@@ -21,9 +21,9 @@
 
 ## Ближайшие шаги
 
-1. Провести ручной визуальный smoke-pass профиля и страницы книги на мобильных брейкпоинтах.
-2. Добить следующие страницы под тот же язык интерфейса: логин/регистрация, создание списка, профиль списка.
-3. Если дизайн стабилизируется, вынести orb/menu/toggle паттерны в shared-компоненты.
+1. Провести ручной визуальный smoke-pass профиля, страницы книги и обеих form-страниц на мобильных брейкпоинтах.
+2. Решить, выносить ли минималистичные `form-action`, checkbox и card-selection паттерны в shared-слой.
+3. Отдельно зафиксировать серверный алгоритм сессионного градиента по палитрам обложек, если он должен вычисляться автоматически, а не храниться как preset.
 
 ## Последняя проверка
 
@@ -52,6 +52,13 @@
 - `GET https://polka.keykomi.com/api/v1/books/:id`
 - `DELETE https://polka.keykomi.com/api/v1/books/:id`
 - Lighthouse mobile report: `docs/lighthouse/polka-mobile.report.html`
+- `npm run lint` после minimal UI/book/list pass
+- `npm run format:check` после minimal UI/book/list pass
+- `npm run test:frontend` после minimal UI/book/list pass
+- `npm run test:backend` после minimal UI/book/list pass
+- `npm run build:frontend` после minimal UI/book/list pass
+- `npm run compose:check` после minimal UI/book/list pass
+- `npm run test:component` после minimal UI/book/list pass
 
 ## Принципы итераций
 

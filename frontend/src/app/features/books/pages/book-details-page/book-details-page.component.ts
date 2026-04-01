@@ -19,11 +19,12 @@ import {
   type BookFormValue,
   type BookOpinion,
   type BookQuote,
-  type CreateBookPayload,
+  type UpdateBookPayload,
 } from '../../../../shared/models/book.model';
 
 type BookContentTab = 'quotes' | 'opinions';
 type BookEntry = BookQuote | BookOpinion;
+type BookEntryDraftMap = Record<string, string>;
 
 const NAVIGATION_THRESHOLD = 280;
 const TYPEWRITER_INTERVAL_MS = 14;
@@ -65,6 +66,12 @@ export class BookDetailsPageComponent {
   protected readonly uploadedCoverKey = signal<string | null>(null);
   protected readonly removeCoverOnSubmit = signal(false);
   protected readonly statusOptions = BOOK_STATUS_OPTIONS;
+  protected readonly quoteDrafts = signal<BookEntryDraftMap>({});
+  protected readonly opinionDrafts = signal<BookEntryDraftMap>({});
+  protected readonly newQuoteDraft = signal('');
+  protected readonly newOpinionDraft = signal('');
+  protected readonly activeEntryMutationKey = signal<string | null>(null);
+  protected readonly noteErrorMessage = signal<string | null>(null);
 
   protected readonly bookForm = this.formBuilder.nonNullable.group({
     title: ['', [Validators.required, Validators.minLength(2)]],
@@ -128,7 +135,6 @@ export class BookDetailsPageComponent {
     () => this.activeEntryIndex() < this.currentEntries().length - 1,
   );
   protected readonly hasPreviousEntry = computed(() => this.activeEntryIndex() > 0);
-  protected readonly isCurrentEntryQuote = computed(() => this.activeTab() === 'quotes');
   protected readonly currentEntryContentClass = computed(() =>
     this.activeTab() === 'quotes'
       ? 'details-stream__content details-stream__content--quote'
@@ -156,6 +162,11 @@ export class BookDetailsPageComponent {
   protected readonly upcomingNumberScale = computed(
     () => 1 + Math.min(Math.abs(this.navigationProgress()) / NAVIGATION_THRESHOLD, 1) * 0.32,
   );
+  protected readonly navigationGap = computed(() => {
+    const arrowHeight = 32;
+
+    return 4 + ((this.navigationStretch() - 1) * arrowHeight) / 2;
+  });
   protected readonly navigationAccent = computed(() => {
     if (!this.currentEntries().length) {
       return false;
@@ -283,6 +294,8 @@ export class BookDetailsPageComponent {
 
     this.bookForm.reset(mapBookToFormValue(book));
     this.syncCoverStateFromBook(book);
+    this.syncEntryDraftsFromBook(book);
+    this.noteErrorMessage.set(null);
     this.isEditMode.set(true);
     this.closeCoverModal();
   }
@@ -296,6 +309,8 @@ export class BookDetailsPageComponent {
 
     this.bookForm.reset(mapBookToFormValue(book));
     this.syncCoverStateFromBook(book);
+    this.syncEntryDraftsFromBook(book);
+    this.noteErrorMessage.set(null);
     this.isEditMode.set(false);
   }
 
@@ -311,7 +326,7 @@ export class BookDetailsPageComponent {
     this.errorMessage.set(null);
 
     this.bookApiService
-      .updateBook(book.id, this.buildPayload())
+      .updateBook(book.id, this.buildMetadataPayload())
       .pipe(
         finalize(() => this.isProcessing.set(false)),
         takeUntilDestroyed(this.destroyRef),
@@ -323,6 +338,181 @@ export class BookDetailsPageComponent {
         },
         error: () => this.errorMessage.set('Не удалось сохранить изменения книги.'),
       });
+  }
+
+  protected entryDraft(entryId: string): string {
+    const drafts = this.activeTab() === 'quotes' ? this.quoteDrafts() : this.opinionDrafts();
+    const entry = this.currentEntries().find((item) => item.id === entryId);
+
+    return drafts[entryId] ?? entry?.content ?? '';
+  }
+
+  protected updateEntryDraft(entryId: string, value: string): void {
+    if (this.activeTab() === 'quotes') {
+      this.quoteDrafts.update((current) => ({
+        ...current,
+        [entryId]: value,
+      }));
+
+      return;
+    }
+
+    this.opinionDrafts.update((current) => ({
+      ...current,
+      [entryId]: value,
+    }));
+  }
+
+  protected newEntryDraft(): string {
+    return this.activeTab() === 'quotes' ? this.newQuoteDraft() : this.newOpinionDraft();
+  }
+
+  protected updateNewEntryDraft(value: string): void {
+    if (this.activeTab() === 'quotes') {
+      this.newQuoteDraft.set(value);
+
+      return;
+    }
+
+    this.newOpinionDraft.set(value);
+  }
+
+  protected saveEntry(entryId: string): void {
+    const book = this.book();
+    const entry = this.currentEntries().find((item) => item.id === entryId);
+    const content = this.entryDraft(entryId).trim();
+    if (!book || !entry) {
+      return;
+    }
+
+    if (!content) {
+      this.noteErrorMessage.set(
+        this.activeTab() === 'quotes'
+          ? 'Текст цитаты не должен быть пустым.'
+          : 'Текст мнения не должен быть пустым.',
+      );
+
+      return;
+    }
+
+    if (content === entry.content.trim()) {
+      return;
+    }
+
+    this.noteErrorMessage.set(null);
+    this.activeEntryMutationKey.set(this.buildEntryMutationKey(entryId));
+
+    const request$ =
+      this.activeTab() === 'quotes'
+        ? this.bookApiService.updateQuote(book.id, entryId, { content })
+        : this.bookApiService.updateOpinion(book.id, entryId, { content });
+
+    request$
+      .pipe(
+        finalize(() => this.activeEntryMutationKey.set(null)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (updatedBook) => this.applyNoteMutation(updatedBook),
+        error: () =>
+          this.noteErrorMessage.set(
+            this.activeTab() === 'quotes'
+              ? 'Не удалось обновить цитату.'
+              : 'Не удалось обновить мнение.',
+          ),
+      });
+  }
+
+  protected createEntry(): void {
+    const book = this.book();
+    const content = this.newEntryDraft().trim();
+    if (!book) {
+      return;
+    }
+
+    if (!content) {
+      this.noteErrorMessage.set(
+        this.activeTab() === 'quotes'
+          ? 'Введите текст новой цитаты.'
+          : 'Введите текст нового мнения.',
+      );
+
+      return;
+    }
+
+    this.noteErrorMessage.set(null);
+    this.activeEntryMutationKey.set(this.buildNewEntryMutationKey());
+
+    const request$ =
+      this.activeTab() === 'quotes'
+        ? this.bookApiService.createQuote(book.id, { content })
+        : this.bookApiService.createOpinion(book.id, { content });
+
+    request$
+      .pipe(
+        finalize(() => this.activeEntryMutationKey.set(null)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (updatedBook) => {
+          this.applyNoteMutation(updatedBook);
+
+          if (this.activeTab() === 'quotes') {
+            this.newQuoteDraft.set('');
+
+            return;
+          }
+
+          this.newOpinionDraft.set('');
+        },
+        error: () =>
+          this.noteErrorMessage.set(
+            this.activeTab() === 'quotes'
+              ? 'Не удалось добавить цитату.'
+              : 'Не удалось добавить мнение.',
+          ),
+      });
+  }
+
+  protected deleteEntry(entryId: string): void {
+    const book = this.book();
+    if (
+      !book ||
+      !globalThis.confirm(this.activeTab() === 'quotes' ? 'Удалить цитату?' : 'Удалить мнение?')
+    ) {
+      return;
+    }
+
+    this.noteErrorMessage.set(null);
+    this.activeEntryMutationKey.set(this.buildEntryMutationKey(entryId));
+
+    const request$ =
+      this.activeTab() === 'quotes'
+        ? this.bookApiService.deleteQuote(book.id, entryId)
+        : this.bookApiService.deleteOpinion(book.id, entryId);
+
+    request$
+      .pipe(
+        finalize(() => this.activeEntryMutationKey.set(null)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (updatedBook) => this.applyNoteMutation(updatedBook),
+        error: () =>
+          this.noteErrorMessage.set(
+            this.activeTab() === 'quotes'
+              ? 'Не удалось удалить цитату.'
+              : 'Не удалось удалить мнение.',
+          ),
+      });
+  }
+
+  protected isEntryMutating(entryId: string): boolean {
+    return this.activeEntryMutationKey() === this.buildEntryMutationKey(entryId);
+  }
+
+  protected isCreatingEntry(): boolean {
+    return this.activeEntryMutationKey() === this.buildNewEntryMutationKey();
   }
 
   protected uploadCover(event: Event): void {
@@ -402,10 +592,18 @@ export class BookDetailsPageComponent {
     this.book.set(book);
     this.bookForm.reset(mapBookToFormValue(book));
     this.syncCoverStateFromBook(book);
+    this.syncEntryDraftsFromBook(book);
     this.activeEntryIndex.set(0);
     this.navigationProgress.set(0);
     this.isImmersed.set(false);
     this.renderedEntryText.set('');
+    this.noteErrorMessage.set(null);
+  }
+
+  private applyNoteMutation(book: BookDetails): void {
+    this.book.set(book);
+    this.syncEntryDraftsFromBook(book);
+    this.noteErrorMessage.set(null);
   }
 
   private changeEntry(direction: 1 | -1, viewport: HTMLElement): void {
@@ -447,9 +645,18 @@ export class BookDetailsPageComponent {
     }, TYPEWRITER_INTERVAL_MS);
   }
 
-  private buildPayload(): CreateBookPayload {
+  private buildMetadataPayload(): UpdateBookPayload {
     return {
-      ...this.bookForm.getRawValue(),
+      title: this.bookForm.controls.title.value,
+      author: this.bookForm.controls.author.value,
+      description: this.bookForm.controls.description.value,
+      year: this.bookForm.controls.year.value,
+      publisher: this.bookForm.controls.publisher.value,
+      ageRating: this.bookForm.controls.ageRating.value,
+      genre: this.bookForm.controls.genre.value,
+      isPublic: this.bookForm.controls.isPublic.value,
+      status: this.bookForm.controls.status.value,
+      rating: this.bookForm.controls.rating.value,
       coverObjectKey: this.uploadedCoverKey(),
       coverPalette: this.hasCover() ? this.coverPreviewPalette() : [],
       removeCover: this.removeCoverOnSubmit(),
@@ -515,6 +722,20 @@ export class BookDetailsPageComponent {
     this.renderedEntryText.set('');
     this.isEditMode.set(false);
     this.isCoverModalOpen.set(false);
+    this.noteErrorMessage.set(null);
+  }
+
+  private syncEntryDraftsFromBook(book: BookDetails): void {
+    this.quoteDrafts.set(buildEntryDraftMap(book.quotes));
+    this.opinionDrafts.set(buildEntryDraftMap(book.opinions));
+  }
+
+  private buildEntryMutationKey(entryId: string): string {
+    return `${this.activeTab()}:${entryId}`;
+  }
+
+  private buildNewEntryMutationKey(): string {
+    return `${this.activeTab()}:new`;
   }
 }
 
@@ -551,4 +772,8 @@ function formatEntryContent(content: string, tab: BookContentTab): string {
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
+}
+
+function buildEntryDraftMap(entries: BookEntry[]): BookEntryDraftMap {
+  return Object.fromEntries(entries.map((entry) => [entry.id, entry.content]));
 }

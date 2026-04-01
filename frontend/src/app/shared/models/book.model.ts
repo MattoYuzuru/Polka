@@ -114,4 +114,24 @@ export interface CreateBookPayload {
   removeCover: boolean;
 }
 
-export type UpdateBookPayload = CreateBookPayload;
+export interface UpdateBookPayload {
+  title: string;
+  author: string;
+  description: string;
+  year: number;
+  publisher: string;
+  ageRating: string;
+  genre: string;
+  isPublic: boolean;
+  status: BookStatus;
+  rating: number | null;
+  opinion?: string;
+  quote?: string;
+  coverPalette: string[];
+  coverObjectKey: string | null;
+  removeCover: boolean;
+}
+
+export interface BookEntryPayload {
+  content: string;
+}

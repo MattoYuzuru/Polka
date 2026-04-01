@@ -5,6 +5,7 @@ import { type Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   type BookDetails,
+  type BookEntryPayload,
   type BooksImportPayload,
   type BooksImportResponse,
   type CoverUploadResponse,
@@ -30,6 +31,50 @@ export class BookApiService {
     return this.http.patch<BookDetails>(
       `${this.apiBaseUrl}/books/${encodeURIComponent(bookId)}`,
       payload,
+    );
+  }
+
+  createQuote(bookId: string, payload: BookEntryPayload): Observable<BookDetails> {
+    return this.http.post<BookDetails>(
+      `${this.apiBaseUrl}/books/${encodeURIComponent(bookId)}/quotes`,
+      payload,
+    );
+  }
+
+  updateQuote(bookId: string, quoteId: string, payload: BookEntryPayload): Observable<BookDetails> {
+    return this.http.patch<BookDetails>(
+      `${this.apiBaseUrl}/books/${encodeURIComponent(bookId)}/quotes/${encodeURIComponent(quoteId)}`,
+      payload,
+    );
+  }
+
+  deleteQuote(bookId: string, quoteId: string): Observable<BookDetails> {
+    return this.http.delete<BookDetails>(
+      `${this.apiBaseUrl}/books/${encodeURIComponent(bookId)}/quotes/${encodeURIComponent(quoteId)}`,
+    );
+  }
+
+  createOpinion(bookId: string, payload: BookEntryPayload): Observable<BookDetails> {
+    return this.http.post<BookDetails>(
+      `${this.apiBaseUrl}/books/${encodeURIComponent(bookId)}/opinions`,
+      payload,
+    );
+  }
+
+  updateOpinion(
+    bookId: string,
+    opinionId: string,
+    payload: BookEntryPayload,
+  ): Observable<BookDetails> {
+    return this.http.patch<BookDetails>(
+      `${this.apiBaseUrl}/books/${encodeURIComponent(bookId)}/opinions/${encodeURIComponent(opinionId)}`,
+      payload,
+    );
+  }
+
+  deleteOpinion(bookId: string, opinionId: string): Observable<BookDetails> {
+    return this.http.delete<BookDetails>(
+      `${this.apiBaseUrl}/books/${encodeURIComponent(bookId)}/opinions/${encodeURIComponent(opinionId)}`,
     );
   }
 
