@@ -59,10 +59,17 @@ Polka это full-stack приложение для личной библиот�
 
 ## Локальный запуск
 
+### Установка зависимостей
+
+```bash
+npm install
+```
+
+Корневой `package.json` подключает `frontend` как npm workspace, поэтому эта команда ставит и root-инструменты, и все Angular/Jest/ESLint/Stylelint зависимости frontend.
+
 ### Frontend
 
 ```bash
-npm --prefix frontend install
 npm run start:frontend
 ```
 
@@ -78,6 +85,12 @@ npm run start:backend
 
 ```bash
 docker compose up --build
+```
+
+Если локальные порты уже заняты, их можно переопределить:
+
+```bash
+POSTGRES_PORT=55432 BACKEND_PORT=18080 FRONTEND_PORT=14200 docker compose up --build
 ```
 
 После запуска:
