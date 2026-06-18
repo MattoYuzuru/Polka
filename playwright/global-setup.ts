@@ -1,5 +1,5 @@
-import { execFileSync } from 'node:child_process';
-import { setTimeout as delay } from 'node:timers/promises';
+import { execFileSync } from "node:child_process";
+import { setTimeout as delay } from "node:timers/promises";
 
 async function waitForUrl(url: string): Promise<void> {
   const timeoutAt = Date.now() + 180_000;
@@ -20,11 +20,14 @@ async function waitForUrl(url: string): Promise<void> {
 }
 
 export default async function globalSetup(): Promise<void> {
-  execFileSync('docker', ['compose', 'up', '-d', '--build'], {
+  const backendPort = process.env["BACKEND_PORT"] ?? "8080";
+  const frontendPort = process.env["FRONTEND_PORT"] ?? "4200";
+
+  execFileSync("docker", ["compose", "up", "-d", "--build"], {
     cwd: process.cwd(),
-    stdio: 'inherit',
+    stdio: "inherit",
   });
 
-  await waitForUrl('http://127.0.0.1:8080/api/v1/profiles/mattoy');
-  await waitForUrl('http://127.0.0.1:4200/login');
+  await waitForUrl(`http://127.0.0.1:${backendPort}/api/v1/profiles/mattoy`);
+  await waitForUrl(`http://127.0.0.1:${frontendPort}/login`);
 }
