@@ -8,6 +8,7 @@ NAMESPACE="polka"
 IMAGE_TAG="${POLKA_IMAGE_TAG:-edge}"
 FRONTEND_IMAGE="ghcr.io/mattoyuzuru/polka/frontend:${IMAGE_TAG}"
 BACKEND_IMAGE="ghcr.io/mattoyuzuru/polka/backend:${IMAGE_TAG}"
+MINIO_IMAGE="ghcr.io/mattoyuzuru/polka/minio:${IMAGE_TAG}"
 
 POSTGRES_USER="${POLKA_POSTGRES_USER:-polka}"
 POSTGRES_DB="${POLKA_POSTGRES_DB:-polka}"
@@ -53,6 +54,7 @@ fi
 ${KUBECTL_BIN} apply -k "${ROOT_DIR}/k8s/polka"
 ${KUBECTL_BIN} -n "${NAMESPACE}" set image deployment/backend backend="${BACKEND_IMAGE}"
 ${KUBECTL_BIN} -n "${NAMESPACE}" set image deployment/frontend frontend="${FRONTEND_IMAGE}"
+${KUBECTL_BIN} -n "${NAMESPACE}" set image statefulset/minio minio="${MINIO_IMAGE}"
 
 ${KUBECTL_BIN} -n "${NAMESPACE}" rollout status statefulset/postgres --timeout=180s
 ${KUBECTL_BIN} -n "${NAMESPACE}" rollout status statefulset/minio --timeout=180s
