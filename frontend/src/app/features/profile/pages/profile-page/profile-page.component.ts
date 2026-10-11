@@ -1,8 +1,10 @@
+import { AuthenticatedCoverDirective } from '../../../../shared/directives/authenticated-cover.directive';
 import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
   type OnInit,
+  HostListener,
   computed,
   inject,
   signal,
@@ -19,6 +21,7 @@ import {
   map,
   switchMap,
   tap,
+  type Subscription,
 } from 'rxjs';
 import { TuiButton, TuiSurface } from '@taiga-ui/core';
 import { TuiChip } from '@taiga-ui/kit';
@@ -73,7 +76,15 @@ const INITIAL_BOOKS_BATCH = 6;
 
 @Component({
   selector: 'app-profile-page',
-  imports: [RouterLink, TuiButton, TuiCardLarge, TuiChip, TuiHeader, TuiSurface],
+  imports: [
+    AuthenticatedCoverDirective,
+    RouterLink,
+    TuiButton,
+    TuiCardLarge,
+    TuiChip,
+    TuiHeader,
+    TuiSurface,
+  ],
   templateUrl: './profile-page.component.html',
   styleUrl: './profile-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -89,6 +100,9 @@ export class ProfilePageComponent implements OnInit {
   protected readonly uiPreferencesStore = inject(UiPreferencesStore);
 
   private readonly currentNickname = signal('');
+  private previewRequest: Subscription | null = null;
+  private floatingUiTrigger: HTMLElement | null = null;
+  private shelfRequest: Subscription | null = null;
   private readonly listCache = new Map<string, RecommendationListDetails>();
 
   protected readonly profile = signal<PublicProfile | null>(null);
@@ -117,6 +131,12 @@ export class ProfilePageComponent implements OnInit {
 
     return Boolean(profile && user && profile.user.nickname === user.nickname);
   });
+
+  protected readonly profileGradientCss = computed(() =>
+    this.isPreviewingAsGuest()
+      ? `linear-gradient(135deg, ${this.profile()?.gradientStops.join(', ') || '#101010, #5f6c71'})`
+      : this.uiPreferencesStore.profileGradientCss(),
+  );
 
   protected readonly ownerMode = computed(() => this.isOwner() && !this.isPreviewingAsGuest());
 
@@ -228,7 +248,7 @@ export class ProfilePageComponent implements OnInit {
     }
 
     const activeList = this.activeList();
-    if (!activeList) {
+    if (!activeList || activeList.id !== activeShelf.listId) {
       return [];
     }
 
@@ -312,6 +332,12 @@ export class ProfilePageComponent implements OnInit {
           this.visibleBooksLimit.set(INITIAL_BOOKS_BATCH);
           this.selectedShelfKey.set('library');
           this.listCache.clear();
+          this.previewRequest?.unsubscribe();
+          this.shelfRequest?.unsubscribe();
+          this.isLoadingShelf.set(false);
+          this.bookSearch.set('');
+          this.selectedStatus.set('all');
+          this.selectedSort.set('top');
         }),
         switchMap((nickname) => {
           this.currentNickname.set(nickname);
@@ -359,6 +385,7 @@ export class ProfilePageComponent implements OnInit {
 
     const clipboard = globalThis.navigator?.clipboard;
     if (!clipboard) {
+      this.errorMessage.set('Не удалось скопировать ссылку. Скопируйте адрес из браузера.');
       return;
     }
 
@@ -369,10 +396,15 @@ export class ProfilePageComponent implements OnInit {
         ? `${origin}/lists/${activeShelf.listId}`
         : `${origin}/${this.currentNickname()}`;
 
-    void clipboard.writeText(link).then(() => {
-      this.copied.set(true);
-      globalThis.setTimeout(() => this.copied.set(false), 1800);
-    });
+    void clipboard
+      .writeText(link)
+      .then(() => {
+        this.copied.set(true);
+        globalThis.setTimeout(() => this.copied.set(false), 1800);
+      })
+      .catch(() =>
+        this.errorMessage.set('Не удалось скопировать ссылку. Скопируйте адрес из браузера.'),
+      );
   }
 
   protected downloadShelfArchive(): void {
@@ -426,6 +458,7 @@ export class ProfilePageComponent implements OnInit {
 
   protected toggleCreateMenu(event?: Event): void {
     event?.stopPropagation();
+    this.floatingUiTrigger = event?.currentTarget as HTMLElement | null;
     this.isCreateMenuOpen.update((current) => !current);
   }
 
@@ -434,18 +467,47 @@ export class ProfilePageComponent implements OnInit {
   }
 
   protected toggleGuestPreview(): void {
+    this.previewRequest?.unsubscribe();
+    this.shelfRequest?.unsubscribe();
+    this.isLoadingShelf.set(false);
     this.isPreviewingAsGuest.update((current) => !current);
+    const asGuest = this.isPreviewingAsGuest();
+    this.listCache.clear();
+    this.previewRequest = this.profileApiService
+      .getPublicProfile(this.currentNickname(), asGuest)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (profile) => {
+          this.profile.set(profile);
+          this.normalizeActiveShelfSelection();
+        },
+        error: () => {
+          this.isPreviewingAsGuest.set(!asGuest);
+          this.errorMessage.set('Не удалось переключить режим просмотра. Попробуйте ещё раз.');
+        },
+      });
     this.normalizeActiveShelfSelection();
     this.closeAllFloatingUi();
     this.resetVisibleBooks();
   }
 
-  protected selectShelf(key: ActiveShelfKey): void {
+  protected selectShelf(key: ActiveShelfKey, event?: Event): void {
     if (this.selectedShelfKey() === key) {
       return;
     }
 
+    this.shelfRequest?.unsubscribe();
+    this.isLoadingShelf.set(false);
+    this.activeList.set(null);
+    this.errorMessage.set(null);
     this.selectedShelfKey.set(key);
+    (event?.currentTarget as HTMLElement | null)?.scrollIntoView({
+      block: 'nearest',
+      inline: 'nearest',
+      behavior: globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+        ? 'instant'
+        : 'smooth',
+    });
     this.bookSearch.set('');
     this.selectedStatus.set('all');
     this.selectedSort.set('top');
@@ -461,6 +523,7 @@ export class ProfilePageComponent implements OnInit {
 
   protected toggleBookMenu(event: Event, bookId: string): void {
     event.stopPropagation();
+    this.floatingUiTrigger = event.currentTarget as HTMLElement | null;
     this.activeBookMenuId.update((current) => (current === bookId ? null : bookId));
   }
 
@@ -494,6 +557,15 @@ export class ProfilePageComponent implements OnInit {
     }
 
     event.preventDefault();
+  }
+
+  protected moveBook(bookId: string, direction: 'up' | 'down'): void {
+    const books = this.profile()?.books ?? [];
+    const index = books.findIndex((book) => book.id === bookId);
+    const target = books[index + (direction === 'up' ? -1 : 1)];
+    if (index < 0 || !target || !this.canReorderBooks()) return;
+    this.draggedBookId.set(bookId);
+    this.onBookDrop(new DragEvent('drop'), target.id);
   }
 
   protected onBookDrop(event: DragEvent, targetBookId: string): void {
@@ -541,11 +613,16 @@ export class ProfilePageComponent implements OnInit {
 
   protected canReorderBooks(): boolean {
     return (
-      this.ownerMode() && this.activeShelf()?.kind === 'library' && this.selectedSort() === 'top'
+      this.ownerMode() &&
+      this.activeShelf()?.kind === 'library' &&
+      this.selectedSort() === 'top' &&
+      this.processingBookId() === null
     );
   }
 
   protected toggleBookVisibility(bookId: string, isPublic: boolean): void {
+    if (this.processingBookId() !== null) return;
+    this.errorMessage.set(null);
     this.processingBookId.set(bookId);
 
     this.bookApiService
@@ -658,6 +735,32 @@ export class ProfilePageComponent implements OnInit {
       });
   }
 
+  @HostListener('document:keydown.escape')
+  protected dismissFloatingUi(): void {
+    if (this.isCreateMenuOpen() || this.activeBookMenuId()) this.floatingUiTrigger?.focus();
+    this.closeAllFloatingUi();
+  }
+
+  @HostListener('document:click', ['$event'])
+  protected dismissBookMenu(event: MouseEvent): void {
+    if ((event.target as Element | null)?.closest('.book-menu')) return;
+    this.closeBookMenu();
+  }
+
+  protected loadMoreBooks(): void {
+    this.visibleBooksLimit.update((current) => current + INITIAL_BOOKS_BATCH);
+  }
+
+  protected clearFilters(): void {
+    this.bookSearch.set('');
+    this.selectedStatus.set('all');
+    this.resetVisibleBooks();
+  }
+
+  protected dismissError(): void {
+    this.errorMessage.set(null);
+  }
+
   protected logout(): void {
     this.authSessionStore.clear();
     this.uiPreferencesStore.clearProfileGradientSession();
@@ -707,12 +810,14 @@ export class ProfilePageComponent implements OnInit {
   private async loadListIfNeeded(listId: string): Promise<void> {
     const cachedList = this.listCache.get(listId);
     if (cachedList) {
+      this.isLoadingShelf.set(false);
       this.activeList.set(cachedList);
       return;
     }
 
+    this.activeList.set(null);
     this.isLoadingShelf.set(true);
-    this.recommendationListApiService
+    this.shelfRequest = this.recommendationListApiService
       .getList(listId)
       .pipe(
         finalize(() => this.isLoadingShelf.set(false)),
@@ -721,7 +826,9 @@ export class ProfilePageComponent implements OnInit {
       .subscribe({
         next: (recommendationList) => {
           this.listCache.set(listId, recommendationList);
-          this.activeList.set(recommendationList);
+          if (this.selectedShelfKey() === `list:${listId}`) {
+            this.activeList.set(recommendationList);
+          }
         },
         error: () => this.errorMessage.set('Не удалось загрузить выбранную подборку.'),
       });
@@ -734,10 +841,11 @@ export class ProfilePageComponent implements OnInit {
     }
 
     this.profileApiService
-      .getPublicProfile(nickname)
+      .getPublicProfile(nickname, this.isPreviewingAsGuest())
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (profile) => {
+          this.listCache.clear();
           this.profile.set(profile);
           this.uiPreferencesStore.syncProfileGradient(profile.user.nickname, profile.gradientStops);
           this.normalizeActiveShelfSelection();

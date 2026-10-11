@@ -1,59 +1,19 @@
-# Frontend
+# Frontend Polka
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.5.
-
-## Development server
-
-To start a local development server, run:
+Angular 21 / Taiga UI 4 / NgRx Signal Store. Зависимости управляются корневым npm workspace; устанавливайте их через `npm ci` в корне репозитория.
 
 ```bash
-ng serve
+npm run start:frontend
+npm run lint
+npm run format:check
+npm run test:frontend
+npm run build:frontend
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+Dev server проксирует `/api/**` на локальный backend, порт задаётся `BACKEND_PORT` (8080 по умолчанию). Например, `BACKEND_PORT=18081 npm run start:frontend -- --port 14201`.
 
-## Code scaffolding
+Unit runner — Jest. Browser/flow tests — Playwright: `npm run test:component` из корня. Для действующего runtime задайте `POLKA_REUSE_STACK=1`, `FRONTEND_PORT`, `BACKEND_PORT`.
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+Текстовые черновики привязаны к аккаунту. Приватные обложки загружаются через авторизованные HTTP-запросы, blob URLs освобождаются при смене книги/сессии. Состояния ошибок сохраняют уже загруженную страницу; переключение полки отменяет старый запрос. Typewriter ограничен по времени, корректно работает с Unicode и отключается при reduced motion.
 
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+Демо-контент, запуск всего стека и снимки интерфейса описаны в [корневом README](../README.md).

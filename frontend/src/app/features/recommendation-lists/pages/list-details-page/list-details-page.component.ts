@@ -1,3 +1,4 @@
+import { AuthenticatedCoverDirective } from '../../../../shared/directives/authenticated-cover.directive';
 import { DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
@@ -21,6 +22,7 @@ import { type RecommendationListDetails } from '../../../../shared/models/recomm
 @Component({
   selector: 'app-list-details-page',
   imports: [
+    AuthenticatedCoverDirective,
     DatePipe,
     RouterLink,
     TuiBadge,
@@ -54,6 +56,7 @@ export class ListDetailsPageComponent {
     const currentUser = this.authSessionStore.user();
 
     return Boolean(
+      this.authSessionStore.isAuthenticated() &&
       recommendationList &&
       (recommendationList.viewerCanEdit ||
         currentUser?.nickname === recommendationList.ownerNickname),
@@ -108,10 +111,15 @@ export class ListDetailsPageComponent {
       return;
     }
 
-    void clipboard.writeText(globalThis.location?.href ?? '').then(() => {
-      this.copied.set(true);
-      globalThis.setTimeout(() => this.copied.set(false), 1800);
-    });
+    void clipboard
+      .writeText(globalThis.location?.href ?? '')
+      .then(() => {
+        this.copied.set(true);
+        globalThis.setTimeout(() => this.copied.set(false), 1800);
+      })
+      .catch(() =>
+        this.errorMessage.set('Не удалось скопировать ссылку. Скопируйте адрес из браузера.'),
+      );
   }
 
   protected toggleVisibility(): void {

@@ -3,15 +3,18 @@
     <section class="state-card" tuiCardLarge tuiSurface>
       <p tuiChip>Загрузка</p>
       <h1 tuiHeader="h3">Получаем подборку {{ listId() }}</h1>
-      <p>Запрос уже ушёл в API.</p>
+      <p>Книги, собранные в одну историю.</p>
     </section>
-  } @else if (errorMessage()) {
+  } @else if (errorMessage() && !recommendationList()) {
     <section class="state-card" tuiCardLarge tuiSurface>
       <p tuiChip>Ошибка</p>
       <h1 tuiHeader="h3">{{ errorMessage() }}</h1>
       <a routerLink="/login" tuiButton>Ко входу</a>
     </section>
   } @else if (recommendationList(); as recommendationList) {
+    @if (errorMessage()) {
+      <p class="inline-error" role="alert">{{ errorMessage() }}</p>
+    }
     <section class="hero-card" tuiCardLarge tuiSurface>
       <p tuiChip>Список рекомендаций</p>
       <h1 tuiHeader="h2">{{ recommendationList.title }}</h1>
@@ -76,7 +79,12 @@
               >
                 <span class="book-rank">{{ index + 1 }}</span>
                 @if (book.coverUrl) {
-                  <img [src]="book.coverUrl" [alt]="'Обложка книги ' + book.title" />
+                  <img
+                    loading="lazy"
+                    decoding="async"
+                    [appCover]="book.coverUrl"
+                    [alt]="'Обложка книги ' + book.title"
+                  />
                 } @else {
                   <span class="book-initial">{{ book.title.slice(0, 1).toUpperCase() }}</span>
                 }
@@ -88,7 +96,7 @@
 
                 <div class="book-tags">
                   <span tuiBadge>{{ book.status }}</span>
-                  @if (book.rating) {
+                  @if (book.rating !== null) {
                     <span tuiBadge>★ {{ book.rating }}</span>
                   }
                   @if (canEdit()) {

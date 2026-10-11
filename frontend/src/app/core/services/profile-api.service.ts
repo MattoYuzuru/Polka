@@ -1,7 +1,8 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { type Observable } from 'rxjs';
 
+import { SKIP_AUTH_TOKEN } from '../interceptors/auth-token.interceptor';
 import { environment } from '../../../environments/environment';
 import {
   type EditableProfile,
@@ -13,9 +14,10 @@ import {
 export class ProfileApiService {
   private readonly http = inject(HttpClient);
 
-  getPublicProfile(nickname: string): Observable<PublicProfile> {
+  getPublicProfile(nickname: string, asGuest = false): Observable<PublicProfile> {
     return this.http.get<PublicProfile>(
       `${environment.apiBaseUrl}/profiles/${encodeURIComponent(nickname)}`,
+      { context: new HttpContext().set(SKIP_AUTH_TOKEN, asGuest) },
     );
   }
 

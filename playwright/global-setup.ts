@@ -6,7 +6,7 @@ async function waitForUrl(url: string): Promise<void> {
 
   while (Date.now() < timeoutAt) {
     try {
-      const response = await fetch(url);
+      const response = await fetch(url, { signal: AbortSignal.timeout(3_000) });
 
       if (response.ok) {
         return;
@@ -19,15 +19,37 @@ async function waitForUrl(url: string): Promise<void> {
   throw new Error(`Timeout while waiting for ${url}`);
 }
 
-export default async function globalSetup(): Promise<void> {
+export default async function globalSetup(): Promise<(() => void) | void> {
   const backendPort = process.env["BACKEND_PORT"] ?? "8080";
   const frontendPort = process.env["FRONTEND_PORT"] ?? "4200";
 
-  execFileSync("docker", ["compose", "up", "-d", "--build"], {
-    cwd: process.cwd(),
-    stdio: "inherit",
-  });
+  const reuseStack = process.env["POLKA_REUSE_STACK"] === "1";
+  const tearDown = () => {
+    execFileSync("docker", ["compose", "down"], {
+      cwd: process.cwd(),
+      stdio: "inherit",
+    });
+  };
 
-  await waitForUrl(`http://127.0.0.1:${backendPort}/api/v1/profiles/mattoy`);
-  await waitForUrl(`http://127.0.0.1:${frontendPort}/login`);
+  if (!reuseStack) {
+    execFileSync("docker", ["compose", "up", "-d", "--build"], {
+      cwd: process.cwd(),
+      stdio: "inherit",
+    });
+  }
+
+  try {
+    await waitForUrl(`http://127.0.0.1:${backendPort}/api/v1/health`);
+    await waitForUrl(`http://127.0.0.1:${frontendPort}/login`);
+  } catch (error) {
+    if (!reuseStack) {
+      tearDown();
+    }
+
+    throw error;
+  }
+
+  if (!reuseStack) {
+    return tearDown;
+  }
 }

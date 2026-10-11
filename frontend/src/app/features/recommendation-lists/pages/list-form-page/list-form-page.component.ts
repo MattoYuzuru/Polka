@@ -1,3 +1,4 @@
+import { AuthenticatedCoverDirective } from '../../../../shared/directives/authenticated-cover.directive';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -9,13 +10,14 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { debounceTime, distinctUntilChanged, finalize, map } from 'rxjs';
+import { distinctUntilChanged, finalize, map } from 'rxjs';
 import { TuiButton, TuiSurface } from '@taiga-ui/core';
 import { TuiBadge, TuiChip } from '@taiga-ui/kit';
 import { TuiCardLarge, TuiHeader } from '@taiga-ui/layout';
 
 import { ProfileApiService } from '../../../../core/services/profile-api.service';
 import { RecommendationListApiService } from '../../../../core/services/recommendation-list-api.service';
+import { readLocalValue, writeLocalValue } from '../../../../core/utils/local-storage';
 import { AuthSessionStore } from '../../../../core/stores/auth-session.store';
 import { UiPreferencesStore } from '../../../../core/stores/ui-preferences.store';
 import { type BookCard } from '../../../../shared/models/book.model';
@@ -29,6 +31,7 @@ const LIST_DRAFT_KEY = 'polka.lists.create-draft';
 @Component({
   selector: 'app-list-form-page',
   imports: [
+    AuthenticatedCoverDirective,
     ReactiveFormsModule,
     RouterLink,
     TuiBadge,
@@ -62,7 +65,9 @@ export class ListFormPageComponent {
   protected readonly isEditMode = signal(false);
   protected readonly currentListId = signal<string | null>(null);
   protected readonly books = signal<BookCard[]>([]);
-  protected readonly selectedCount = computed(() => this.listForm.controls.bookIds.value.length);
+  protected selectedCount(): number {
+    return this.listForm.controls.bookIds.value.length;
+  }
   protected readonly accentGradientCss = computed(() =>
     this.uiPreferencesStore.profileGradientCss(),
   );
@@ -110,6 +115,7 @@ export class ListFormPageComponent {
       ? selected.filter((value) => value !== bookId)
       : [...selected, bookId];
 
+    if (this.isSubmitting()) return;
     this.listForm.controls.bookIds.setValue(nextSelected);
     this.listForm.controls.bookIds.markAsDirty();
     this.listForm.controls.bookIds.updateValueAndValidity();
@@ -122,6 +128,7 @@ export class ListFormPageComponent {
   }
 
   protected submit(): void {
+    if (this.isSubmitting()) return;
     if (this.listForm.invalid) {
       this.listForm.markAllAsTouched();
 
@@ -148,7 +155,7 @@ export class ListFormPageComponent {
       .subscribe({
         next: (recommendationList) => {
           if (!this.isEditMode()) {
-            globalThis.localStorage?.removeItem(LIST_DRAFT_KEY);
+            writeLocalValue(this.draftKey(), null);
           }
 
           void this.router.navigateByUrl(`/lists/${recommendationList.id}`);
@@ -165,6 +172,10 @@ export class ListFormPageComponent {
   }
 
   protected saveDraftLocally(): void {
+    if (!writeLocalValue(this.draftKey(), JSON.stringify(this.listForm.getRawValue()))) {
+      this.draftMessage.set('Браузер не позволяет сохранить черновик. Оставьте вкладку открытой.');
+      return;
+    }
     this.draftMessage.set(
       `Черновик обновлён ${new Intl.DateTimeFormat('ru-RU', {
         dateStyle: 'medium',
@@ -182,7 +193,7 @@ export class ListFormPageComponent {
     });
 
     if (!this.isEditMode()) {
-      globalThis.localStorage?.removeItem(LIST_DRAFT_KEY);
+      writeLocalValue(this.draftKey(), null);
     }
 
     this.draftMessage.set('Черновик очищен.');
@@ -230,17 +241,35 @@ export class ListFormPageComponent {
       });
   }
 
+  private draftKey(): string {
+    return `${LIST_DRAFT_KEY}.${this.authSessionStore.user()?.id ?? 'anonymous'}`;
+  }
+
   private restoreDraftIfPresent(): void {
-    const savedDraft = globalThis.localStorage?.getItem(LIST_DRAFT_KEY);
+    const savedDraft = readLocalValue(this.draftKey());
 
     if (!savedDraft) {
       return;
     }
 
     try {
-      this.listForm.patchValue(JSON.parse(savedDraft) as Partial<RecommendationListFormValue>);
+      const parsed: unknown = JSON.parse(savedDraft);
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed))
+        throw new Error('Invalid draft');
+      const value = parsed as Record<string, unknown>;
+      this.listForm.patchValue(
+        {
+          title: typeof value['title'] === 'string' ? value['title'] : '',
+          description: typeof value['description'] === 'string' ? value['description'] : '',
+          isPublic: typeof value['isPublic'] === 'boolean' ? value['isPublic'] : true,
+          bookIds: Array.isArray(value['bookIds'])
+            ? value['bookIds'].filter((id): id is string => typeof id === 'string')
+            : [],
+        },
+        { emitEvent: false },
+      );
     } catch {
-      globalThis.localStorage?.removeItem(LIST_DRAFT_KEY);
+      writeLocalValue(this.draftKey(), null);
     }
   }
 
@@ -251,13 +280,11 @@ export class ListFormPageComponent {
 
     this.draftWatcherInitialized = true;
 
-    this.listForm.valueChanges
-      .pipe(debounceTime(150), takeUntilDestroyed(this.destroyRef))
-      .subscribe((value) => {
-        if (!this.isEditMode()) {
-          globalThis.localStorage?.setItem(LIST_DRAFT_KEY, JSON.stringify(value));
-        }
-      });
+    this.listForm.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((value) => {
+      if (!this.isEditMode()) {
+        writeLocalValue(this.draftKey(), JSON.stringify(value));
+      }
+    });
   }
 
   private loadListForEdit(listId: string): void {

@@ -166,7 +166,7 @@
                   "
                 >
                   @if (book.coverUrl) {
-                    <img [src]="book.coverUrl" [alt]="'Обложка книги ' + book.title" />
+                    <img [appCover]="book.coverUrl" [alt]="'Обложка книги ' + book.title" />
                   } @else {
                     <span>{{ book.title.slice(0, 1).toUpperCase() }}</span>
                   }

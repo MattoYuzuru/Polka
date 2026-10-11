@@ -25,7 +25,12 @@ function normalizeGradientStops(gradientStops: string[]): string[] {
 }
 
 function readGradientFromSession(): StoredGradientPayload {
-  const rawValue = globalThis.sessionStorage?.getItem(SESSION_GRADIENT_KEY);
+  let rawValue: string | null;
+  try {
+    rawValue = globalThis.sessionStorage?.getItem(SESSION_GRADIENT_KEY) ?? null;
+  } catch {
+    return { activeProfileKey: null, gradientsByKey: {} };
+  }
 
   if (!rawValue) {
     return {
@@ -65,7 +70,7 @@ function readGradientFromSession(): StoredGradientPayload {
       gradientsByKey,
     };
   } catch {
-    globalThis.sessionStorage?.removeItem(SESSION_GRADIENT_KEY);
+    clearGradientSession();
 
     return {
       activeProfileKey: null,
@@ -75,7 +80,19 @@ function readGradientFromSession(): StoredGradientPayload {
 }
 
 function writeGradientToSession(payload: StoredGradientPayload): void {
-  globalThis.sessionStorage?.setItem(SESSION_GRADIENT_KEY, JSON.stringify(payload));
+  try {
+    globalThis.sessionStorage?.setItem(SESSION_GRADIENT_KEY, JSON.stringify(payload));
+  } catch {
+    return;
+  }
+}
+
+function clearGradientSession(): void {
+  try {
+    globalThis.sessionStorage?.removeItem(SESSION_GRADIENT_KEY);
+  } catch {
+    return;
+  }
 }
 
 export const UiPreferencesStore = signalStore(
@@ -127,7 +144,7 @@ export const UiPreferencesStore = signalStore(
       });
     },
     clearProfileGradientSession(): void {
-      globalThis.sessionStorage?.removeItem(SESSION_GRADIENT_KEY);
+      clearGradientSession();
 
       patchState(store, {
         activeProfileKey: null,

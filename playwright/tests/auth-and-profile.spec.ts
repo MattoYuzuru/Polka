@@ -91,7 +91,7 @@ test("owner creates, edits and deletes a book with uploaded cover", async ({
     .filter({ has: page.getByRole("heading", { name: createdTitle }) });
   await expect(createdCard).toBeVisible();
   await expect(createdCard.locator("img")).toHaveCount(1);
-  await createdCard.getByRole("link", { name: "Мнение" }).click();
+  await createdCard.getByRole("link", { name: /^О книге/ }).click();
 
   await expect(page.getByRole("heading", { name: createdTitle })).toBeVisible();
   await expect(page.locator(".book-pane--meta .book-cover img")).toBeVisible();

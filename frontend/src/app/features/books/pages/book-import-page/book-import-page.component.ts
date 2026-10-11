@@ -112,10 +112,12 @@ export class BookImportPageComponent {
 
     this.errorMessage.set(null);
     this.successMessage.set(null);
-    this.importForm.controls.rawJson.setValue(await file.text());
-
-    if (input) {
-      input.value = '';
+    try {
+      this.importForm.controls.rawJson.setValue(await file.text());
+    } catch {
+      this.errorMessage.set('Не удалось прочитать файл. Попробуйте выбрать его ещё раз.');
+    } finally {
+      if (input) input.value = '';
     }
   }
 }
