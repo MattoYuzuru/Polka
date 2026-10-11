@@ -8,6 +8,7 @@ const root = fileURLToPath(new URL("../../", import.meta.url));
 const output = path.join(root, "docs/screenshots");
 await mkdir(output, { recursive: true });
 const base = new URL(process.env.POLKA_DEMO_URL ?? "http://127.0.0.1:14200");
+const profilePath = `/${encodeURIComponent(process.env.POLKA_DEMO_NICKNAME ?? "yuzuru")}`;
 if (!["localhost", "127.0.0.1", "[::1]"].includes(base.hostname))
   throw new Error("Capture is restricted to localhost.");
 const browser = await chromium.launch({
@@ -28,7 +29,17 @@ async function selectDemoShelf(page) {
 }
 async function primeCovers(page) {
   const more = page.getByRole("button", { name: "Показать ещё книги" });
-  if (await more.isVisible()) await more.click();
+  while (await more.isVisible()) {
+    const count = await page.locator(".book-card").count();
+    await page.evaluate(() =>
+      window.scrollTo(0, document.documentElement.scrollHeight),
+    );
+    await page.waitForFunction(
+      (previousCount) =>
+        document.querySelectorAll(".book-card").length > previousCount,
+      count,
+    );
+  }
   for (const image of await page.locator(".book-card img").all()) {
     await image.scrollIntoViewIfNeeded();
     await image.evaluate((element) => element.decode());
@@ -44,24 +55,31 @@ try {
   page.on("console", (message) => {
     if (message.type() === "error") errors.push(message.text());
   });
-  await page.goto(new URL("/mattoy", base).href);
+  await page.goto(new URL(profilePath, base).href);
   await page.getByTestId("profile-hero").waitFor();
-  await page.locator(".book-card img").first().waitFor();
+  await primeCovers(page);
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
   await page.screenshot({
     path: path.join(output, "profile-desktop.png"),
     fullPage: true,
+    animations: "disabled",
   });
   await selectDemoShelf(page);
   await primeCovers(page);
-  await page
-    .locator(".books-grid")
-    .screenshot({ path: path.join(output, "shelf-gallery.png") });
+  await page.locator(".books-grid").screenshot({
+    path: path.join(output, "shelf-gallery.png"),
+    animations: "disabled",
+    style: ".shelf-navigation, .skip-link { visibility: hidden !important; }",
+  });
   await page
     .getByRole("heading", { name: "Мир на четырёх языках", exact: true })
     .waitFor();
   await page.locator(".book-card").first().scrollIntoViewIfNeeded();
   await page.locator(".book-card img").first().waitFor();
-  await page.screenshot({ path: path.join(output, "shelf-desktop.png") });
+  await page.screenshot({
+    path: path.join(output, "shelf-desktop.png"),
+    animations: "disabled",
+  });
   const bookLink = page
     .getByRole("heading", { name: "こころ", exact: true })
     .getByRole("link");
@@ -70,23 +88,44 @@ try {
   await page.getByRole("button", { name: "Нажмите для погружения" }).click();
   await page.locator(".typewriter-cursor").waitFor({ state: "visible" });
   await page.locator(".typewriter-cursor").waitFor({ state: "hidden" });
-  await page.screenshot({ path: path.join(output, "book-desktop.png") });
+  await page.screenshot({
+    path: path.join(output, "book-desktop.png"),
+    animations: "disabled",
+  });
+  await page.getByRole("button", { name: "Мнения", exact: true }).click();
+  await page.getByRole("button", { name: "Нажмите для погружения" }).click();
+  await page.locator(".typewriter-cursor").waitFor({ state: "visible" });
+  await page.locator(".typewriter-cursor").waitFor({ state: "hidden" });
+  await page
+    .getByRole("button", { name: "Следующая запись", exact: true })
+    .click();
+  await page.locator(".typewriter-cursor").waitFor({ state: "visible" });
+  await page.locator(".typewriter-cursor").waitFor({ state: "hidden" });
+  await page.screenshot({
+    path: path.join(output, "book-opinions-desktop.png"),
+    animations: "disabled",
+  });
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto(new URL("/mattoy", base).href);
+  await page.goto(new URL(profilePath, base).href);
   await page.getByTestId("profile-hero").waitFor();
   await selectDemoShelf(page);
   await primeCovers(page);
-  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
   await page.locator(".book-card img").first().waitFor();
   await page.screenshot({
     path: path.join(output, "profile-mobile.png"),
     fullPage: true,
+    animations: "disabled",
   });
   await page.goto(new URL(bookPath, base).href);
   await page.getByRole("heading", { name: "こころ", exact: true }).waitFor();
+  await page
+    .locator(".book-pane--meta .book-cover img")
+    .evaluate((image) => image.decode());
   await page.screenshot({
     path: path.join(output, "book-mobile.png"),
     fullPage: true,
+    animations: "disabled",
   });
   await context.close();
 
@@ -99,7 +138,7 @@ try {
   demo.on("console", (message) => {
     if (message.type() === "error") errors.push(message.text());
   });
-  await demo.goto(new URL("/mattoy", base).href);
+  await demo.goto(new URL(profilePath, base).href);
   await demo.getByTestId("profile-hero").waitFor();
   await demo.waitForTimeout(600);
   await selectDemoShelf(demo);
@@ -115,6 +154,11 @@ try {
   await demo.locator(".typewriter-cursor").waitFor({ state: "hidden" });
   await demo.getByRole("button", { name: "Мнения", exact: true }).click();
   await demo.getByRole("button", { name: "Нажмите для погружения" }).click();
+  await demo.locator(".typewriter-cursor").waitFor({ state: "visible" });
+  await demo.locator(".typewriter-cursor").waitFor({ state: "hidden" });
+  await demo
+    .getByRole("button", { name: "Следующая запись", exact: true })
+    .click();
   await demo.locator(".typewriter-cursor").waitFor({ state: "visible" });
   await demo.locator(".typewriter-cursor").waitFor({ state: "hidden" });
   await demo.waitForTimeout(600);
@@ -151,6 +195,7 @@ try {
         }),
         capturedAt: new Date().toISOString(),
         url: base.href,
+        profile: profilePath,
         viewports: [
           [1440, 1000],
           [390, 844],

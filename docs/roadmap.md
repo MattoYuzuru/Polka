@@ -3,26 +3,26 @@
 ## Текущий статус
 
 - Ветка: `codex/audit-design-library`.
-- Фаза: завершён аудит, UI polish и многоязычная демонстрация; локальный full-stack работает в контейнерах.
+- Фаза: завершён аудит, UI polish и расширение многоязычной демонстрации; локальный full-stack работает в контейнерах.
 - Обновление: 2026-10-11.
 - Основной контекст: [аудит и ограничения](audit-2026-10-11.md), [демо-контент](demo-content.md), [UX](ux.md), [запуск](../README.md).
 
 ## Этапы
 
-| Этап                           | Статус    | Результат                                                                                                                   |
-| ------------------------------ | --------- | --------------------------------------------------------------------------------------------------------------------------- |
-| Discovery и bootstrap          | completed | Документы, Angular workspace, Go API, Compose                                                                               |
-| Auth и профиль                 | completed | JWT, owner/guest, редактирование профиля                                                                                    |
-| Книги и подборки               | completed | CRUD, обложки, заметки, импорт, экспорт и публичность                                                                       |
-| QA и delivery                  | completed | Jest, Playwright, GitHub Actions, GHCR, K8s                                                                                 |
-| Аудит и UI polish · 2026-10-11 | completed | Приватность cover, atomic import, production secret/seed, patched dependencies, формы/сессия/черновики, mobile/focus/motion |
-| Многоязычная демонстрация      | completed | Восемь книг, восемь локальных обложек, две подборки, desktop/mobile screenshots, GIF/WebM                                   |
+| Этап                           | Статус    | Результат                                                                                                                                                 |
+| ------------------------------ | --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Discovery и bootstrap          | completed | Документы, Angular workspace, Go API, Compose                                                                                                             |
+| Auth и профиль                 | completed | JWT, owner/guest, редактирование профиля                                                                                                                  |
+| Книги и подборки               | completed | CRUD, обложки, заметки, импорт, экспорт и публичность                                                                                                     |
+| QA и delivery                  | completed | Jest, Playwright, GitHub Actions, GHCR, K8s                                                                                                               |
+| Аудит и UI polish · 2026-10-11 | completed | Приватность cover, atomic import, production secret/seed, patched dependencies, формы/сессия/черновики, mobile/focus/motion                               |
+| Многоязычная демонстрация      | completed | Профиль yuzuru: 24 книги, 20 локальных обложек, 80 мнений у многоязычных книг, 12 дополнений к исходным, шесть публичных подборок, screenshots и GIF/WebM |
 
 ## Проверенная среда
 
 Текущая машина macOS/arm64, Node 22, Go 1.27, Docker/Colima. Локальный Compose project `polka` сохраняет `postgres-data` и `minio-data`. Другие проекты и их volumes не изменяются.
 
-Локальная полка — `http://127.0.0.1:14200/mattoy`, API — `http://127.0.0.1:18081/api/v1/health`, PostgreSQL — 55432, storage — 19000/19001. Порт 18080 занят другим проектом, поэтому используется 18081. Запуск повторяется командой из README.
+Локальная полка — `http://127.0.0.1:14200/yuzuru`, API — `http://127.0.0.1:18081/api/v1/health`, PostgreSQL — 55432, storage — 19000/19001. Порт 18080 занят другим проектом, поэтому используется 18081. Запуск повторяется командой из README.
 
 ## Проверки этой итерации
 

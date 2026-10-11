@@ -3,7 +3,7 @@ package database
 import "testing"
 
 func TestDemoMigrationsAreDevelopmentOnly(t *testing.T) {
-	for _, name := range []string{"002_seed_demo_data.sql", "005_seed_book_notes.sql", "007_seed_recommendation_list_books.sql"} {
+	for _, name := range []string{"002_seed_demo_data.sql", "005_seed_book_notes.sql", "007_seed_recommendation_list_books.sql", "010_seed_demo_profile.sql"} {
 		if shouldApplyMigration(name, false) {
 			t.Errorf("production must not apply %s", name)
 		}

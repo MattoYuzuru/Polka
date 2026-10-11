@@ -11,12 +11,12 @@ const api = "/api/v1";
 test("the keyboard skip link preserves the current route and focuses content", async ({
   page,
 }) => {
-  await page.goto("/mattoy");
+  await page.goto("/yuzuru");
   await page.getByTestId("profile-hero").waitFor();
   const skip = page.getByRole("link", { name: "К содержимому" });
   await skip.focus();
   await skip.press("Enter");
-  await expect(page).toHaveURL(/\/mattoy$/);
+  await expect(page).toHaveURL(/\/yuzuru$/);
   await expect(page.locator("#main-content")).toBeFocused();
 });
 const coverGif = Buffer.from(
@@ -264,7 +264,7 @@ for (const width of [360, 768, 1440]) {
     for (const path of [
       "/login",
       "/register",
-      "/mattoy",
+      "/yuzuru",
       "/books/f691ff32-c3f8-4b25-8965-4f45a1bff001",
     ]) {
       await page.goto(path);
@@ -341,7 +341,7 @@ test("a rejected import leaves the library unchanged", async ({ request }) => {
 
 test("reduced motion keeps the public profile still", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
-  await page.goto("/mattoy");
+  await page.goto("/yuzuru");
   await expect(page.getByTestId("profile-hero")).toBeVisible();
   const durations = await page
     .locator(".book-card")

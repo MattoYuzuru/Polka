@@ -15,7 +15,7 @@
 - Поиск, фильтры, сортировка, перестановка книг и тематические подборки.
 - JSON-импорт с атомарным сохранением и ZIP-экспорт полки с обложками.
 - Черновики текста отдельно для каждого аккаунта; keyboard/touch-навигация и reduced motion.
-- Демо на четырёх языках: японская и испанская классика, Flatland, SICP, Пушкин и Замятин. [Книги и источники](docs/demo-content.md).
+- Демо-профиль `yuzuru`: 24 книги, 20 оригинальных обложек, четыре мнения у каждой многоязычной книги и шесть публичных подборок. Классика, Борхес, Дадзай, SICP, Кнут и Стругацкие на четырёх языках. [Книги и источники](docs/demo-content.md).
 
 ## Стек
 
@@ -32,7 +32,7 @@ STORAGE_PORT=19000 STORAGE_CONSOLE_PORT=19001 docker compose up -d --build
 POLKA_DEMO_URL=http://127.0.0.1:14200 npm run demo:seed
 ```
 
-Откройте [локальную полку](http://127.0.0.1:14200/mattoy). Демо-вход: `reader@polka.local` / `Reader1234`. Известная учётка создаётся только при `APP_ENV=development`.
+Откройте [локальную полку](http://127.0.0.1:14200/yuzuru). Демо-вход: `reader@polka.local` / `Reader1234`. Известная учётка создаётся только при `APP_ENV=development`.
 
 Порты можно переопределять. Без переменных Compose использует frontend 4200, API 8080, PostgreSQL 5432, MinIO 9000/9001. Данные живут в именованных volumes и сохраняются при обычном перезапуске.
 
@@ -82,7 +82,7 @@ POLKA_REUSE_STACK=1 FRONTEND_PORT=14200 BACKEND_PORT=18081 npm run test:componen
 
 `npm run demo:covers` пересобирает локальные обложки. `npm run demo:capture` снимает десктоп, мобильную версию, WebM и GIF реального поведения; для записи нужен `npx playwright install ffmpeg`, для GIF — системный `ffmpeg`.
 
-[Десктопная страница книги](docs/screenshots/book-desktop.png) · [Мобильная полка](docs/screenshots/profile-mobile.png) · [Мобильная книга](docs/screenshots/book-mobile.png) · [Видео](docs/screenshots/polka-interactions.webm).
+[Десктопная страница книги](docs/screenshots/book-desktop.png) · [Мобильная полка](docs/screenshots/profile-mobile.png) · [Мнения внутри книги](docs/screenshots/book-opinions-desktop.png) · [Мобильная книга](docs/screenshots/book-mobile.png) · [Видео](docs/screenshots/polka-interactions.webm).
 
 ## Документация
 
