@@ -8,6 +8,17 @@ import { randomBytes } from "node:crypto";
 import { crc32, deflateSync } from "node:zlib";
 
 const api = "/api/v1";
+test("the keyboard skip link preserves the current route and focuses content", async ({
+  page,
+}) => {
+  await page.goto("/mattoy");
+  await page.getByTestId("profile-hero").waitFor();
+  const skip = page.getByRole("link", { name: "К содержимому" });
+  await skip.focus();
+  await skip.press("Enter");
+  await expect(page).toHaveURL(/\/mattoy$/);
+  await expect(page.locator("#main-content")).toBeFocused();
+});
 const coverGif = Buffer.from(
   "R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==",
   "base64",

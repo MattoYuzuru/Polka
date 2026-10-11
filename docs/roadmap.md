@@ -27,7 +27,7 @@
 ## Проверки этой итерации
 
 - 47 Jest tests / 8 suites.
-- 12 Playwright scenarios; responsive 360/768/1440px, owner/guest и cover privacy, CRUD, import, keyboard и reduced motion.
+- 13 Playwright scenarios; responsive 360/768/1440px, owner/guest и cover privacy, CRUD, import, keyboard и reduced motion.
 - Backend unit/HTTP/S3-fake/isolated PostgreSQL tests и race detector.
 - `go vet`, ESLint/Stylelint, format, production build, Compose model, actionlint и shellcheck.
 - `npm audit --omit=dev`: 0 vulnerabilities. Dev tooling residuals перечислены в аудите.

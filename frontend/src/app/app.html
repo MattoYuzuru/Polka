@@ -1,5 +1,10 @@
 <tui-root>
-  <a class="skip-link" href="#main-content">К содержимому</a>
+  <a
+    class="skip-link"
+    [href]="currentUrl().split('#')[0] + '#main-content'"
+    (click)="skipToContent($event)"
+    >К содержимому</a
+  >
   <div class="app-shell">
     <div class="app-shell__content" id="main-content" tabindex="-1">
       <router-outlet />
