@@ -30,6 +30,12 @@ func NewRouter(
 ) http.Handler {
 	router := chi.NewRouter()
 
+	router.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			r.Body = http.MaxBytesReader(w, r.Body, 10<<20)
+			next.ServeHTTP(w, r)
+		})
+	})
 	router.Use(middleware.RequestID)
 	router.Use(middleware.RealIP)
 	router.Use(middleware.Logger)
@@ -173,6 +179,11 @@ func NewRouter(
 				return
 			}
 
+			defer func() {
+				if r.MultipartForm != nil {
+					_ = r.MultipartForm.RemoveAll()
+				}
+			}()
 			if err := r.ParseMultipartForm(8 << 20); err != nil {
 				httputil.WriteError(w, http.StatusBadRequest, "Не удалось прочитать multipart payload.")
 
@@ -732,6 +743,8 @@ func NewRouter(
 			editableProfile, err := profileService.UpdateByUserID(r.Context(), claims.Subject, input)
 			if err != nil {
 				switch {
+				case errors.Is(err, profile.ErrInvalidInput):
+					httputil.WriteError(w, http.StatusBadRequest, "Укажите корректный никнейм и имя профиля.")
 				case errors.Is(err, profile.ErrNicknameAlreadyExists):
 					httputil.WriteError(w, http.StatusConflict, "Пользователь с таким никнеймом уже существует.")
 				case errors.Is(err, profile.ErrNotFound):
@@ -766,6 +779,7 @@ func NewRouter(
 			}
 
 			exportItems := make([]shelfArchiveBook, 0, len(profileView.Books))
+			exportSize := 0
 			for _, shelfBook := range profileView.Books {
 				bookDetails, err := booksService.FindByID(r.Context(), shelfBook.ID, viewerUserID)
 				if err != nil {
@@ -783,10 +797,10 @@ func NewRouter(
 				}
 
 				if strings.TrimSpace(bookDetails.CoverURL) != "" {
-					coverObject, coverErr := booksService.OpenCover(r.Context(), bookDetails.ID)
+					coverObject, coverErr := booksService.OpenCover(r.Context(), bookDetails.ID, viewerUserID)
 					switch {
 					case coverErr == nil:
-						coverBytes, readErr := io.ReadAll(coverObject.Body)
+						coverBytes, readErr := io.ReadAll(io.LimitReader(coverObject.Body, (8<<20)+1))
 						coverObject.Body.Close()
 						if readErr != nil {
 							httputil.WriteError(w, http.StatusInternalServerError, "Не удалось прочитать обложку для экспорта.")
@@ -794,6 +808,10 @@ func NewRouter(
 							return
 						}
 
+						if len(coverBytes) > 8<<20 {
+							httputil.WriteError(w, http.StatusRequestEntityTooLarge, "Обложка превышает допустимый размер экспорта.")
+							return
+						}
 						exportItem.CoverBytes = coverBytes
 						exportItem.CoverContentType = coverObject.ContentType
 					case errors.Is(coverErr, books.ErrNotFound),
@@ -806,11 +824,25 @@ func NewRouter(
 					}
 				}
 
+				itemSize, sizeErr := archiveBookSize(exportItem)
+				if sizeErr != nil {
+					httputil.WriteError(w, http.StatusInternalServerError, "Не удалось подготовить экспорт полки.")
+					return
+				}
+				exportSize += itemSize
+				if exportSize > maxShelfArchiveBytes {
+					httputil.WriteError(w, http.StatusRequestEntityTooLarge, "Экспорт полки превышает допустимые 32 МиБ.")
+					return
+				}
 				exportItems = append(exportItems, exportItem)
 			}
 
 			archiveBytes, err := buildShelfArchive(exportItems)
 			if err != nil {
+				if errors.Is(err, errShelfArchiveTooLarge) {
+					httputil.WriteError(w, http.StatusRequestEntityTooLarge, "Экспорт полки превышает допустимые 32 МиБ.")
+					return
+				}
 				httputil.WriteError(w, http.StatusInternalServerError, "Не удалось собрать zip-архив полки.")
 
 				return
@@ -874,7 +906,7 @@ func NewRouter(
 		})
 
 		router.Get("/books/{bookID}/cover", func(w http.ResponseWriter, r *http.Request) {
-			coverObject, err := booksService.OpenCover(r.Context(), chi.URLParam(r, "bookID"))
+			coverObject, err := booksService.OpenCover(r.Context(), chi.URLParam(r, "bookID"), extractViewerUserID(r, tokenManager))
 			if err != nil {
 				switch {
 				case errors.Is(err, books.ErrNotFound), errors.Is(err, media.ErrObjectNotFound):
@@ -895,7 +927,8 @@ func NewRouter(
 			}
 
 			w.Header().Set("Content-Type", contentType)
-			w.Header().Set("Cache-Control", "public, max-age=3600")
+			w.Header().Set("Cache-Control", "private, no-store")
+			w.Header().Set("X-Content-Type-Options", "nosniff")
 			w.WriteHeader(http.StatusOK)
 			_, _ = io.Copy(w, coverObject.Body)
 		})

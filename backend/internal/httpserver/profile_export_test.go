@@ -3,7 +3,9 @@ package httpserver
 import (
 	"archive/zip"
 	"bytes"
+	"errors"
 	"io"
+	"strings"
 	"testing"
 
 	"github.com/MattoYuzuru/Polka/backend/internal/books"
@@ -113,4 +115,25 @@ func mapsKeys(entries map[string]string) []string {
 	}
 
 	return keys
+}
+
+func TestArchiveFolderNamesAvoidSuffixAndCaseCollisions(t *testing.T) {
+	used := map[string]int{}
+	names := []string{"Book", "Book", "Book-2", "book", "book-2"}
+	seen := map[string]bool{}
+	for index, title := range names {
+		folder := uniqueArchiveFolderName(title, used, index+1)
+		key := strings.ToLower(folder)
+		if seen[key] {
+			t.Fatalf("archive overwrites folder %q", folder)
+		}
+		seen[key] = true
+	}
+}
+
+func TestBuildShelfArchiveRejectsOversizedSource(t *testing.T) {
+	_, err := buildShelfArchive([]shelfArchiveBook{{Details: books.BookDetails{Title: "Large book"}, CoverBytes: make([]byte, maxShelfArchiveBytes+1)}})
+	if !errors.Is(err, errShelfArchiveTooLarge) {
+		t.Fatalf("oversized archive accepted: %v", err)
+	}
 }

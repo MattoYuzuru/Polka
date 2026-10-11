@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"os"
 	"strings"
 )
@@ -74,4 +75,11 @@ func splitCSV(value string) []string {
 	}
 
 	return result
+}
+
+func (cfg Config) Validate() error {
+	if !strings.EqualFold(strings.TrimSpace(cfg.AppEnv), "development") && len(strings.TrimSpace(cfg.JWTSecret)) < 32 {
+		return errors.New("JWT_SECRET must contain at least 32 bytes outside development")
+	}
+	return nil
 }

@@ -12,6 +12,11 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+type bookQuerier interface {
+	Query(context.Context, string, ...any) (pgx.Rows, error)
+	QueryRow(context.Context, string, ...any) pgx.Row
+}
+
 type PostgresRepository struct {
 	pool *pgxpool.Pool
 }
@@ -30,6 +35,18 @@ func (repository *PostgresRepository) Create(
 		return BookDetails{}, fmt.Errorf("begin create book transaction: %w", err)
 	}
 	defer tx.Rollback(ctx)
+
+	bookID, err := createBookTx(ctx, tx, ownerUserID, input)
+	if err != nil {
+		return BookDetails{}, err
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return BookDetails{}, fmt.Errorf("commit create book transaction: %w", err)
+	}
+	return repository.FindByID(ctx, bookID, ownerUserID)
+}
+
+func createBookTx(ctx context.Context, tx pgx.Tx, ownerUserID string, input CreateBookInput) (string, error) {
 
 	const createBookQuery = `
 		INSERT INTO books (
@@ -93,7 +110,7 @@ func (repository *PostgresRepository) Create(
 		strings.TrimSpace(input.CoverObjectKey),
 		input.CoverPalette,
 	).Scan(&bookID); err != nil {
-		return BookDetails{}, fmt.Errorf("insert book: %w", err)
+		return "", fmt.Errorf("insert book: %w", err)
 	}
 
 	if quote := strings.TrimSpace(input.Quote); quote != "" {
@@ -103,7 +120,7 @@ func (repository *PostgresRepository) Create(
 			bookID,
 			quote,
 		); err != nil {
-			return BookDetails{}, fmt.Errorf("insert quote: %w", err)
+			return "", fmt.Errorf("insert quote: %w", err)
 		}
 	}
 
@@ -114,15 +131,39 @@ func (repository *PostgresRepository) Create(
 			bookID,
 			opinion,
 		); err != nil {
-			return BookDetails{}, fmt.Errorf("insert opinion: %w", err)
+			return "", fmt.Errorf("insert opinion: %w", err)
 		}
 	}
 
-	if err := tx.Commit(ctx); err != nil {
-		return BookDetails{}, fmt.Errorf("commit create book transaction: %w", err)
-	}
+	return bookID, nil
+}
 
-	return repository.FindByID(ctx, bookID, ownerUserID)
+func (repository *PostgresRepository) Import(ctx context.Context, ownerUserID string, items []CreateBookInput) ([]BookDetails, error) {
+	tx, err := repository.pool.Begin(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("begin import books transaction: %w", err)
+	}
+	defer tx.Rollback(ctx)
+	ids := make([]string, 0, len(items))
+	for _, item := range items {
+		id, err := createBookTx(ctx, tx, ownerUserID, item)
+		if err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	result := make([]BookDetails, 0, len(ids))
+	for _, id := range ids {
+		book, err := findBookByID(ctx, tx, id, ownerUserID)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, book)
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return nil, fmt.Errorf("commit import books transaction: %w", err)
+	}
+	return result, nil
 }
 
 func (repository *PostgresRepository) FindByID(
@@ -130,6 +171,10 @@ func (repository *PostgresRepository) FindByID(
 	bookID string,
 	viewerUserID string,
 ) (BookDetails, error) {
+	return findBookByID(ctx, repository.pool, bookID, viewerUserID)
+}
+
+func findBookByID(ctx context.Context, querier bookQuerier, bookID string, viewerUserID string) (BookDetails, error) {
 	const query = `
 		SELECT
 			b.id::text,
@@ -163,7 +208,7 @@ func (repository *PostgresRepository) FindByID(
 		colorStops     []string
 	)
 
-	err := repository.pool.QueryRow(ctx, query, bookID, viewerUserID).Scan(
+	err := querier.QueryRow(ctx, query, bookID, viewerUserID).Scan(
 		&book.ID,
 		&book.OwnerID,
 		&book.OwnerNickname,
@@ -199,15 +244,16 @@ func (repository *PostgresRepository) FindByID(
 	book.CoverPalette = colorStops
 	if coverObjectKey.Valid && strings.TrimSpace(coverObjectKey.String) != "" {
 		book.CoverObjectKey = coverObjectKey.String
+		book.CoverURL = "/api/v1/books/" + book.ID + "/cover"
 	}
 	book.CreatedAt = createdAt.Format(time.RFC3339)
 
-	quotes, err := repository.loadQuotes(ctx, book.ID)
+	quotes, err := loadQuotes(ctx, querier, book.ID)
 	if err != nil {
 		return BookDetails{}, err
 	}
 
-	opinions, err := repository.loadOpinions(ctx, book.ID)
+	opinions, err := loadOpinions(ctx, querier, book.ID)
 	if err != nil {
 		return BookDetails{}, err
 	}
@@ -592,13 +638,15 @@ func (repository *PostgresRepository) DeleteOpinion(
 func (repository *PostgresRepository) FindCoverObjectKey(
 	ctx context.Context,
 	bookID string,
+	viewerUserID string,
 ) (string, error) {
 	var objectKey sql.NullString
 
 	err := repository.pool.QueryRow(
 		ctx,
-		`SELECT cover_object_key FROM books WHERE id::text = $1 LIMIT 1`,
+		`SELECT cover_object_key FROM books WHERE id::text = $1 AND (is_public OR user_id::text = $2) LIMIT 1`,
 		bookID,
+		viewerUserID,
 	).Scan(&objectKey)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -771,8 +819,8 @@ func (repository *PostgresRepository) Reorder(
 	return nil
 }
 
-func (repository *PostgresRepository) loadQuotes(ctx context.Context, bookID string) ([]Quote, error) {
-	rows, err := repository.pool.Query(
+func loadQuotes(ctx context.Context, querier bookQuerier, bookID string) ([]Quote, error) {
+	rows, err := querier.Query(
 		ctx,
 		`SELECT id::text, content, created_at FROM quotes WHERE book_id::text = $1 ORDER BY created_at DESC`,
 		bookID,
@@ -805,8 +853,8 @@ func (repository *PostgresRepository) loadQuotes(ctx context.Context, bookID str
 	return quotes, nil
 }
 
-func (repository *PostgresRepository) loadOpinions(ctx context.Context, bookID string) ([]Opinion, error) {
-	rows, err := repository.pool.Query(
+func loadOpinions(ctx context.Context, querier bookQuerier, bookID string) ([]Opinion, error) {
+	rows, err := querier.Query(
 		ctx,
 		`SELECT id::text, content, created_at FROM opinions WHERE book_id::text = $1 ORDER BY created_at DESC`,
 		bookID,
@@ -882,4 +930,10 @@ func buildOpinionPreview(opinion string) string {
 	}
 
 	return strings.TrimSpace(string(runes[:117])) + "..."
+}
+
+func (repository *PostgresRepository) IsCoverInUse(ctx context.Context, objectKey string) (bool, error) {
+	var inUse bool
+	err := repository.pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM books WHERE cover_object_key = $1)`, objectKey).Scan(&inUse)
+	return inUse, err
 }

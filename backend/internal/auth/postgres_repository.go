@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -131,10 +132,28 @@ func (repository *PostgresRepository) CreateUser(
 		params.PasswordHash,
 		strings.TrimSpace(params.DisplayName),
 	).Scan(&user.ID, &user.Nickname, &user.Email, &createdAt); err != nil {
+		if conflict := userConflict(err); conflict != nil {
+			return User{}, conflict
+		}
 		return User{}, fmt.Errorf("create user: %w", err)
 	}
 
 	user.CreatedAt = createdAt.Format(time.RFC3339)
 
 	return user, nil
+}
+
+func userConflict(err error) error {
+	var pgError *pgconn.PgError
+	if !errors.As(err, &pgError) || pgError.Code != "23505" {
+		return nil
+	}
+	switch pgError.ConstraintName {
+	case "users_nickname_key", "idx_users_lower_nickname":
+		return ErrNicknameAlreadyExists
+	case "users_email_key", "idx_users_lower_email":
+		return ErrEmailAlreadyExists
+	default:
+		return nil
+	}
 }

@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"mime"
 	"path/filepath"
@@ -12,6 +13,10 @@ import (
 
 	"github.com/MattoYuzuru/Polka/backend/internal/books"
 )
+
+const maxShelfArchiveBytes = 32 << 20
+
+var errShelfArchiveTooLarge = errors.New("shelf archive exceeds size limit")
 
 type shelfArchiveBook struct {
 	Details          books.BookDetails
@@ -41,6 +46,17 @@ type shelfArchiveMetadata struct {
 }
 
 func buildShelfArchive(items []shelfArchiveBook) ([]byte, error) {
+	var sourceSize int
+	for _, item := range items {
+		size, err := archiveBookSize(item)
+		if err != nil {
+			return nil, err
+		}
+		sourceSize += size
+		if sourceSize > maxShelfArchiveBytes {
+			return nil, errShelfArchiveTooLarge
+		}
+	}
 	buffer := bytes.NewBuffer(nil)
 	writer := zip.NewWriter(buffer)
 	usedFolders := make(map[string]int, len(items))
@@ -131,12 +147,16 @@ func uniqueArchiveFolderName(title string, used map[string]int, index int) strin
 		base = fmt.Sprintf("book-%d", index)
 	}
 
-	used[base]++
-	if used[base] == 1 {
-		return base
+	candidate := base
+	for suffix := 2; ; suffix++ {
+		key := strings.ToLower(candidate)
+		if _, exists := used[key]; !exists {
+			used[key] = 1
+			return candidate
+		}
+		candidate = fmt.Sprintf("%s-%d", base, suffix)
 	}
 
-	return fmt.Sprintf("%s-%d", base, used[base])
 }
 
 func sanitizeArchiveName(value string) string {
@@ -182,4 +202,12 @@ func archiveExtension(contentType string) string {
 	default:
 		return ".bin"
 	}
+}
+
+func archiveBookSize(item shelfArchiveBook) (int, error) {
+	metadata, err := json.Marshal(item.Details)
+	if err != nil {
+		return 0, fmt.Errorf("marshal archive book size: %w", err)
+	}
+	return len(metadata) + len(item.CoverBytes), nil
 }

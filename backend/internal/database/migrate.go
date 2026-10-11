@@ -14,7 +14,7 @@ import (
 //go:embed migrations/*.sql
 var migrationFiles embed.FS
 
-func Migrate(ctx context.Context, pool *pgxpool.Pool) error {
+func Migrate(ctx context.Context, pool *pgxpool.Pool, seedDemoData bool) error {
 	if _, err := pool.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS schema_migrations (
 			filename TEXT PRIMARY KEY,
@@ -40,6 +40,10 @@ func Migrate(ctx context.Context, pool *pgxpool.Pool) error {
 	sort.Strings(fileNames)
 
 	for _, fileName := range fileNames {
+		if !shouldApplyMigration(fileName, seedDemoData) {
+			continue
+		}
+
 		var alreadyApplied bool
 
 		if err := pool.QueryRow(
@@ -86,4 +90,8 @@ func Migrate(ctx context.Context, pool *pgxpool.Pool) error {
 	}
 
 	return nil
+}
+
+func shouldApplyMigration(fileName string, seedDemoData bool) bool {
+	return seedDemoData || !strings.Contains(fileName, "_seed_")
 }

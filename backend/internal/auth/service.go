@@ -4,9 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/mail"
 	"strings"
+	"unicode/utf8"
 
 	"golang.org/x/crypto/bcrypt"
+
+	"github.com/MattoYuzuru/Polka/backend/internal/shared/identity"
 )
 
 var ErrInvalidCredentials = errors.New("invalid credentials")
@@ -93,9 +97,14 @@ func (service *Service) Login(ctx context.Context, input LoginInput) (Session, e
 func (service *Service) Register(ctx context.Context, input RegisterInput) (Session, error) {
 	nickname := strings.TrimSpace(input.Nickname)
 	email := strings.TrimSpace(strings.ToLower(input.Email))
-	password := strings.TrimSpace(input.Password)
+	password := input.Password
 
-	if nickname == "" || email == "" || password == "" {
+	if !identity.ValidNickname(nickname) || email == "" || utf8.RuneCountInString(password) < 8 || strings.TrimSpace(password) == "" || len(password) > 72 {
+		return Session{}, ErrInvalidCredentials
+	}
+
+	address, err := mail.ParseAddress(email)
+	if err != nil || address.Address != email {
 		return Session{}, ErrInvalidCredentials
 	}
 

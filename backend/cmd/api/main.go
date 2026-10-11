@@ -23,6 +23,9 @@ import (
 
 func main() {
 	cfg := config.Load()
+	if err := cfg.Validate(); err != nil {
+		log.Fatalf("invalid config: %v", err)
+	}
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
@@ -33,7 +36,7 @@ func main() {
 	defer pool.Close()
 
 	if cfg.AutoMigrate {
-		if err := database.Migrate(ctx, pool); err != nil {
+		if err := database.Migrate(ctx, pool, cfg.AppEnv == "development"); err != nil {
 			log.Fatalf("migrate database: %v", err)
 		}
 	}

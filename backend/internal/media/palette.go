@@ -23,6 +23,10 @@ type colorBucket struct {
 }
 
 func ExtractPalette(content []byte) ([]string, error) {
+	config, _, err := image.DecodeConfig(bytes.NewReader(content))
+	if err != nil || config.Width <= 0 || config.Height <= 0 || config.Width > 8192 || config.Height > 8192 || int64(config.Width)*int64(config.Height) > 20_000_000 {
+		return nil, ErrUnsupportedImage
+	}
 	imageValue, _, err := image.Decode(bytes.NewReader(content))
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", ErrUnsupportedImage, err)
@@ -109,7 +113,11 @@ func quantizedHex(red uint32, green uint32, blue uint32) string {
 }
 
 func quantizeChannel(value uint8) uint8 {
-	return uint8(math.Round(float64(value)/32.0) * 32.0)
+	quantized := math.Round(float64(value)/32.0) * 32.0
+	if quantized > 255 {
+		return 255
+	}
+	return uint8(quantized)
 }
 
 func relativeLuminance(hex string) float64 {
