@@ -19,6 +19,14 @@ export class App {
   private readonly authSessionStore = inject(AuthSessionStore);
   private readonly uiPreferencesStore = inject(UiPreferencesStore);
   protected readonly currentUrl = signal(this.router.url);
+  protected skipToContent(event: Event): void {
+    const content = globalThis.document.getElementById('main-content');
+    if (content) {
+      event.preventDefault();
+      content.focus();
+      content.scrollIntoView({ block: 'start' });
+    }
+  }
   protected readonly showFooter = computed(
     () => !/^\/books\/(?!new$)(?!import$)[^/]+$/.test(this.currentUrl()),
   );

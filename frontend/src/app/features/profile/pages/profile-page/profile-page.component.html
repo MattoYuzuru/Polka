@@ -1,4 +1,4 @@
-<main class="profile-page">
+<main class="profile-page" [style.--accent-gradient]="profileGradientCss()">
   @if (isCreateMenuOpen()) {
     <button
       class="page-backdrop"
@@ -8,8 +8,9 @@
     ></button>
 
     <div
+      id="create-menu"
       class="floating-menu create-menu"
-      [style.--accent-gradient]="uiPreferencesStore.profileGradientCss()"
+      [style.--accent-gradient]="profileGradientCss()"
     >
       <a routerLink="/books/new" class="floating-menu__action" (click)="closeCreateMenu()">
         <span class="floating-menu__text" data-gradient-text="Добавить книгу">
@@ -28,27 +29,32 @@
     <section class="state-card" tuiCardLarge tuiSurface>
       <p tuiChip>Загрузка</p>
       <h1 tuiHeader="h3">Собираем библиотеку и метаданные профиля.</h1>
-      <p>Запрос уже ушёл в backend API.</p>
+      <p>Книги, которые остаются с вами.</p>
     </section>
-  } @else if (errorMessage()) {
+  } @else if (errorMessage() && !profile()) {
     <section class="state-card" tuiCardLarge tuiSurface>
       <p tuiChip>Ошибка</p>
       <h1 tuiHeader="h3">{{ errorMessage() }}</h1>
       <a routerLink="/login" tuiButton>Вернуться ко входу</a>
     </section>
   } @else if (profile(); as profile) {
+    @if (errorMessage()) {
+      <div class="inline-error" role="alert">
+        <p>{{ errorMessage() }}</p>
+        <button type="button" (click)="dismissError()" aria-label="Закрыть сообщение">×</button>
+      </div>
+    }
     <section class="profile-hero" tuiCardLarge tuiSurface data-testid="profile-hero">
       <div class="profile-hero__panel">
-        <div
-          class="profile-hero__actions"
-          [style.--accent-gradient]="uiPreferencesStore.profileGradientCss()"
-        >
-          @if (ownerMode()) {
+        <div class="profile-hero__actions" [style.--accent-gradient]="profileGradientCss()">
+          @if (isOwner()) {
             <div class="owner-actions">
               <button
                 class="orb-button orb-button--accent"
                 type="button"
                 aria-label="Добавить контент"
+                [attr.aria-expanded]="isCreateMenuOpen()"
+                aria-controls="create-menu"
                 (click)="toggleCreateMenu($event)"
               >
                 <span>+</span>
@@ -58,6 +64,11 @@
                 class="orb-button orb-button--accent orb-button--guest"
                 type="button"
                 [attr.aria-pressed]="isPreviewingAsGuest()"
+                [attr.aria-label]="
+                  isPreviewingAsGuest()
+                    ? 'Вернуться к режиму владельца'
+                    : 'Посмотреть как посетитель'
+                "
                 [title]="
                   isPreviewingAsGuest()
                     ? 'Вернуться к режиму владельца'
@@ -85,7 +96,7 @@
         <div class="profile-hero__content">
           <p class="profile-kicker">Личная полка</p>
           <h1 class="profile-title" data-testid="profile-nickname">
-            <span [style.background-image]="uiPreferencesStore.profileGradientCss()">
+            <span [style.background-image]="profileGradientCss()">
               {{ profile.user.nickname }}
             </span>
           </h1>
@@ -129,15 +140,16 @@
     </section>
 
     <section class="shelf-navigation" tuiCardLarge tuiSurface>
-      <div class="shelf-navigation__rail">
+      <div class="shelf-navigation__rail" role="group" aria-label="Библиотека и подборки">
         @for (tab of shelfTabs(); track tab.key) {
           <button
             class="shelf-tab"
             type="button"
+            [attr.aria-pressed]="activeShelf().key === tab.key"
             [class.shelf-tab--active]="activeShelf().key === tab.key"
             [class.shelf-tab--accent]="activeShelf().key === tab.key"
-            [style.--accent-gradient]="uiPreferencesStore.profileGradientCss()"
-            (click)="selectShelf(tab.key)"
+            [style.--accent-gradient]="profileGradientCss()"
+            (click)="selectShelf(tab.key, $event)"
           >
             <span class="shelf-tab__title">{{ tab.title }}</span>
             <span class="shelf-tab__meta">{{ tab.booksCount }}</span>
@@ -245,6 +257,7 @@
       </label>
     </section>
 
+    <p class="books-result" aria-live="polite">{{ filteredBooks().length }} книг на этой полке</p>
     @if (isLoadingShelf()) {
       <section class="state-card" tuiCardLarge tuiSurface>
         <p tuiChip>Подборка</p>
@@ -262,13 +275,14 @@
             (drop)="onBookDrop($event, book.id)"
           >
             <div class="book-card__frame">
-              <span class="book-rank">{{ book.displayRankPosition }}</span>
+              <span class="book-rank" aria-hidden="true">{{ book.displayRankPosition }}</span>
 
               @if (ownerMode()) {
                 <button
                   class="book-handle"
                   type="button"
-                  draggable="true"
+                  [draggable]="canReorderBooks()"
+                  [attr.aria-expanded]="activeBookMenuId() === book.id"
                   [attr.aria-label]="
                     canReorderBooks()
                       ? 'Двигать книгу или открыть меню действий'
@@ -287,7 +301,7 @@
               @if (ownerMode() && activeBookMenuId() === book.id) {
                 <div
                   class="floating-menu book-menu"
-                  [style.--accent-gradient]="uiPreferencesStore.profileGradientCss()"
+                  [style.--accent-gradient]="profileGradientCss()"
                 >
                   <a [routerLink]="['/books', book.id, 'edit']" class="floating-menu__action">
                     <span class="floating-menu__text" data-gradient-text="Изменить">
@@ -310,6 +324,24 @@
                     </span>
                   </button>
 
+                  @if (book.source === 'library' && canReorderBooks()) {
+                    <button
+                      class="floating-menu__action"
+                      type="button"
+                      [disabled]="book.rankPosition === 1"
+                      (click)="moveBook(book.id, 'up')"
+                    >
+                      Поднять выше
+                    </button>
+                    <button
+                      class="floating-menu__action"
+                      type="button"
+                      [disabled]="book.rankPosition === profile.books.length"
+                      (click)="moveBook(book.id, 'down')"
+                    >
+                      Опустить ниже
+                    </button>
+                  }
                   @if (book.source === 'library') {
                     <button
                       class="floating-menu__action"
@@ -342,7 +374,14 @@
                 [routerLink]="['/books', book.id]"
               >
                 @if (book.coverUrl) {
-                  <img [src]="book.coverUrl" [alt]="'Обложка книги ' + book.title" />
+                  <img
+                    loading="lazy"
+                    decoding="async"
+                    width="360"
+                    height="520"
+                    [appCover]="book.coverUrl"
+                    [alt]="'Обложка книги ' + book.title"
+                  />
                 } @else {
                   <div
                     class="book-cover__placeholder"
@@ -361,7 +400,9 @@
             </div>
 
             <div class="book-card__body">
-              <h3 tuiHeader="h5">{{ book.title }}</h3>
+              <h3 tuiHeader="h5">
+                <a [routerLink]="['/books', book.id]">{{ book.title }}</a>
+              </h3>
               <p class="book-card__line">{{ book.author }}</p>
               <p class="book-card__line">
                 {{ book.genre }}
@@ -369,18 +410,24 @@
                   · {{ book.year }}
                 }
               </p>
-              <p class="book-card__line">
+              <p class="book-card__line book-card__status">
                 {{ book.status }}
-                @if (book.rating) {
+                @if (book.rating !== null) {
                   · ★ {{ book.rating }}
                 }
               </p>
+
+              @if (ownerMode() && !book.isPublic) {
+                <span class="book-private">Приватная книга</span>
+              }
 
               @if (book.opinionPreview) {
                 <p class="book-card__opinion">{{ book.opinionPreview }}</p>
               }
 
-              <a class="book-card__link" [routerLink]="['/books', book.id]">Мнение</a>
+              <a class="book-card__link" [routerLink]="['/books', book.id]"
+                >О книге <span aria-hidden="true">↗</span></a
+              >
             </div>
           </article>
         }
@@ -389,10 +436,23 @@
       @if (!visibleBooks().length) {
         <section class="state-card" tuiCardLarge tuiSurface>
           <p tuiChip>Пусто</p>
-          <h2 tuiHeader="h4">По текущим параметрам книги не найдены.</h2>
+          <h2 tuiHeader="h4">
+            {{
+              bookSearch() || selectedStatus() !== 'all'
+                ? 'Таких книг пока нет.'
+                : 'Здесь начнётся ваша история чтения.'
+            }}
+          </h2>
+          @if (bookSearch() || selectedStatus() !== 'all') {
+            <button tuiButton type="button" (click)="clearFilters()">Сбросить фильтры</button>
+          } @else if (ownerMode()) {
+            <a tuiButton routerLink="/books/new">Добавить первую книгу</a>
+          }
         </section>
       } @else if (hasMoreBooks()) {
-        <p class="books-lazy-note">Прокрутите ниже, чтобы догрузить следующие книги.</p>
+        <button tuiButton class="books-load-more" type="button" (click)="loadMoreBooks()">
+          Показать ещё книги
+        </button>
       }
     }
   }

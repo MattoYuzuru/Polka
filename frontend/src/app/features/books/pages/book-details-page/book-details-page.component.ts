@@ -1,7 +1,9 @@
+import { AuthenticatedCoverDirective } from '../../../../shared/directives/authenticated-cover.directive';
 import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  HostListener,
   computed,
   inject,
   signal,
@@ -34,7 +36,7 @@ const TYPEWRITER_INTERVAL_MS = 14;
 
 @Component({
   selector: 'app-book-details-page',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [AuthenticatedCoverDirective, ReactiveFormsModule, RouterLink],
   templateUrl: './book-details-page.component.html',
   styleUrl: './book-details-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -64,6 +66,11 @@ export class BookDetailsPageComponent {
   protected readonly isImmersed = signal(false);
   protected readonly navigationProgress = signal(0);
   protected readonly renderedEntryText = signal('');
+  protected readonly fullEntryText = computed(() => {
+    const entry = this.currentEntry();
+    return entry ? formatEntryContent(entry.content, this.activeTab()) : '';
+  });
+  protected readonly isTyping = computed(() => this.renderedEntryText() !== this.fullEntryText());
   protected readonly coverPreviewUrl = signal<string | null>(null);
   protected readonly coverPreviewPalette = signal<string[]>([]);
   protected readonly hasCover = signal(false);
@@ -86,7 +93,7 @@ export class BookDetailsPageComponent {
     year: [new Date().getFullYear(), [Validators.required, Validators.min(0)]],
     status: [BOOK_STATUS_OPTIONS[6], [Validators.required]],
     isPublic: [true],
-    rating: [null as number | null],
+    rating: [null as number | null, [Validators.min(0), Validators.max(10)]],
     description: [''],
     opinion: [''],
     quote: [''],
@@ -97,7 +104,11 @@ export class BookDetailsPageComponent {
     const book = this.book();
     const currentUser = this.authSessionStore.user();
 
-    return Boolean(book && (book.viewerCanEdit || currentUser?.nickname === book.ownerNickname));
+    return Boolean(
+      this.authSessionStore.isAuthenticated() &&
+      book &&
+      (book.viewerCanEdit || currentUser?.nickname === book.ownerNickname),
+    );
   });
   protected readonly accentGradientCss = computed(() =>
     buildAccentGradient(this.coverPreviewPalette().length ? this.coverPreviewPalette() : null),
@@ -243,10 +254,14 @@ export class BookDetailsPageComponent {
     }
 
     this.isCoverModalOpen.set(true);
+    globalThis.setTimeout(() => document.querySelector<HTMLButtonElement>('.cover-modal')?.focus());
   }
 
+  @HostListener('document:keydown.escape')
   protected closeCoverModal(): void {
+    if (!this.isCoverModalOpen()) return;
     this.isCoverModalOpen.set(false);
+    document.querySelector<HTMLButtonElement>('.book-cover')?.focus();
   }
 
   protected selectTab(tab: BookContentTab): void {
@@ -254,6 +269,8 @@ export class BookDetailsPageComponent {
       return;
     }
 
+    if (this.activeEntryMutationKey()) return;
+    this.clearTimers();
     this.activeTab.set(tab);
     this.activeEntryIndex.set(0);
     this.isImmersed.set(false);
@@ -276,7 +293,7 @@ export class BookDetailsPageComponent {
       return;
     }
 
-    if (event.deltaY === 0) {
+    if (event.ctrlKey || Math.abs(event.deltaX) > Math.abs(event.deltaY) || event.deltaY === 0) {
       return;
     }
 
@@ -301,7 +318,10 @@ export class BookDetailsPageComponent {
     const currentDirection = Math.sign(currentProgress);
     const directionChanged = currentDirection !== 0 && currentDirection !== direction;
     const startingProgress = directionChanged ? 0 : currentProgress;
-    const weightedDelta = Math.max(Math.abs(event.deltaY) - 4, 0) * direction;
+    const deltaPixels =
+      event.deltaY *
+      (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? viewport.clientHeight : 1);
+    const weightedDelta = Math.max(Math.abs(deltaPixels) - 4, 0) * direction;
     const nextProgress = clamp(
       startingProgress + weightedDelta * NAVIGATION_PROGRESS_MULTIPLIER,
       -NAVIGATION_THRESHOLD,
@@ -321,7 +341,21 @@ export class BookDetailsPageComponent {
     }
   }
 
+  protected navigateEntry(direction: 1 | -1, viewport: HTMLElement): void {
+    if (!this.isImmersed()) {
+      this.unlockEntry(viewport);
+      return;
+    }
+    this.changeEntry(direction, viewport);
+  }
+
+  protected revealEntry(): void {
+    this.clearTypewriterTimer();
+    this.renderedEntryText.set(this.fullEntryText());
+  }
+
   protected enterEditMode(): void {
+    this.clearTimers();
     const book = this.book();
     if (!book) {
       return;
@@ -351,6 +385,7 @@ export class BookDetailsPageComponent {
 
   protected submitEdit(): void {
     const book = this.book();
+    if (this.isProcessing() || this.isUploadingCover() || this.activeEntryMutationKey()) return;
     if (!book || this.bookForm.invalid) {
       this.bookForm.markAllAsTouched();
 
@@ -413,6 +448,7 @@ export class BookDetailsPageComponent {
   }
 
   protected saveEntry(entryId: string): void {
+    if (this.activeEntryMutationKey()) return;
     const book = this.book();
     const entry = this.currentEntries().find((item) => item.id === entryId);
     const content = this.entryDraft(entryId).trim();
@@ -459,6 +495,7 @@ export class BookDetailsPageComponent {
   }
 
   protected createEntry(): void {
+    if (this.activeEntryMutationKey()) return;
     const book = this.book();
     const content = this.newEntryDraft().trim();
     if (!book) {
@@ -510,6 +547,7 @@ export class BookDetailsPageComponent {
   }
 
   protected deleteEntry(entryId: string): void {
+    if (this.activeEntryMutationKey()) return;
     const book = this.book();
     if (
       !book ||
@@ -624,6 +662,7 @@ export class BookDetailsPageComponent {
   }
 
   private applyLoadedBook(book: BookDetails): void {
+    this.clearTimers();
     this.book.set(book);
     this.bookForm.reset(mapBookToFormValue(book));
     this.syncCoverStateFromBook(book);
@@ -637,7 +676,25 @@ export class BookDetailsPageComponent {
 
   private applyNoteMutation(book: BookDetails): void {
     this.book.set(book);
-    this.syncEntryDraftsFromBook(book);
+    const mutationKey = this.activeEntryMutationKey();
+    const preserveDrafts = (
+      entries: BookEntry[],
+      drafts: BookEntryDraftMap,
+      tab: BookContentTab,
+    ): BookEntryDraftMap =>
+      Object.fromEntries(
+        entries.map((entry) => [
+          entry.id,
+          mutationKey === `${tab}:${entry.id}`
+            ? entry.content
+            : (drafts[entry.id] ?? entry.content),
+        ]),
+      );
+    this.quoteDrafts.set(preserveDrafts(book.quotes, this.quoteDrafts(), 'quotes'));
+    this.opinionDrafts.set(preserveDrafts(book.opinions, this.opinionDrafts(), 'opinions'));
+    this.activeEntryIndex.update((index) =>
+      Math.max(0, Math.min(index, this.currentEntries().length - 1)),
+    );
     this.noteErrorMessage.set(null);
   }
 
@@ -647,7 +704,12 @@ export class BookDetailsPageComponent {
       return;
     }
 
-    viewport.scrollTo({ top: 0, behavior: 'smooth' });
+    viewport.scrollTo({
+      top: 0,
+      behavior: globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+        ? 'instant'
+        : 'smooth',
+    });
     this.activeEntryIndex.set(nextIndex);
     this.navigationProgress.set(0);
     this.renderCurrentEntry(true);
@@ -663,18 +725,20 @@ export class BookDetailsPageComponent {
     const targetText = formatEntryContent(entry.content, this.activeTab());
     this.clearTypewriterTimer();
 
-    if (!animate) {
+    if (!animate || globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
       this.renderedEntryText.set(targetText);
       return;
     }
 
+    const characters = Array.from(targetText);
+    const step = Math.max(1, Math.ceil(characters.length / 120));
     let cursor = 0;
     this.renderedEntryText.set('');
     this.typewriterTimer = window.setInterval(() => {
-      cursor += 1;
-      this.renderedEntryText.set(targetText.slice(0, cursor));
+      cursor += step;
+      this.renderedEntryText.set(characters.slice(0, cursor).join(''));
 
-      if (cursor >= targetText.length) {
+      if (cursor >= characters.length) {
         this.clearTypewriterTimer();
       }
     }, TYPEWRITER_INTERVAL_MS);

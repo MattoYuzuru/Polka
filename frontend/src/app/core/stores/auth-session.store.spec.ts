@@ -48,10 +48,22 @@ describe('AuthSessionStore', () => {
 
     store.bootstrap();
 
-    expect(store.token()).toBe(session.token);
+    expect(store.token()).toBeNull();
     expect(store.user()).toBeNull();
     expect(globalThis.localStorage.getItem('polka.auth.user')).toBeNull();
   });
+
+  it.each(['true', '42', '"reader"', '{}', '{"nickname":"reader"}'])(
+    'rejects malformed stored identity %s',
+    (raw) => {
+      globalThis.localStorage.setItem('polka.auth.token', session.token);
+      globalThis.localStorage.setItem('polka.auth.user', raw);
+      const store = TestBed.inject(AuthSessionStore);
+      store.bootstrap();
+      expect(store.isAuthenticated()).toBe(false);
+      expect(store.token()).toBeNull();
+    },
+  );
 
   it('persists a new session', () => {
     const store = TestBed.inject(AuthSessionStore);

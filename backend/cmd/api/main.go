@@ -3,11 +3,9 @@ package main
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
 	"os/signal"
-	"strings"
 	"syscall"
 	"time"
 
@@ -23,6 +21,9 @@ import (
 
 func main() {
 	cfg := config.Load()
+	if err := cfg.Validate(); err != nil {
+		log.Fatalf("invalid config: %v", err)
+	}
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
@@ -33,7 +34,7 @@ func main() {
 	defer pool.Close()
 
 	if cfg.AutoMigrate {
-		if err := database.Migrate(ctx, pool); err != nil {
+		if err := database.Migrate(ctx, pool, cfg.AppEnv == "development"); err != nil {
 			log.Fatalf("migrate database: %v", err)
 		}
 	}
@@ -66,7 +67,7 @@ func main() {
 	}
 
 	go func() {
-		log.Printf("polka api is listening on :%s (%s)", cfg.Port, safeDatabaseURL(cfg.DatabaseURL))
+		log.Printf("polka api is listening on :%s (%s)", cfg.Port, cfg.AppEnv)
 
 		if err := server.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
 			log.Fatalf("server stopped unexpectedly: %v", err)
@@ -82,22 +83,4 @@ func main() {
 	if err := server.Shutdown(shutdownCtx); err != nil {
 		log.Fatalf("graceful shutdown failed: %v", err)
 	}
-}
-
-func safeDatabaseURL(databaseURL string) string {
-	const marker = "://"
-
-	parts := strings.SplitN(databaseURL, marker, 2)
-	if len(parts) != 2 {
-		return databaseURL
-	}
-
-	credentialsAndHost := strings.SplitN(parts[1], "@", 2)
-	if len(credentialsAndHost) != 2 || !strings.Contains(credentialsAndHost[0], ":") {
-		return databaseURL
-	}
-
-	userAndPassword := strings.SplitN(credentialsAndHost[0], ":", 2)
-
-	return fmt.Sprintf("%s%s%s:%s@%s", parts[0], marker, userAndPassword[0], "***", credentialsAndHost[1])
 }

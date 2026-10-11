@@ -3,18 +3,18 @@ package media
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
 	"errors"
 	"fmt"
+	"image"
 	"io"
-	"mime"
-	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/smithy-go"
 
 	backendconfig "github.com/MattoYuzuru/Polka/backend/internal/config"
 )
@@ -25,6 +25,7 @@ var (
 )
 
 type UploadInput struct {
+	OwnerUserID string
 	FileName    string
 	ContentType string
 	Body        []byte
@@ -110,8 +111,15 @@ func (storage *S3Storage) UploadCover(ctx context.Context, input UploadInput) (U
 		return UploadedObject{}, err
 	}
 
-	objectKey := buildObjectKey(input.FileName)
-	contentType := normalizeContentType(input.ContentType, input.FileName)
+	objectKey, err := buildObjectKey(input.OwnerUserID)
+	if err != nil {
+		return UploadedObject{}, err
+	}
+	_, format, err := image.DecodeConfig(bytes.NewReader(input.Body))
+	if err != nil {
+		return UploadedObject{}, ErrUnsupportedImage
+	}
+	contentType := "image/" + format
 
 	_, err = storage.client.PutObject(ctx, &s3.PutObjectInput{
 		Bucket:       aws.String(storage.bucket),
@@ -137,7 +145,8 @@ func (storage *S3Storage) Open(ctx context.Context, objectKey string) (Downloade
 		Key:    aws.String(objectKey),
 	})
 	if err != nil {
-		if strings.Contains(strings.ToLower(err.Error()), "no such key") {
+		var apiError smithy.APIError
+		if errors.As(err, &apiError) && (apiError.ErrorCode() == "NoSuchKey" || apiError.ErrorCode() == "NotFound") {
 			return DownloadedObject{}, ErrObjectNotFound
 		}
 
@@ -166,24 +175,13 @@ func (storage *S3Storage) Delete(ctx context.Context, objectKey string) error {
 	return nil
 }
 
-func buildObjectKey(fileName string) string {
-	extension := strings.ToLower(filepath.Ext(fileName))
-	if extension == "" {
-		extension = ".bin"
+func buildObjectKey(ownerUserID string) (string, error) {
+	if strings.TrimSpace(ownerUserID) == "" || strings.ContainsAny(ownerUserID, "/\\") {
+		return "", ErrUnsupportedImage
 	}
-
-	return fmt.Sprintf("covers/%d-%d%s", time.Now().UnixNano(), time.Now().UnixMilli(), extension)
-}
-
-func normalizeContentType(contentType string, fileName string) string {
-	trimmed := strings.TrimSpace(contentType)
-	if trimmed != "" {
-		return trimmed
+	var id [16]byte
+	if _, err := rand.Read(id[:]); err != nil {
+		return "", fmt.Errorf("generate cover object key: %w", err)
 	}
-
-	if guessed := mime.TypeByExtension(filepath.Ext(fileName)); guessed != "" {
-		return guessed
-	}
-
-	return "application/octet-stream"
+	return fmt.Sprintf("covers/%s/%x", ownerUserID, id), nil
 }

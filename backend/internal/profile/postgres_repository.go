@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -188,6 +189,10 @@ func (repository *PostgresRepository) UpdateByUserID(
 			return EditableProfile{}, ErrNotFound
 		}
 
+		var pgError *pgconn.PgError
+		if errors.As(err, &pgError) && pgError.Code == "23505" && (pgError.ConstraintName == "users_nickname_key" || pgError.ConstraintName == "idx_users_lower_nickname") {
+			return EditableProfile{}, ErrNicknameAlreadyExists
+		}
 		return EditableProfile{}, fmt.Errorf("update profile by user id: %w", err)
 	}
 

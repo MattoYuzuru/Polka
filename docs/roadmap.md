@@ -2,104 +2,47 @@
 
 ## Текущий статус
 
-- Текущая ветка: `chore/root-install-dependencies`
-- Текущая фаза: завершена нормализация установки зависимостей через root `package.json` и npm workspace для frontend
-- Последнее обновление: 2026-06-18
+- Ветка: `codex/audit-design-library`.
+- Фаза: завершён аудит, UI polish и расширение многоязычной демонстрации; локальный full-stack работает в контейнерах.
+- Обновление: 2026-10-11.
+- Основной контекст: [аудит и ограничения](audit-2026-10-11.md), [демо-контент](demo-content.md), [UX](ux.md), [запуск](../README.md).
 
 ## Этапы
 
-| Этап                           | Статус    | Содержимое                                                                                                                                          | Артефакты                                               |
-| ------------------------------ | --------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
-| 0. Discovery и правила работы  | completed | Анализ требований, документы, правила для агентов, стартовый README                                                                                 | `docs/plan.md`, `docs/ux.md`, `AGENTS.md`, `README.md`  |
-| 1. Monorepo bootstrap          | completed | Angular 21, Taiga UI 4, Signal Store, lazy routes, root scripts, Dockerfiles                                                                        | `frontend/`, root config                                |
-| 2. Backend foundation          | completed | Go API, Postgres, Docker Compose, startup migrations, seeded auth/profile persistence                                                               | `backend/`, `compose.yaml`                              |
-| 3. Auth и app shell            | completed | JWT login/register, token storage, guards, interceptors, profile edit, owner/guest profile visibility                                               | frontend + backend auth modules                         |
-| 4. Books domain                | completed | create/get/update/delete книг, edit mode, публичность, цитаты, мнения, reorder/top order, cover upload через S3-compatible storage                  | books feature                                           |
-| 5. Recommendation lists        | completed | create/get/update/delete списков, edit mode, публичность, owner/guest visibility                                                                    | recommendation-lists feature                            |
-| 6. Public profile и статистика | completed | owner/guest режимы, фильтры, сортировка, метрики, reading analytics                                                                                 | profile feature                                         |
-| 7. QA и delivery               | completed | lint/format tooling, Jest unit tests, Playwright browser scenarios, CI/CD, GHCR, Kubernetes manifests, deploy docs, `edge` rollout flow, Lighthouse | `.github/`, `docs/`, `README.md`, `playwright/`, `k8s/` |
+| Этап                           | Статус    | Результат                                                                                                                                                 |
+| ------------------------------ | --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Discovery и bootstrap          | completed | Документы, Angular workspace, Go API, Compose                                                                                                             |
+| Auth и профиль                 | completed | JWT, owner/guest, редактирование профиля                                                                                                                  |
+| Книги и подборки               | completed | CRUD, обложки, заметки, импорт, экспорт и публичность                                                                                                     |
+| QA и delivery                  | completed | Jest, Playwright, GitHub Actions, GHCR, K8s                                                                                                               |
+| Аудит и UI polish · 2026-10-11 | completed | Приватность cover, atomic import, production secret/seed, patched dependencies, формы/сессия/черновики, mobile/focus/motion                               |
+| Многоязычная демонстрация      | completed | Профиль yuzuru: 24 книги, 20 локальных обложек, 80 мнений у многоязычных книг, 12 дополнений к исходным, шесть публичных подборок, screenshots и GIF/WebM |
+
+## Проверенная среда
+
+Текущая машина macOS/arm64, Node 22, Go 1.27, Docker/Colima. Локальный Compose project `polka` сохраняет `postgres-data` и `minio-data`. Другие проекты и их volumes не изменяются.
+
+Локальная полка — `http://127.0.0.1:14200/yuzuru`, API — `http://127.0.0.1:18081/api/v1/health`, PostgreSQL — 55432, storage — 19000/19001. Порт 18080 занят другим проектом, поэтому используется 18081. Запуск повторяется командой из README.
+
+## Проверки этой итерации
+
+- 47 Jest tests / 8 suites.
+- 13 Playwright scenarios; responsive 360/768/1440px, owner/guest и cover privacy, CRUD, import, keyboard и reduced motion.
+- Backend unit/HTTP/S3-fake/isolated PostgreSQL tests и race detector.
+- `go vet`, ESLint/Stylelint, format, production build, Compose model, actionlint и shellcheck.
+- `npm audit --omit=dev`: 0 vulnerabilities. Dev tooling residuals перечислены в аудите.
+- Сборка MinIO из pinned official source с checksum и сохранённой лицензией.
+- Визуальные артефакты: `docs/screenshots/`; `capture.json` содержит viewport и browser errors.
+
+`govulncheck`: 0 уязвимостей в вызываемом коде и импортируемых пакетах; 19 advisories остаются в неиспользуемых частях required modules. Все четыре Compose services запущены на новых образах; PostgreSQL/MinIO healthy, API health возвращает 200 напрямую и через Nginx. Проверен upload ~1.7MiB через production frontend. Backend и MinIO собраны native arm64 с Go 1.27.2. Frontend собран через Buildx; 8kB CSS limit сохранён, 4kB предупреждения остаются. Исторические production smoke и Lighthouse не считаются доказательством состояния этой ветки.
 
 ## Ближайшие шаги
 
-1. Провести ручной smoke-pass профиля и страницы книги на мобильных брейкпоинтах после новой scroll/navigation логики.
-2. Решить, выносить ли минималистичные `auth-action`, `profile-action` и `form-action` паттерны в shared-слой.
-3. При необходимости добавить отдельные e2e-сценарии на скачивание `zip`-экспорта полки и гостевой режим с приватными книгами.
+1. Выбрать поддерживаемое S3-хранилище: MinIO upstream архивирован; source build решает текущий запуск, но не будущее сопровождение.
+2. Усилить lifecycle медиа: устойчивые черновики загруженных обложек, сбор orphan uploads и координация concurrent attach/delete.
+3. Разобрать остающиеся advisories dev tooling и добавить auth rate limiting перед production exposure.
+4. Пройти Safari/Firefox и screen reader на физическом мобильном устройстве; Chromium viewport checks покрывают только свою среду.
 
-## Последняя проверка
+## Правила продолжения
 
-- `npm ci` после подключения frontend как npm workspace
-- `npm run lint` после root workspace dependency pass
-- `npm run format:check` после root workspace dependency pass
-- `npm run build:frontend` после root workspace dependency pass
-- `npm run test:frontend` после root workspace dependency pass
-- `npm run test:backend` после root workspace dependency pass
-- `npm run compose:check` после root workspace dependency pass
-- `POSTGRES_PORT=55432 BACKEND_PORT=18080 docker compose up -d --build`
-- `GET http://localhost:18080/api/v1/health`
-- `GET http://localhost:4200/api/v1/health`
-- `POSTGRES_PORT=55432 BACKEND_PORT=18080 npm run test:component`
-- `npm run lint`
-- `npm run format:check`
-- `npm run lint:frontend`
-- `npm run lint:styles`
-- `npm run build:frontend`
-- `npm run test:frontend`
-- `npm run test:component`
-- `npm run test:backend`
-- `npm run compose:check`
-- `npm run build:frontend` после UI redesign
-- `npm run lint:frontend` после UI redesign
-- `npm run lint:styles` после UI redesign
-- `npm run test:frontend` после UI redesign
-- `npm run test:component` после UI redesign
-- `npm run lint:frontend` после profile/book pass 2
-- `npm run lint:styles` после profile/book pass 2
-- `npm run build:frontend` после profile/book pass 2
-- `npm run test:frontend` после profile/book pass 2
-- `npx playwright test playwright/tests/auth-and-profile.spec.ts`
-- `POST https://polka.keykomi.com/api/v1/auth/login`
-- `POST https://polka.keykomi.com/api/v1/books/cover-upload`
-- `POST https://polka.keykomi.com/api/v1/books`
-- `GET https://polka.keykomi.com/api/v1/books/:id`
-- `DELETE https://polka.keykomi.com/api/v1/books/:id`
-- Lighthouse mobile report: `docs/lighthouse/polka-mobile.report.html`
-- `npm run lint` после minimal UI/book/list pass
-- `npm run format:check` после minimal UI/book/list pass
-- `npm run test:frontend` после minimal UI/book/list pass
-- `npm run test:backend` после minimal UI/book/list pass
-- `npm run build:frontend` после minimal UI/book/list pass
-- `npm run compose:check` после minimal UI/book/list pass
-- `npm run test:component` после minimal UI/book/list pass
-- `npm run lint` после export/auth/scroll polish
-- `npm run format:check` после export/auth/scroll polish
-- `npm run test:frontend` после export/auth/scroll polish
-- `npm run test:backend` после export/auth/scroll polish
-- `npm run build:frontend` после export/auth/scroll polish
-- `npm run compose:check` после export/auth/scroll polish
-- `npm run test:component` после export/auth/scroll polish
-- `npm run lint` после final main/book scroll pass
-- `npm run format:check` после final main/book scroll pass
-- `npm run test:frontend` после final main/book scroll pass
-- `npm run test:component` после final main/book scroll pass
-- `npm run build:frontend` после final main/book scroll pass
-- `npm run lint` после auth/import/icon pass
-- `npm run format:check` после auth/import/icon pass
-- `npm run test:frontend` после auth/import/icon pass
-- `npm run test:component` после auth/import/icon pass
-- `npm run build:frontend` после auth/import/icon pass
-- `npm run lint` после site-footer auth pass
-- `npm run format:check` после site-footer auth pass
-- `npm run test:frontend` после site-footer auth pass
-- `npm run test:component` после site-footer auth pass
-- `npm run build:frontend` после site-footer auth pass
-- `npm run lint` после footer home/auth switch pass
-- `npm run format:check` после footer home/auth switch pass
-- `npm run test:frontend` после footer home/auth switch pass
-- `npm run test:component` после footer home/auth switch pass
-- `npm run build:frontend` после footer home/auth switch pass
-
-## Принципы итераций
-
-- Один вертикальный срез на одну небольшую ветку.
-- Каждый шаг должен оставлять проект в собираемом состоянии.
-- После каждого заметного этапа обновлять этот файл, чтобы новый агент быстро входил в контекст.
+Сначала открыть этот файл, затем текущий audit report. Работать в отдельной ветке, устанавливать npm-зависимости из корня, сохранять volumes и не запускать Playwright с rebuild поверх другого runtime. Для действующего стека использовать `POLKA_REUSE_STACK=1` и его реальные порты. Финальные проверки проводить в тихой фазе без параллельных изменений исходников.

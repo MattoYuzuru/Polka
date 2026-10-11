@@ -45,6 +45,7 @@ export class RegisterPageComponent {
   });
 
   protected submit(): void {
+    if (this.isSubmitting()) return;
     if (this.registerForm.invalid) {
       this.registerForm.markAllAsTouched();
 

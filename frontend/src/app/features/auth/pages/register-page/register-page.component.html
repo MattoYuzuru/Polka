@@ -1,14 +1,11 @@
 <main class="register-page">
   <section class="register-hero" tuiCardLarge tuiSurface>
     <p class="eyebrow" tuiChip>Polka / регистрация</p>
-    <h1 tuiHeader="h1">Создайте полку, которая сразу станет вашим адресом.</h1>
+    <h1 tuiHeader="h1">Место для книг, которые вас меняют.</h1>
     <p class="lead">
-      После регистрации вы сразу попадаете в свой профиль и можете начать собирать библиотеку без
-      дополнительной настройки.
+      Соберите свою библиотеку. Отметьте прочитанное. Сохраните цитату, к которой хочется вернуться.
     </p>
-    <p class="hero-note">
-      Никнейм становится ссылкой, а визуальный акцент дальше собирается из книг.
-    </p>
+    <p class="hero-note">Ваша полка получит собственный адрес — им можно поделиться с друзьями.</p>
   </section>
 
   <section class="register-card" tuiCardLarge tuiSurface>
@@ -21,7 +18,14 @@
     <form class="register-form" [formGroup]="registerForm" (ngSubmit)="submit()">
       <label class="field">
         <span class="field__label">Никнейм</span>
-        <input class="field__control" formControlName="nickname" type="text" />
+        <input
+          class="field__control"
+          formControlName="nickname"
+          autocomplete="username"
+          autocapitalize="none"
+          spellcheck="false"
+          type="text"
+        />
         @if (registerForm.controls.nickname.touched && registerForm.controls.nickname.invalid) {
           <span class="field__error">Введите никнейм длиной минимум 3 символа.</span>
         }
@@ -29,7 +33,16 @@
 
       <label class="field">
         <span class="field__label">Почта</span>
-        <input class="field__control" formControlName="email" type="email" />
+        <input
+          class="field__control"
+          formControlName="email"
+          autocomplete="email"
+          inputmode="email"
+          [attr.aria-invalid]="
+            registerForm.controls.email.touched && registerForm.controls.email.invalid
+          "
+          type="email"
+        />
         @if (registerForm.controls.email.touched && registerForm.controls.email.invalid) {
           <span class="field__error">Введите корректный email.</span>
         }
@@ -37,14 +50,22 @@
 
       <label class="field">
         <span class="field__label">Пароль</span>
-        <input class="field__control" formControlName="password" type="password" />
+        <input
+          class="field__control"
+          formControlName="password"
+          autocomplete="new-password"
+          [attr.aria-invalid]="
+            registerForm.controls.password.touched && registerForm.controls.password.invalid
+          "
+          type="password"
+        />
         @if (registerForm.controls.password.touched && registerForm.controls.password.invalid) {
           <span class="field__error">Пароль должен содержать минимум 8 символов.</span>
         }
       </label>
 
       @if (errorMessage()) {
-        <div class="error-box">
+        <div class="error-box" role="alert">
           {{ errorMessage() }}
         </div>
       }

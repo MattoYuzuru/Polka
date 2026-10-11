@@ -6,7 +6,7 @@
     "frontend"
   ],
   "scripts": {
-    "start:frontend": "npm --workspace frontend run start",
+    "start:frontend": "npm --workspace frontend run start --",
     "build:frontend": "npm --workspace frontend run build",
     "test:frontend": "npm --workspace frontend run test",
     "test:component": "playwright test",
@@ -22,9 +22,24 @@
     "lint": "npm run lint:frontend && npm run lint:styles",
     "compose:up": "docker compose up --build",
     "compose:down": "docker compose down",
-    "compose:check": "docker compose config"
+    "compose:check": "docker compose config",
+    "demo:seed": "node scripts/demo/seed.mjs",
+    "demo:covers": "node scripts/demo/covers.mjs",
+    "demo:capture": "node scripts/demo/capture.mjs",
+    "audit:backend": "go -C backend run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./..."
   },
   "devDependencies": {
     "@playwright/test": "^1.58.2"
+  },
+  "overrides": {
+    "@angular/animations": "21.2.25",
+    "@angular/common": "21.2.25",
+    "@angular/compiler": "21.2.25",
+    "@angular/core": "21.2.25",
+    "@angular/forms": "21.2.25",
+    "@angular/platform-browser": "21.2.25",
+    "@angular/platform-browser-dynamic": "21.2.25",
+    "@angular/router": "21.2.25",
+    "minimatch@>=10.0.0 <10.2.6": "10.2.6"
   }
 }

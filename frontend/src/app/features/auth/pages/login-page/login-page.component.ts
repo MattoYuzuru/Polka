@@ -44,6 +44,7 @@ export class LoginPageComponent {
   });
 
   protected submit(): void {
+    if (this.isSubmitting()) return;
     if (this.loginForm.invalid) {
       this.loginForm.markAllAsTouched();
 

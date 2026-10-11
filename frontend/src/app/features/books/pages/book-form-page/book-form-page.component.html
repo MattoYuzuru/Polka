@@ -12,7 +12,7 @@
       @if (isEditMode()) {
         Спокойный режим правки: одна обложка, одна колонка фактов и отдельный поток заметок.
       } @else {
-        Черновик сохраняется локально, поэтому после `F5` поля и текст не потеряются.
+        Черновик сохраняется в этом браузере — можно вернуться к нему после перезагрузки.
       }
     </p>
   </section>
@@ -28,14 +28,13 @@
         <div class="cover-dropzone__header">
           <p tuiBadge>Обложка</p>
           <p class="muted">
-            Дайте блоку больше воздуха: обложка сразу задаёт акцент и подсказывает будущий градиент.
+            Обложка задаст цвет вашей книге. Выберите файл или перетащите его сюда.
           </p>
         </div>
 
         <label
           class="cover-dropzone__placeholder"
           [class.cover-dropzone__placeholder--active]="isCoverDropActive()"
-          tabindex="0"
           data-testid="book-cover-upload-label"
           (dragover)="onCoverDragOver($event)"
           (dragleave)="onCoverDragLeave($event)"
@@ -52,7 +51,7 @@
 
           @if (coverPreviewUrl()) {
             <img
-              [src]="coverPreviewUrl()"
+              [appCover]="coverPreviewUrl()"
               [alt]="'Обложка книги ' + (bookForm.controls.title.value || 'без названия')"
             />
           } @else {
@@ -206,12 +205,18 @@
             </label>
           </div>
 
+          @if (bookForm.touched && bookForm.invalid) {
+            <p class="error-box" role="alert">
+              Проверьте обязательные поля: название, автор, жанр, издательство, возраст и год.
+              Название, автор и издательство — минимум 2 символа; оценка — от 0 до 10.
+            </p>
+          }
           @if (draftMessage()) {
-            <p class="muted">{{ draftMessage() }}</p>
+            <p class="muted" role="status">{{ draftMessage() }}</p>
           }
 
           @if (errorMessage()) {
-            <p class="error-box">{{ errorMessage() }}</p>
+            <p class="error-box" role="alert">{{ errorMessage() }}</p>
           }
 
           <div class="actions">
@@ -219,7 +224,7 @@
               class="form-action form-action--accent"
               tuiButton
               type="submit"
-              [disabled]="isSubmitting()"
+              [disabled]="isSubmitting() || isUploadingCover()"
               data-testid="book-submit"
             >
               {{

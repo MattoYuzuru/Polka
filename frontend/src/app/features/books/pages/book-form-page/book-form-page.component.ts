@@ -1,3 +1,4 @@
+import { AuthenticatedCoverDirective } from '../../../../shared/directives/authenticated-cover.directive';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -9,12 +10,13 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { debounceTime, distinctUntilChanged, finalize, map } from 'rxjs';
+import { distinctUntilChanged, finalize, map } from 'rxjs';
 import { TuiBadge, TuiChip } from '@taiga-ui/kit';
 import { TuiButton, TuiSurface } from '@taiga-ui/core';
 import { TuiCardLarge, TuiHeader } from '@taiga-ui/layout';
 
 import { BookApiService } from '../../../../core/services/book-api.service';
+import { readLocalValue, writeLocalValue } from '../../../../core/utils/local-storage';
 import { AuthSessionStore } from '../../../../core/stores/auth-session.store';
 import { UiPreferencesStore } from '../../../../core/stores/ui-preferences.store';
 import { BOOK_STATUS_OPTIONS } from '../../../../shared/data/book-form.constants';
@@ -29,6 +31,7 @@ const BOOK_DRAFT_KEY = 'polka.books.create-draft';
 @Component({
   selector: 'app-book-form-page',
   imports: [
+    AuthenticatedCoverDirective,
     ReactiveFormsModule,
     RouterLink,
     TuiBadge,
@@ -87,13 +90,14 @@ export class BookFormPageComponent {
     year: [new Date().getFullYear(), [Validators.required, Validators.min(0)]],
     status: [BOOK_STATUS_OPTIONS[6], [Validators.required]],
     isPublic: [true],
-    rating: [null as number | null],
+    rating: [null as number | null, [Validators.min(0), Validators.max(10)]],
     description: [''],
     opinion: [''],
     quote: [''],
   });
 
   constructor() {
+    this.destroyRef.onDestroy(() => this.clearPreviewUrlOnly());
     this.route.paramMap
       .pipe(
         map((params) => params.get('bookId')),
@@ -113,6 +117,7 @@ export class BookFormPageComponent {
   }
 
   protected submit(): void {
+    if (this.isSubmitting() || this.isUploadingCover()) return;
     if (this.bookForm.invalid) {
       this.bookForm.markAllAsTouched();
 
@@ -139,7 +144,7 @@ export class BookFormPageComponent {
           this.syncCoverStateFromBook(book);
 
           if (!this.isEditMode()) {
-            globalThis.localStorage?.removeItem(BOOK_DRAFT_KEY);
+            writeLocalValue(this.draftKey(), null);
             const nickname = this.authSessionStore.user()?.nickname ?? 'login';
             void this.router.navigateByUrl(`/${nickname}`);
 
@@ -158,6 +163,10 @@ export class BookFormPageComponent {
   }
 
   protected saveDraftLocally(): void {
+    if (!writeLocalValue(this.draftKey(), JSON.stringify(this.bookForm.getRawValue()))) {
+      this.draftMessage.set('Браузер не позволяет сохранить черновик. Оставьте вкладку открытой.');
+      return;
+    }
     this.draftMessage.set(
       `Черновик обновлён ${new Intl.DateTimeFormat('ru-RU', {
         dateStyle: 'medium',
@@ -176,11 +185,11 @@ export class BookFormPageComponent {
       return;
     }
 
-    this.bookForm.reset(defaultFormValue());
+    this.bookForm.reset(defaultFormValue(), { emitEvent: false });
     this.clearCoverState();
     this.draftMessage.set('Черновик очищен.');
     this.errorMessage.set(null);
-    globalThis.localStorage?.removeItem(BOOK_DRAFT_KEY);
+    writeLocalValue(this.draftKey(), null);
   }
 
   protected uploadCover(event: Event): void {
@@ -242,6 +251,8 @@ export class BookFormPageComponent {
   }
 
   private initializeCreateMode(): void {
+    this.bookForm.reset(defaultFormValue(), { emitEvent: false });
+    this.errorMessage.set(null);
     this.initialFormValue = null;
     this.initialCoverUrl = null;
     this.initialCoverPalette = [];
@@ -254,28 +265,45 @@ export class BookFormPageComponent {
     this.clearCoverState();
   }
 
+  private draftKey(): string {
+    return `${BOOK_DRAFT_KEY}.${this.authSessionStore.user()?.id ?? 'anonymous'}`;
+  }
+
   private restoreDraftIfPresent(): void {
-    const savedDraft = globalThis.localStorage?.getItem(BOOK_DRAFT_KEY);
+    const savedDraft = readLocalValue(this.draftKey());
 
     if (!savedDraft) {
       return;
     }
 
     try {
-      this.bookForm.patchValue(JSON.parse(savedDraft) as Partial<BookFormValue>);
+      const parsed: unknown = JSON.parse(savedDraft);
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed))
+        throw new Error('Invalid draft');
+      const candidate = parsed as Record<string, unknown>;
+      const defaults = defaultFormValue();
+      const value = Object.fromEntries(
+        Object.entries(defaults)
+          .filter(([key, defaultValue]) => {
+            const field = candidate[key];
+            return key === 'rating'
+              ? field === null || typeof field === 'number'
+              : typeof field === typeof defaultValue;
+          })
+          .map(([key]) => [key, candidate[key]]),
+      );
+      this.bookForm.patchValue(value, { emitEvent: false });
     } catch {
-      globalThis.localStorage?.removeItem(BOOK_DRAFT_KEY);
+      writeLocalValue(this.draftKey(), null);
     }
   }
 
   private watchDraftChanges(): void {
-    this.bookForm.valueChanges
-      .pipe(debounceTime(150), takeUntilDestroyed(this.destroyRef))
-      .subscribe((value) => {
-        if (!this.isEditMode()) {
-          globalThis.localStorage?.setItem(BOOK_DRAFT_KEY, JSON.stringify(value));
-        }
-      });
+    this.bookForm.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((value) => {
+      if (!this.isEditMode()) {
+        writeLocalValue(this.draftKey(), JSON.stringify(value));
+      }
+    });
   }
 
   private loadBookForEdit(bookId: string): void {
@@ -374,6 +402,7 @@ export class BookFormPageComponent {
   }
 
   private uploadCoverFile(file: File, input?: HTMLInputElement | null): void {
+    if (this.isUploadingCover() || this.isSubmitting()) return;
     this.errorMessage.set(null);
     this.isUploadingCover.set(true);
     this.isCoverDropActive.set(false);

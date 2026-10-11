@@ -3,10 +3,15 @@ package profile
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
+	"unicode/utf8"
+
+	"github.com/MattoYuzuru/Polka/backend/internal/shared/identity"
 )
 
 var ErrNotFound = errors.New("profile not found")
+var ErrInvalidInput = errors.New("invalid profile input")
 
 type Stats struct {
 	MemberSinceLabel         string `json:"memberSinceLabel"`
@@ -134,5 +139,11 @@ func (service *Service) UpdateByUserID(
 	userID string,
 	input UpdateProfileInput,
 ) (EditableProfile, error) {
+	input.Nickname = strings.TrimSpace(input.Nickname)
+	input.DisplayName = strings.TrimSpace(input.DisplayName)
+	input.Tagline = strings.TrimSpace(input.Tagline)
+	if !identity.ValidNickname(input.Nickname) || utf8.RuneCountInString(input.DisplayName) < 2 || utf8.RuneCountInString(input.Tagline) > 280 {
+		return EditableProfile{}, ErrInvalidInput
+	}
 	return service.repository.UpdateByUserID(ctx, userID, input)
 }

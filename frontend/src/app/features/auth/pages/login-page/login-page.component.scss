@@ -24,6 +24,9 @@
 }
 
 .login-hero {
+  border: 0;
+  background: transparent;
+  min-width: 0;
   min-height: min(30rem, 64vh);
   display: grid;
   align-content: center;
@@ -160,5 +163,27 @@
   .login-page {
     grid-template-columns: 1fr;
     max-width: 34rem;
+  }
+}
+
+.login-hero h1 {
+  max-width: 11ch;
+  font-size: clamp(2.5rem, 5vw, 4.4rem);
+  line-height: 1.07;
+  text-wrap: balance;
+}
+
+.hero-demo-link {
+  min-height: 2.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  border-bottom: 1px solid var(--polka-border-strong);
+}
+
+@media (max-width: 600px) {
+  .login-hero {
+    min-height: auto;
+    padding: 2rem 0.5rem 1rem;
   }
 }

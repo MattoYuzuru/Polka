@@ -2,6 +2,7 @@ package books
 
 import (
 	"context"
+	"encoding/hex"
 	"errors"
 	"io"
 	"strings"
@@ -105,7 +106,9 @@ type ImportBooksResult struct {
 type Repository interface {
 	Create(ctx context.Context, ownerUserID string, input CreateBookInput) (BookDetails, error)
 	FindByID(ctx context.Context, bookID string, viewerUserID string) (BookDetails, error)
-	FindCoverObjectKey(ctx context.Context, bookID string) (string, error)
+	FindCoverObjectKey(ctx context.Context, bookID string, viewerUserID string) (string, error)
+	IsCoverInUse(ctx context.Context, objectKey string) (bool, error)
+	Import(ctx context.Context, ownerUserID string, items []CreateBookInput) ([]BookDetails, error)
 	FindOwnedCoverObjectKey(ctx context.Context, ownerUserID string, bookID string) (string, error)
 	Update(ctx context.Context, ownerUserID string, bookID string, input UpdateBookInput) (BookDetails, error)
 	SetVisibility(ctx context.Context, ownerUserID string, bookID string, isPublic bool) (BookDetails, error)
@@ -145,26 +148,10 @@ func (service *Service) Create(
 		return BookDetails{}, ErrUnauthorized
 	}
 
-	if strings.TrimSpace(input.Title) == "" ||
-		strings.TrimSpace(input.Author) == "" ||
-		strings.TrimSpace(input.Genre) == "" ||
-		strings.TrimSpace(input.Status) == "" ||
-		input.Year < 0 {
-		return BookDetails{}, ErrInvalidInput
-	}
-
-	if input.Rating != nil && (*input.Rating < 0 || *input.Rating > 10) {
-		return BookDetails{}, ErrInvalidInput
-	}
-
-	input.CoverPalette = normalizeCoverPalette(input.CoverPalette)
-
-	if strings.TrimSpace(input.Publisher) == "" {
-		input.Publisher = "Не указано"
-	}
-
-	if strings.TrimSpace(input.AgeRating) == "" {
-		input.AgeRating = "16+"
+	var err error
+	input, err = normalizeCreateInput(ownerUserID, input)
+	if err != nil {
+		return BookDetails{}, err
 	}
 
 	book, err := service.repository.Create(ctx, ownerUserID, input)
@@ -211,7 +198,7 @@ func (service *Service) Update(
 	if strings.TrimSpace(input.Title) == "" ||
 		strings.TrimSpace(input.Author) == "" ||
 		strings.TrimSpace(input.Genre) == "" ||
-		strings.TrimSpace(input.Status) == "" ||
+		!validStatus(strings.TrimSpace(input.Status)) ||
 		input.Year < 0 {
 		return BookDetails{}, ErrInvalidInput
 	}
@@ -233,6 +220,11 @@ func (service *Service) Update(
 	previousCoverObjectKey, err := service.repository.FindOwnedCoverObjectKey(ctx, ownerUserID, bookID)
 	if err != nil {
 		return BookDetails{}, err
+	}
+
+	input.CoverObjectKey = strings.TrimSpace(input.CoverObjectKey)
+	if input.CoverObjectKey != "" && input.CoverObjectKey != previousCoverObjectKey && !ownedCoverKey(ownerUserID, input.CoverObjectKey) {
+		return BookDetails{}, ErrInvalidInput
 	}
 
 	book, err := service.repository.Update(ctx, ownerUserID, bookID, input)
@@ -472,15 +464,20 @@ func (service *Service) Import(
 		return ImportBooksResult{}, ErrInvalidInput
 	}
 
-	importedBooks := make([]BookDetails, 0, len(input.Items))
-
-	for _, item := range input.Items {
-		importedBook, err := service.Create(ctx, ownerUserID, item)
+	normalized := make([]CreateBookInput, len(input.Items))
+	for index, item := range input.Items {
+		var err error
+		normalized[index], err = normalizeCreateInput(ownerUserID, item)
 		if err != nil {
 			return ImportBooksResult{}, err
 		}
-
-		importedBooks = append(importedBooks, importedBook)
+	}
+	importedBooks, err := service.repository.Import(ctx, ownerUserID, normalized)
+	if err != nil {
+		return ImportBooksResult{}, err
+	}
+	for index := range importedBooks {
+		importedBooks[index] = service.decorateBook(importedBooks[index])
 	}
 
 	return ImportBooksResult{
@@ -504,16 +501,17 @@ func (service *Service) UploadCover(
 		return UploadedCover{}, media.ErrStorageDisabled
 	}
 
-	content, err := io.ReadAll(io.LimitReader(reader, 8<<20))
+	content, err := io.ReadAll(io.LimitReader(reader, (8<<20)+1))
 	if err != nil {
 		return UploadedCover{}, err
 	}
 
-	if len(content) == 0 {
+	if len(content) == 0 || len(content) > 8<<20 {
 		return UploadedCover{}, ErrInvalidInput
 	}
 
 	uploadedCover, err := service.storage.UploadCover(ctx, media.UploadInput{
+		OwnerUserID: ownerUserID,
 		FileName:    fileName,
 		ContentType: contentType,
 		Body:        content,
@@ -532,7 +530,7 @@ func (service *Service) UploadCover(
 	}, nil
 }
 
-func (service *Service) OpenCover(ctx context.Context, bookID string) (media.DownloadedObject, error) {
+func (service *Service) OpenCover(ctx context.Context, bookID string, viewerUserID string) (media.DownloadedObject, error) {
 	if strings.TrimSpace(bookID) == "" {
 		return media.DownloadedObject{}, ErrNotFound
 	}
@@ -541,7 +539,7 @@ func (service *Service) OpenCover(ctx context.Context, bookID string) (media.Dow
 		return media.DownloadedObject{}, media.ErrStorageDisabled
 	}
 
-	objectKey, err := service.repository.FindCoverObjectKey(ctx, bookID)
+	objectKey, err := service.repository.FindCoverObjectKey(ctx, bookID, viewerUserID)
 	if err != nil {
 		return media.DownloadedObject{}, err
 	}
@@ -564,6 +562,10 @@ func (service *Service) cleanupCoverObject(ctx context.Context, objectKey string
 		return
 	}
 
+	inUse, err := service.repository.IsCoverInUse(ctx, objectKey)
+	if err != nil || inUse {
+		return
+	}
 	_ = service.storage.Delete(ctx, objectKey)
 }
 
@@ -576,6 +578,9 @@ func normalizeCoverPalette(colors []string) []string {
 			continue
 		}
 
+		if _, err := hex.DecodeString(trimmed[1:]); err != nil {
+			continue
+		}
 		normalized = append(normalized, trimmed)
 		if len(normalized) == 4 {
 			break
@@ -652,4 +657,43 @@ func validateBookEntryDelete(
 	}
 
 	return trimmedOwnerID, trimmedBookID, trimmedEntryID, nil
+}
+
+func ownedCoverKey(ownerUserID string, objectKey string) bool {
+	prefix := "covers/" + ownerUserID + "/"
+	return strings.HasPrefix(objectKey, prefix) && len(objectKey) > len(prefix) && !strings.ContainsAny(strings.TrimPrefix(objectKey, prefix), "/\\")
+}
+
+func normalizeCreateInput(ownerUserID string, input CreateBookInput) (CreateBookInput, error) {
+	input.Title = strings.TrimSpace(input.Title)
+	input.Author = strings.TrimSpace(input.Author)
+	input.Genre = strings.TrimSpace(input.Genre)
+	input.Status = strings.TrimSpace(input.Status)
+	input.CoverObjectKey = strings.TrimSpace(input.CoverObjectKey)
+	if input.Title == "" || input.Author == "" || input.Genre == "" || !validStatus(input.Status) || input.Year < 0 {
+		return CreateBookInput{}, ErrInvalidInput
+	}
+	if input.Rating != nil && (*input.Rating < 0 || *input.Rating > 10) {
+		return CreateBookInput{}, ErrInvalidInput
+	}
+	if input.CoverObjectKey != "" && !ownedCoverKey(ownerUserID, input.CoverObjectKey) {
+		return CreateBookInput{}, ErrInvalidInput
+	}
+	input.CoverPalette = normalizeCoverPalette(input.CoverPalette)
+	if strings.TrimSpace(input.Publisher) == "" {
+		input.Publisher = "Не указано"
+	}
+	if strings.TrimSpace(input.AgeRating) == "" {
+		input.AgeRating = "16+"
+	}
+	return input, nil
+}
+
+func validStatus(status string) bool {
+	switch status {
+	case "Жду выхода", "Отложил", "Забросил", "Читаю", "Прочитал", "Пауза", "Хочу":
+		return true
+	default:
+		return false
+	}
 }

@@ -1,140 +1,95 @@
 # Polka
 
-<p align="center">
-  <img src="docs/assets/polka-readme-logo.png" alt="Polka logo" width="180">
-</p>
+<p align="center"><img src="docs/assets/polka-readme-logo.png" alt="Polka" width="140"></p>
 
-Polka это full-stack приложение для личной библиотеки с публичным профилем, списками рекомендаций, цитатами и мнениями о книгах.
+Личная библиотека с публичной полкой, подборками, цитатами и читательскими заметками. Выразительная книжная типографика, обложки с собственной палитрой и спокойная анимация помогают исследовать коллекцию.
 
-Текущий статус: собран и выложен на VPS рабочий full-stack vertical slice с Angular 21, Taiga UI 4, Signal Store, Go API, PostgreSQL, MinIO/S3-compatible cover upload и цепочкой `register/login -> JWT session -> owner/guest profile -> create/edit/delete book -> cover upload -> reorder/filter library -> profile analytics -> create/edit/delete recommendation list -> import JSON`.
+![Многоязычная полка Polka](docs/screenshots/shelf-desktop.png)
 
-Прод URL: `https://polka.keykomi.com`
+![Полка, hover и раскрытие заметок](docs/screenshots/polka-interactions.gif)
+
+## Возможности
+
+- Регистрация, вход и сессия; отдельные режимы владельца и гостя.
+- Книги с обложками, статусами, оценками, цитатами и мнениями; создание, редактирование, удаление и управление публичностью.
+- Поиск, фильтры, сортировка, перестановка книг и тематические подборки.
+- JSON-импорт с атомарным сохранением и ZIP-экспорт полки с обложками.
+- Черновики текста отдельно для каждого аккаунта; keyboard/touch-навигация и reduced motion.
+- Демо-профиль `yuzuru`: 24 книги, 20 оригинальных обложек, четыре мнения у каждой многоязычной книги и шесть публичных подборок. Классика, Борхес, Дадзай, SICP, Кнут и Стругацкие на четырёх языках. [Книги и источники](docs/demo-content.md).
 
 ## Стек
 
-- Frontend: Angular 21, TypeScript, Taiga UI 4, RxJS, NgRx Signal Store
-- Backend: Go 1.25, chi router, PostgreSQL, startup migrations, S3-compatible media storage
-- Data layer: PostgreSQL 17 и MinIO в Docker Compose
-- Delivery: Docker images, GHCR, `k3s` deploy на VPS
-
-## Что уже есть
-
-- `docs/plan.md` и `docs/ux.md`
-- `docs/roadmap.md` с текущей фазой и ближайшими шагами
-- `docs/release-readiness.md` с audit по требованиям, production smoke и оставшимися хвостами
-- `docs/lighthouse/` с mobile Lighthouse отчётом, raw HTML/JSON и summary screenshot
-- `AGENTS.md` с правилами по веткам, проверкам и обновлению документации
-- login flow с токеном в `localStorage`
-- registration flow с автоматическим входом после создания аккаунта
-- auth guard и HTTP interceptors
-- публичная страница профиля с загрузкой данных из Go API и учётом owner/guest видимости
-- страница редактирования профиля с сохранением в PostgreSQL
-- создание книги через реальный backend endpoint
-- страница книги с загрузкой метаданных, мнений и цитат
-- owner actions для книг: редактирование, удаление и переключение публичности
-- reorder/top mechanics для книг через backend endpoint и owner controls в профиле
-- поиск, фильтрация по статусу и сортировка библиотеки на странице профиля
-- analytics-блок на профиле: чтение за 30/365 дней, средняя оценка, публичные/приватные книги, breakdown по статусам и жанрам
-- backend tracking `finished_at` для completed books, чтобы периодическая статистика считалась по данным сервера
-- форма создания книги с валидацией и draft cache в `localStorage`
-- загрузка обложки книги в S3-compatible storage с автоматической палитрой для fallback-градиентов
-- import JSON для массового добавления книг во владельческую библиотеку
-- форма создания списка рекомендаций с выбором книг из библиотеки и draft cache в `localStorage`
-- публичная страница списка рекомендаций с owner/guest visibility
-- owner actions для списков: редактирование, удаление и переключение публичности
-- ESLint, Stylelint и Prettier scripts для frontend с root-level proxy командами
-- Jest как unit test runner для frontend с 30+ тестами на stores, guard, interceptors и профильные utils
-- Playwright browser scenarios для protected routes, login flow, фильтрации профиля и owner CRUD книги с upload flow
-- GitHub Actions pipeline под lint/test/build и публикацию образов в GHCR
-- Kubernetes manifests и bootstrap script для namespace `polka` на VPS с `k3s`, `traefik`, `cert-manager` и `minio`
-- Production rollout на `https://polka.keykomi.com` с рабочим TLS, `login`, `cover-upload` и owner CRUD smoke
-- Dockerfiles для frontend и backend
-- `compose.yaml` с frontend, backend, PostgreSQL и MinIO
-
-## Демо-учётка
-
-- Email: `reader@polka.local`
-- Password: `Reader1234`
-- Public profile: `/mattoy`
+Angular 21 · TypeScript · Taiga UI 4 · NgRx Signal Store · Go 1.27+ · PostgreSQL 17 · S3-compatible storage · Docker Compose · GitHub Actions / GHCR / Kubernetes.
 
 ## Локальный запуск
 
-### Установка зависимостей
+Нужны Docker Compose с Buildx и Node.js 22 для инструментов. Ставьте npm-зависимости из корня: один workspace и один lockfile.
 
 ```bash
-npm install
+npm ci
+POSTGRES_PORT=55432 BACKEND_PORT=18081 FRONTEND_PORT=14200 \
+STORAGE_PORT=19000 STORAGE_CONSOLE_PORT=19001 docker compose up -d --build
+POLKA_DEMO_URL=http://127.0.0.1:14200 npm run demo:seed
 ```
 
-Корневой `package.json` подключает `frontend` как npm workspace, поэтому эта команда ставит и root-инструменты, и все Angular/Jest/ESLint/Stylelint зависимости frontend.
+Откройте [локальную полку](http://127.0.0.1:14200/yuzuru). Демо-вход: `reader@polka.local` / `Reader1234`. Известная учётка создаётся только при `APP_ENV=development`.
 
-### Frontend
+Порты можно переопределять. Без переменных Compose использует frontend 4200, API 8080, PostgreSQL 5432, MinIO 9000/9001. Данные живут в именованных volumes и сохраняются при обычном перезапуске.
+
+MinIO собирается из [официальных исходников](https://github.com/minio/minio) с фиксированным commit и проверкой SHA-256. Первый запуск скачивает исходники и зависимости. Для локального уже сохранённого совместимого образа можно задать `MINIO_IMAGE` и выполнить `docker compose up -d --no-build` после сборки остальных сервисов. Архивированный upstream требует отдельного решения по дальнейшему сопровождению хранилища.
+
+### Разработка с HMR
+
+После запуска backend/PostgreSQL/MinIO можно заменить контейнер frontend сервером Angular:
 
 ```bash
-npm run start:frontend
+BACKEND_PORT=18081 npm run start:frontend -- --port 14201
 ```
 
-### Backend
-
-```bash
-go -C backend mod tidy
-export DATABASE_URL=postgres://polka:polka@localhost:5432/polka?sslmode=disable
-npm run start:backend
-```
-
-### Полный стек в Docker
-
-```bash
-docker compose up --build
-```
-
-Если локальные порты уже заняты, их можно переопределить:
-
-```bash
-POSTGRES_PORT=55432 BACKEND_PORT=18080 FRONTEND_PORT=14200 docker compose up --build
-```
-
-После запуска:
-
-- frontend: `http://localhost:4200`
-- backend health: `http://localhost:8080/api/v1/health`
-- minio api: `http://localhost:9000`
-- minio console: `http://localhost:9001`
-
-При старте backend автоматически применяет SQL-миграции и добавляет demo seed пользователя.
+API автоматически проксируется на `BACKEND_PORT` (по умолчанию 8080), а дополнительные аргументы передаются Angular CLI. Для native backend требуется Go 1.27+ и `DATABASE_URL`; запуск — `npm run start:backend`.
 
 ## Проверки
 
 ```bash
-npm run playwright:install
-npm run lint:frontend
-npm run lint:styles
 npm run lint
 npm run format:check
-npm run build:frontend
 npm run test:frontend
-npm run test:component
 npm run test:backend
+go -C backend vet ./...
+npm run audit:backend
+npm run build:frontend
 npm run compose:check
+npm run playwright:install
+npm run test:component
 ```
 
-## Deploy
-
-- Инструкции по VPS и `k3s` лежат в `docs/deploy.md`
-- Bootstrap команда для кластера: `npm run deploy:polka:k8s`
-- Для обычного продового rollout после merge в default branch используется `edge` тег
-- После merge и завершения GitHub Actions deploy делается вручную:
+Playwright по умолчанию собирает и запускает Compose. Для уже работающего стека, включая HMR, используйте:
 
 ```bash
-ssh -i ~/sshKeysDir/id_ed25519_hse matto@158.160.66.87
-cd /opt/polka
-git fetch --all --prune
-git checkout main
-git pull --ff-only
-POLKA_IMAGE_TAG=edge ./scripts/deploy/polka-bootstrap-k8s.sh
+POLKA_REUSE_STACK=1 FRONTEND_PORT=14200 BACKEND_PORT=18081 npm run test:component
 ```
 
-## Следующие шаги
+Проверки больше не останавливают существующий стек. PostgreSQL integration tests включаются через `POLKA_TEST_DATABASE_URL`, указывающую на отдельную тестовую БД: тесты создают временную схему и удаляют только её. Без этой переменной DB-тест явно пропускается; unit-тесты не подтверждают транзакции и SQL-видимость.
 
-1. Добавить реальную Figma ссылку в `docs/ux.md`, если она обязательна для сдачи.
-2. При желании расширить Playwright на owner CRUD рекомендационных списков.
-3. При желании поднять Lighthouse mobile performance выше `80` без потери текущего дизайна.
+На macOS при недоступном Playwright CDN можно использовать установленный Chrome:
+
+```bash
+PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' \
+POLKA_REUSE_STACK=1 FRONTEND_PORT=14200 BACKEND_PORT=18081 npm run test:component
+```
+
+## Визуальная демонстрация
+
+`npm run demo:covers` пересобирает локальные обложки. `npm run demo:capture` снимает десктоп, мобильную версию, WebM и GIF реального поведения; для записи нужен `npx playwright install ffmpeg`, для GIF — системный `ffmpeg`.
+
+[Десктопная страница книги](docs/screenshots/book-desktop.png) · [Мобильная полка](docs/screenshots/profile-mobile.png) · [Мнения внутри книги](docs/screenshots/book-opinions-desktop.png) · [Мобильная книга](docs/screenshots/book-mobile.png) · [Видео](docs/screenshots/polka-interactions.webm).
+
+## Документация
+
+- [Текущая фаза и следующие шаги](docs/roadmap.md)
+- [Результаты аудита и проверки](docs/audit-2026-10-11.md)
+- [UX и интерфейс](docs/ux.md)
+- [Демо-контент и источники](docs/demo-content.md)
+- [Развёртывание](docs/deploy.md)
+
+Production URL: [polka.keykomi.com](https://polka.keykomi.com). Исторические deployment-отчёты не подтверждают текущее состояние production; эта итерация запускается и проверяется локально.

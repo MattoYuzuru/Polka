@@ -1,11 +1,14 @@
 <main class="login-page">
   <section class="login-hero" tuiCardLarge tuiSurface>
     <p class="eyebrow" tuiChip>Polka / вход</p>
-    <h1 tuiHeader="h1">Личная библиотека без визуального шума.</h1>
+    <h1 tuiHeader="h1">У каждой книги — своя история.</h1>
     <p class="lead">
-      Вход открывает приватную рабочую полку, заметки к книгам и публичный профиль по одному адресу.
+      Собирайте любимые книги, сохраняйте мысли на полях и делитесь тем, что стоит прочитать.
     </p>
-    <p class="hero-note">Чёрно-белая основа, тонкие бордеры и акцент из палитры ваших обложек.</p>
+    <a class="hero-demo-link" routerLink="/yuzuru"
+      >Заглянуть на открытую полку <span aria-hidden="true">↗</span></a
+    >
+    <p class="hero-note">Ваша библиотека. Ваш порядок. Ваш взгляд.</p>
   </section>
 
   <section class="login-card" tuiCardLarge tuiSurface>
@@ -21,6 +24,9 @@
         <input
           class="field__control"
           formControlName="email"
+          autocomplete="email"
+          inputmode="email"
+          [attr.aria-invalid]="loginForm.controls.email.touched && loginForm.controls.email.invalid"
           type="email"
           data-testid="login-email"
         />
@@ -34,6 +40,10 @@
         <input
           class="field__control"
           formControlName="password"
+          autocomplete="current-password"
+          [attr.aria-invalid]="
+            loginForm.controls.password.touched && loginForm.controls.password.invalid
+          "
           type="password"
           data-testid="login-password"
         />
@@ -43,7 +53,7 @@
       </label>
 
       @if (errorMessage()) {
-        <div class="error-box">
+        <div class="error-box" role="alert">
           {{ errorMessage() }}
         </div>
       }

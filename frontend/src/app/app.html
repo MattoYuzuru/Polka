@@ -1,6 +1,12 @@
 <tui-root>
+  <a
+    class="skip-link"
+    [href]="currentUrl().split('#')[0] + '#main-content'"
+    (click)="skipToContent($event)"
+    >К содержимому</a
+  >
   <div class="app-shell">
-    <div class="app-shell__content">
+    <div class="app-shell__content" id="main-content" tabindex="-1">
       <router-outlet />
     </div>
 
@@ -26,7 +32,7 @@
           }
 
           <div class="site-footer__links">
-            <p>Создатель: MattoYuzuru</p>
+            <p>Создатель: yuzuru</p>
             <a href="https://github.com/MattoYuzuru/Polka" rel="noreferrer" target="_blank">
               GitHub repository
             </a>

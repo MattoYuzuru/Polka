@@ -6,7 +6,7 @@
       aria-label="Закрыть полноэкранную обложку"
       (click)="closeCoverModal()"
     >
-      <img [src]="displayedCoverUrl()" [alt]="'Обложка книги ' + (book()?.title ?? '')" />
+      <img [appCover]="displayedCoverUrl()" [alt]="'Обложка книги ' + (book()?.title ?? '')" />
     </button>
   }
 
@@ -16,13 +16,16 @@
       <h1>Поднимаем профиль книги.</h1>
       <p>Сейчас подтягиваются обложка, метаданные и заметки владельца.</p>
     </section>
-  } @else if (errorMessage()) {
+  } @else if (errorMessage() && !book()) {
     <section class="details-state">
       <p class="details-state__eyebrow">Ошибка</p>
       <h1>{{ errorMessage() }}</h1>
       <a [routerLink]="backLink()" class="ghost-action">Вернуться к библиотеке</a>
     </section>
   } @else if (book(); as book) {
+    @if (errorMessage()) {
+      <p class="inline-error" role="alert">{{ errorMessage() }}</p>
+    }
     <section class="book-shell" [style.--book-accent]="accentGradientCss()">
       <article class="book-pane book-pane--meta">
         <div class="book-pane__topline">
@@ -64,7 +67,7 @@
             (click)="openCoverModal()"
           >
             @if (displayedCoverUrl()) {
-              <img [src]="displayedCoverUrl()" [alt]="'Обложка книги ' + book.title" />
+              <img [appCover]="displayedCoverUrl()" [alt]="'Обложка книги ' + book.title" />
             } @else {
               <span>{{ book.title.slice(0, 1).toUpperCase() }}</span>
             }
@@ -201,10 +204,19 @@
               </label>
             </div>
 
+            @if (bookForm.touched && bookForm.invalid) {
+              <p class="inline-error" role="alert">
+                Заполните обязательные поля. Название, автор и издательство — минимум 2 символа;
+                оценка — от 0 до 10.
+              </p>
+            }
             <div class="edit-actions">
               <button
                 class="ghost-action ghost-action--accent"
                 type="button"
+                [disabled]="
+                  isProcessing() || isUploadingCover() || activeEntryMutationKey() !== null
+                "
                 (click)="submitEdit()"
               >
                 Сохранить
@@ -216,10 +228,20 @@
                     : 'Сделать публичной после сохранения'
                 }}
               </button>
-              <button class="ghost-action" type="button" (click)="cancelEdit()">Отмена</button>
+              <button
+                class="ghost-action"
+                type="button"
+                [disabled]="
+                  isProcessing() || isUploadingCover() || activeEntryMutationKey() !== null
+                "
+                (click)="cancelEdit()"
+              >
+                Отмена
+              </button>
               <button
                 class="ghost-action ghost-action--danger"
                 type="button"
+                [disabled]="isProcessing() || activeEntryMutationKey() !== null"
                 (click)="deleteBook()"
               >
                 Удалить книгу
@@ -242,6 +264,8 @@
           <button
             class="stream-toggle__button"
             type="button"
+            [disabled]="activeEntryMutationKey() !== null"
+            [attr.aria-pressed]="activeTab() === 'quotes'"
             [class.stream-toggle__button--active]="activeTab() === 'quotes'"
             (click)="selectTab('quotes')"
           >
@@ -250,6 +274,8 @@
           <button
             class="stream-toggle__button"
             type="button"
+            [disabled]="activeEntryMutationKey() !== null"
+            [attr.aria-pressed]="activeTab() === 'opinions'"
             [class.stream-toggle__button--active]="activeTab() === 'opinions'"
             (click)="selectTab('opinions')"
           >
@@ -285,24 +311,54 @@
                 </button>
               } @else {
                 <article [class]="currentEntryContentClass()">
-                  {{ renderedEntryText() }}
+                  <span aria-hidden="true">{{ renderedEntryText() }}</span>
+                  <span class="sr-only">{{ fullEntryText() }}</span>
+                  @if (isTyping()) {
+                    <span class="typewriter-cursor" aria-hidden="true"></span>
+                  }
                 </article>
               }
             </div>
 
-            <div class="details-stream__nav" [style.--nav-gap.px]="navigationGap()">
-              <span class="details-stream__nav-number">{{ leadingIndexLabel() }}</span>
-              <span class="details-stream__nav-arrow" [style.transform]="arrowTransform()">
-                ↓
-              </span>
-              <span
-                class="details-stream__nav-number details-stream__nav-number--next"
-                [class.details-stream__nav-number--accent]="navigationAccent()"
-                [style.transform]="'scale(' + upcomingNumberScale() + ')'"
+            <div class="entry-controls" aria-label="Навигация по записям">
+              <button
+                class="entry-controls__arrow"
+                type="button"
+                aria-label="Предыдущая запись"
+                [disabled]="!isImmersed() || !hasPreviousEntry()"
+                (click)="navigateEntry(-1, entryViewport)"
               >
-                {{ trailingIndexLabel() }}
-              </span>
+                ←
+              </button>
+              <div class="entry-controls__position" aria-live="polite">
+                <span>{{ currentIndexLabel() }}</span
+                ><span class="entry-controls__divider">/</span
+                ><span>{{ currentEntries().length }}</span>
+                <span
+                  class="entry-controls__progress"
+                  [style.transform]="
+                    'scaleX(' +
+                    (navigationProgress() < 0 ? -navigationProgress() : navigationProgress()) /
+                      360 +
+                    ')'
+                  "
+                ></span>
+              </div>
+              <button
+                class="entry-controls__arrow"
+                type="button"
+                aria-label="Следующая запись"
+                [disabled]="!isImmersed() || !hasNextEntry()"
+                (click)="navigateEntry(1, entryViewport)"
+              >
+                →
+              </button>
             </div>
+            @if (isImmersed() && isTyping()) {
+              <button class="entry-reveal" type="button" (click)="revealEntry()">
+                Показать весь текст
+              </button>
+            }
           </div>
         } @else {
           <div class="stream-editor">
@@ -323,7 +379,7 @@
               <button
                 class="ghost-action ghost-action--accent"
                 type="button"
-                [disabled]="isCreatingEntry()"
+                [disabled]="activeEntryMutationKey() !== null"
                 (click)="createEntry()"
               >
                 {{
@@ -368,6 +424,9 @@
                     </div>
 
                     <textarea
+                      [attr.aria-label]="
+                        (activeTab() === 'quotes' ? 'Цитата ' : 'Мнение ') + (index + 1)
+                      "
                       [value]="entryDraft(entry.id)"
                       (input)="
                         updateEntryDraft(entry.id, ($any($event.target).value ?? '').toString())
@@ -378,7 +437,7 @@
                       <button
                         class="ghost-action ghost-action--accent"
                         type="button"
-                        [disabled]="isEntryMutating(entry.id)"
+                        [disabled]="activeEntryMutationKey() !== null"
                         (click)="saveEntry(entry.id)"
                       >
                         {{ isEntryMutating(entry.id) ? 'Сохраняем...' : 'Сохранить' }}
@@ -386,7 +445,7 @@
                       <button
                         class="ghost-action ghost-action--danger"
                         type="button"
-                        [disabled]="isEntryMutating(entry.id)"
+                        [disabled]="activeEntryMutationKey() !== null"
                         (click)="deleteEntry(entry.id)"
                       >
                         Удалить

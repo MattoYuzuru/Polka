@@ -95,3 +95,18 @@
     justify-content: flex-start;
   }
 }
+
+.skip-link {
+  position: fixed;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 1000;
+  padding: 0.8rem 1rem;
+  transform: translateY(-200%);
+  background: var(--polka-ink);
+  color: #fff;
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}

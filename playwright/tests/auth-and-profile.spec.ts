@@ -20,8 +20,8 @@ test("logs in with the seeded demo account and opens the owner profile", async (
   await page.getByTestId("login-password").fill("Reader1234");
   await page.getByTestId("login-submit").click();
 
-  await expect(page).toHaveURL(/\/mattoy$/);
-  await expect(page.getByTestId("profile-nickname")).toHaveText("mattoy");
+  await expect(page).toHaveURL(/\/yuzuru$/);
+  await expect(page.getByTestId("profile-nickname")).toHaveText("yuzuru");
   await page.getByRole("button", { name: "Добавить контент" }).click();
   await expect(
     page.getByRole("link", { name: "Добавить книгу" }),
@@ -33,7 +33,7 @@ test("logs in with the seeded demo account and opens the owner profile", async (
 test("filters the public library by search query and status", async ({
   page,
 }) => {
-  await page.goto("/mattoy");
+  await page.goto("/yuzuru");
 
   await expect(page.getByTestId("profile-hero")).toBeVisible();
   await page.getByTestId("books-search").fill("Дюна");
@@ -60,7 +60,7 @@ test("owner creates, edits and deletes a book with uploaded cover", async ({
   await page.getByTestId("login-email").fill("reader@polka.local");
   await page.getByTestId("login-password").fill("Reader1234");
   await page.getByTestId("login-submit").click();
-  await expect(page).toHaveURL(/\/mattoy$/);
+  await expect(page).toHaveURL(/\/yuzuru$/);
 
   await page.goto("/books/new");
   await page.getByTestId("book-title-input").fill(createdTitle);
@@ -84,14 +84,14 @@ test("owner creates, edits and deletes a book with uploaded cover", async ({
   ).toBeVisible();
   await page.getByTestId("book-submit").click();
 
-  await expect(page).toHaveURL(/\/mattoy$/);
+  await expect(page).toHaveURL(/\/yuzuru$/);
   await page.getByTestId("books-search").fill(createdTitle);
   const createdCard = page
     .locator("article.book-card")
     .filter({ has: page.getByRole("heading", { name: createdTitle }) });
   await expect(createdCard).toBeVisible();
   await expect(createdCard.locator("img")).toHaveCount(1);
-  await createdCard.getByRole("link", { name: "Мнение" }).click();
+  await createdCard.getByRole("link", { name: /^О книге/ }).click();
 
   await expect(page.getByRole("heading", { name: createdTitle })).toBeVisible();
   await expect(page.locator(".book-pane--meta .book-cover img")).toBeVisible();
@@ -105,7 +105,7 @@ test("owner creates, edits and deletes a book with uploaded cover", async ({
   await expect(page.getByRole("heading", { name: updatedTitle })).toBeVisible();
   await expect(page.getByText("Прочитал")).toBeVisible();
 
-  await page.goto("/mattoy");
+  await page.goto("/yuzuru");
   await page.getByTestId("books-search").fill(updatedTitle);
   const updatedCard = page
     .locator("article.book-card")
@@ -116,7 +116,7 @@ test("owner creates, edits and deletes a book with uploaded cover", async ({
   await updatedCard.getByRole("button", { name: /меню действий/i }).click();
   await page.getByRole("button", { name: "Удалить из библиотеки" }).click();
 
-  await expect(page).toHaveURL(/\/mattoy$/);
+  await expect(page).toHaveURL(/\/yuzuru$/);
   await expect(page.getByRole("heading", { name: updatedTitle })).toHaveCount(
     0,
   );

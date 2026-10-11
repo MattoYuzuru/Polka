@@ -1,0 +1,60 @@
+[
+  {
+    "title": "Мир на четырёх языках",
+    "description": "日本語 · Español · English · Русский. Двадцать голосов: классика, фантастика, образование и программирование.",
+    "slugs": [
+      "kokoro",
+      "ginga",
+      "quijote",
+      "niebla",
+      "flatland",
+      "sicp",
+      "we",
+      "onegin",
+      "rashomon",
+      "ningen",
+      "gakumon",
+      "ficciones",
+      "morel",
+      "selva",
+      "frankenstein",
+      "alice",
+      "taocp",
+      "amphibian",
+      "underground",
+      "monday"
+    ]
+  },
+  {
+    "title": "Воображение как инструмент",
+    "description": "Ночное небо, новые измерения, код и стеклянный город. Книги, которые меняют систему координат.",
+    "slugs": [
+      "ginga",
+      "flatland",
+      "sicp",
+      "we",
+      "ficciones",
+      "morel",
+      "frankenstein",
+      "taocp",
+      "monday"
+    ]
+  },
+  {
+    "title": "Короткая форма, длинное эхо",
+    "description": "Рассказы и небольшие книги, к которым хочется вернуться после последней страницы.",
+    "slugs": [
+      "rashomon",
+      "ficciones",
+      "selva",
+      "underground",
+      "niebla",
+      "morel"
+    ]
+  },
+  {
+    "title": "Между кодом и волшебством",
+    "description": "Абстракции, алгоритмы и исследовательское любопытство. Технические книги рядом с литературой о невозможном.",
+    "slugs": ["sicp", "taocp", "flatland", "alice", "monday", "gakumon"]
+  }
+]

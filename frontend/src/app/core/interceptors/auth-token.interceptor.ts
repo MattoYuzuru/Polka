@@ -1,13 +1,22 @@
-import { type HttpInterceptorFn } from '@angular/common/http';
+import { inject } from '@angular/core';
+import { AuthSessionStore } from '../stores/auth-session.store';
+import { HttpContextToken, type HttpInterceptorFn } from '@angular/common/http';
 
 import { environment } from '../../../environments/environment';
 
-const TOKEN_STORAGE_KEY = 'polka.auth.token';
+export const SKIP_AUTH_TOKEN = new HttpContextToken<boolean>(() => false);
 
 export const authTokenInterceptor: HttpInterceptorFn = (request, next) => {
-  const token = globalThis.localStorage?.getItem(TOKEN_STORAGE_KEY);
+  const store = inject(AuthSessionStore);
+  store.bootstrap();
+  const token = store.token();
 
-  if (!token || !request.url.startsWith(environment.apiBaseUrl)) {
+  if (
+    request.context.get(SKIP_AUTH_TOKEN) ||
+    request.url.startsWith(`${environment.apiBaseUrl}/auth/`) ||
+    !token ||
+    !request.url.startsWith(`${environment.apiBaseUrl}/`)
+  ) {
     return next(request);
   }
 

@@ -1,0 +1,135 @@
+.floating-menu {
+  position: absolute;
+  z-index: 100;
+  min-width: min(18.5rem, calc(100vw - 3rem));
+  display: grid;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid rgba(13, 13, 13, 0.08);
+  border-radius: 1.1rem;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 28px 48px rgba(13, 13, 13, 0.08);
+  backdrop-filter: blur(22px);
+}
+
+.floating-menu__action {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0.55rem 0;
+  text-align: left;
+  cursor: pointer;
+  border: 0;
+  background: transparent;
+  color: var(--polka-ink);
+}
+
+.floating-menu__text {
+  position: relative;
+  display: inline-block;
+  font-family: var(--polka-display-font);
+  font-size: 1.02rem;
+  line-height: 1.4;
+}
+
+.floating-menu__text::after {
+  content: attr(data-gradient-text);
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  color: transparent;
+  background-image: var(--accent-gradient);
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: brightness(0.44);
+  transition: opacity 180ms ease;
+}
+
+.floating-menu__action:hover .floating-menu__text::after,
+.floating-menu__action:focus-visible .floating-menu__text::after {
+  opacity: 1;
+}
+
+.floating-menu__action:hover .floating-menu__text,
+.floating-menu__action:focus-visible .floating-menu__text {
+  color: transparent;
+}
+
+.page-backdrop,
+.cover-modal {
+  position: fixed;
+  inset: 0;
+  border: 0;
+}
+
+.cover-modal {
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  background: rgba(13, 13, 13, 0.82);
+  cursor: zoom-out;
+}
+
+.cover-modal img {
+  width: min(32rem, calc(100vw - 2rem));
+  max-height: calc(100vh - 2rem);
+  object-fit: contain;
+  border-radius: 0.8rem;
+}
+
+.field {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.field--centered input {
+  text-align: center;
+}
+
+.field--wide {
+  grid-column: 1 / -1;
+}
+
+.field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.profile-page :is(button, a)[tuiButton] {
+  border: 1px solid var(--polka-border-strong) !important;
+  background: transparent !important;
+  color: var(--polka-ink) !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+
+.profile-page :is(button, a)[tuiButton]:hover {
+  background: rgba(13, 13, 13, 0.04) !important;
+}
+
+:where(.book-details-page) :is(.inline-nav, .ghost-action) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.8rem;
+  padding: 0.72rem 1.1rem;
+  border: 1px solid var(--polka-border-strong);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--polka-ink);
+  cursor: pointer;
+}
+
+.orb-button {
+  position: relative;
+  width: 3.7rem;
+  height: 3.7rem;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid rgba(13, 13, 13, 0.12);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--polka-ink);
+  cursor: pointer;
+}
